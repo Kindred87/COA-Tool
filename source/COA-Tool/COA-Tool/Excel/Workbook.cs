@@ -7,7 +7,7 @@ using System.Drawing;
 using OfficeOpenXml.Style;
 using System.IO;
 using OfficeOpenXml.Drawing;
-using System.Threading;
+
 
 namespace COA_Tool.Excel
 {
@@ -29,17 +29,20 @@ namespace COA_Tool.Excel
         private string LacticMethod = "(AOAC 990.12)  ";
 
         private List<List<string>> TableauData;
-        private List<List<string>> FinishedGoods;
+        
         private List<List<string>> TitrationResults;
         private List<List<string>> MicroResults;
-        public Workbook(List<List<string>> tableauData, List<List<string>> finishedGoods, List<List<string>> titrationResults, List<List<string>> microResults, CustomerName name)
+        private List<List<string>> FinishedGoods;
+        private List<List<string>> Recipes;
+        public Workbook(List<List<string>> tableauData, List<List<string>> titrationResults, List<List<string>> microResults, CustomerName name,
+            List<List<string>> finishedGoods, List<List<string>> recipes)
         {
             CustomerNameForWorkbook = name;
             TableauData = tableauData;
-            FinishedGoods = finishedGoods;
             TitrationResults = titrationResults;
             MicroResults = microResults;
-
+            FinishedGoods = finishedGoods;
+            Recipes = recipes;
         }
 
         public void Generate()
@@ -206,6 +209,7 @@ namespace COA_Tool.Excel
                     continue;
 
                 worksheet.Cells[18, 2 + i].Value = lotCode;
+                worksheet.Cells[18, 2 + i].Style.Numberformat.Format = "#,##0";
 
                 worksheet.Cells[16, 2 + i].Value = productName;
                 worksheet.Cells[16, 2 + i].Style.WrapText = true;
@@ -222,7 +226,7 @@ namespace COA_Tool.Excel
                 worksheet.Cells[19, 2 + i].Value = madeDate.ToShortDateString();
                 worksheet.Cells[19, 2 + i].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
-                List<int> titrationIndices = GetTitrationIndices(recipeCode, madeDate, lotCode);
+                List<int> titrationIndices = GetTitrationIndicesViaMadeDate(recipeCode, madeDate, lotCode);
 
                 float acidity = GetTitrationValue(titrationIndices, TitrationOffset.Acidity);
                 worksheet.Cells[22, 2 + i].Value = acidity.ToString("0.00");
@@ -258,8 +262,8 @@ namespace COA_Tool.Excel
         }
         private void PopulateContentsLatitute36(ExcelWorksheet worksheet, int page)
         {
-            worksheet.Column(1).Width = 20.3;
-            worksheet.Column(2).Width = 12.3;
+            worksheet.Column(1).Width = 21;
+            worksheet.Column(2).Width = 13;
             worksheet.Column(3).Width = 15.72;
             worksheet.Column(4).Width = 15.72;
             worksheet.Column(5).Width = 15.72;
@@ -288,18 +292,21 @@ namespace COA_Tool.Excel
             worksheet.Cells["C11"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
             worksheet.Cells["C11:H11"].Merge = true;
 
-            worksheet.Cells["C12"].Value = TableauData[1][3];
+            worksheet.Cells["C12"].Value = Convert.ToInt32(TableauData[1][3]);
+            worksheet.Cells["C12"].Style.Numberformat.Format = "0";
             worksheet.Cells["C12"].Style.Font.Size = 12;
             worksheet.Cells["C12"].Style.Font.Bold = true;
             worksheet.Cells["C12"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
             worksheet.Cells["C12:H12"].Merge = true;
 
             worksheet.Cells["C13"].Style.Font.Size = 12;
+            worksheet.Cells["C13"].Style.Numberformat.Format = "0";
             worksheet.Cells["C13"].Style.Font.Bold = true;
             worksheet.Cells["C13"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
             worksheet.Cells["C13:H13"].Merge = true;
 
             worksheet.Cells["C14"].Value = DateTime.Now.Date.ToShortDateString();
+            worksheet.Cells["C14"].Style.Numberformat.Format = "m/d/yyyy";
             worksheet.Cells["C14"].Style.Font.Size = 12;
             worksheet.Cells["C14"].Style.Font.Bold = true;
             worksheet.Cells["C14"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
@@ -376,41 +383,39 @@ namespace COA_Tool.Excel
                 if (string.IsNullOrEmpty(productName))
                     continue;
 
-                worksheet.Cells[18, 2 + i].Value = lotCode;
+                worksheet.Cells[18, 2 + i].Value = Convert.ToDouble(lotCode);
+                worksheet.Cells[18, 2 + i].Style.Numberformat.Format = "0";
 
                 worksheet.Cells[16, 2 + i].Value = productName;
                 worksheet.Cells[16, 2 + i].Style.WrapText = true;
-                //worksheet.Cells[16, 2 + i].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
                 string recipeCode = GetRecipeCode(productCode);
                 worksheet.Cells[17, 2 + i].Value = recipeCode + "/" + productCode;
-                //worksheet.Cells[17, 2 + i].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
                 worksheet.Cells[19, 2 + i].Value = GetManufacturingSite(lotCode);
-                //worksheet.Cells[19, 2 + i].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
                 DateTime madeDate = GetMadeDate(productCode, lotCode);
 
-                List<int> titrationIndices = GetTitrationIndices(recipeCode, madeDate, lotCode);
+                List<int> titrationIndices = GetTitrationIndicesViaMadeDate(recipeCode, madeDate, lotCode);
 
                 float acidity = GetTitrationValue(titrationIndices, TitrationOffset.Acidity);
-                worksheet.Cells[21, 2 + i].Value = acidity.ToString("0.00");
+                worksheet.Cells[21, 2 + i].Style.Numberformat.Format = "0.00";
+                worksheet.Cells[21, 2 + i].Value = acidity;
                 if (acidity == -1)
                     worksheet.Cells[21, 2 + i].Style.Font.Color.SetColor(Color.Red);
-                //worksheet.Cells[21, 2 + i].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
 
                 float ph = GetTitrationValue(titrationIndices, TitrationOffset.pH);
-                worksheet.Cells[22, 2 + i].Value = ph.ToString("0.00");
+                worksheet.Cells[22, 2 + i].Value = ph;
+                worksheet.Cells[22, 2 + i].Style.Numberformat.Format = "0.00";
                 if (ph == -1)
                     worksheet.Cells[22, 2 + i].Style.Font.Color.SetColor(Color.Red);
-                //worksheet.Cells[22, 2 + i].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
                 float viscosity = GetTitrationValue(titrationIndices, TitrationOffset.Viscosity);
-                worksheet.Cells[23, 2 + i].Value = viscosity.ToString("0,000");
+                worksheet.Cells[23, 2 + i].Value = viscosity;
+                worksheet.Cells[23, 2 + i].Style.Numberformat.Format = "0,000";
                 if (viscosity == -1)
                     worksheet.Cells[23, 2 + i].Style.Font.Color.SetColor(Color.Red);
-                //worksheet.Cells[23, 2 + i].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
                 List<int> microIndices = GetMicroIndices(recipeCode, lotCode, productCode, madeDate);
 
@@ -439,9 +444,11 @@ namespace COA_Tool.Excel
                     if (yeastCount == 0)
                         worksheet.Cells[24, 2 + i].Value = "<10";
                     else if (yeastCount > 0)
-                        worksheet.Cells[24, 2 + i].Value = Convert.ToString(yeastCount);
+                        worksheet.Cells[24, 2 + i].Value = yeastCount;
                     else if (yeastCount == -1)
                         worksheet.Cells[24, 2 + i].Value = "N/A";
+
+                    worksheet.Cells[24, 2 + i].Style.Numberformat.Format = "#,##0";
 
 
                     int moldCount = GetMicroValue(microIndices, MicroOffset.Mold);
@@ -449,9 +456,11 @@ namespace COA_Tool.Excel
                     if (moldCount == 0)
                         worksheet.Cells[25, 2 + i].Value = "<10";
                     else if (moldCount > 0)
-                        worksheet.Cells[25, 2 + i].Value = Convert.ToString(moldCount);
+                        worksheet.Cells[25, 2 + i].Value = moldCount;
                     else if (moldCount == -1)
                         worksheet.Cells[25, 2 + i].Value = "N/A";
+
+                    worksheet.Cells[25, 2 + i].Style.Numberformat.Format = "#,##0";
 
                     int aerobicCount = GetMicroValue(microIndices, MicroOffset.Aerobic);
                     //worksheet.Cells[26, 2 + i].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
@@ -460,27 +469,33 @@ namespace COA_Tool.Excel
                     else if (aerobicCount == 0)
                         worksheet.Cells[26, 2 + i].Value = "<100";
                     else if (aerobicCount > 0)
-                        worksheet.Cells[26, 2 + i].Value = Convert.ToString(aerobicCount);
+                        worksheet.Cells[26, 2 + i].Value = aerobicCount;
                     else if (aerobicCount == -1)
                         worksheet.Cells[26, 2 + i].Value = "N/A";
+
+                    worksheet.Cells[26, 2 + i].Style.Numberformat.Format = "#,##0";
 
                     int coliformCount = GetMicroValue(microIndices, MicroOffset.Coliform);
                     //worksheet.Cells[27, 2 + i].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                     if (coliformCount == 0)
                         worksheet.Cells[27, 2 + i].Value = "<10";
                     else if (coliformCount > 0)
-                        worksheet.Cells[27, 2 + i].Value = Convert.ToString(coliformCount);
+                        worksheet.Cells[27, 2 + i].Value = coliformCount;
                     else if (coliformCount == -1)
                         worksheet.Cells[27, 2 + i].Value = "N/A";
+
+                    worksheet.Cells[27, 2 + i].Style.Numberformat.Format = "#,##0";
 
                     int lacticCount = GetMicroValue(microIndices, MicroOffset.Lactic);
                     //worksheet.Cells[28, 2 + i].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                     if (lacticCount == 0)
                         worksheet.Cells[28, 2 + i].Value = "<10";
                     else if (lacticCount > 0)
-                        worksheet.Cells[28, 2 + i].Value = Convert.ToString(lacticCount);
+                        worksheet.Cells[28, 2 + i].Value = lacticCount;
                     else if (lacticCount == -1)
                         worksheet.Cells[28, 2 + i].Value = "N/A";
+
+                    worksheet.Cells[28, 2 + i].Style.Numberformat.Format = "#,##0";
                 }
 
             }
@@ -534,7 +549,7 @@ namespace COA_Tool.Excel
             {
                 if (line[0] == productCode)
                 {
-                    return line[7];
+                    return line[3];
                 }
             }
             return "Could not locate";
@@ -598,7 +613,7 @@ namespace COA_Tool.Excel
             {
                 if (line[0] == productCode)
                 {
-                    daysToExpiry = Convert.ToInt32(line[6]);
+                    daysToExpiry = Convert.ToInt32(line[2]);
                 }
             }
 
@@ -614,20 +629,21 @@ namespace COA_Tool.Excel
 
             return new DateTime(expiryYear, expiryMonth, expiryDay).AddDays(daysToExpiry * -1);
         }
-        private List<int> GetTitrationIndices(string recipeCode, DateTime madeDate, string lotCode)
+        private List<int> GetTitrationIndicesViaMadeDate(string recipeCode, DateTime madeDate, string lotCode)
         {
             List<int> indices = new List<int>();
             string jobNumber = string.Empty;
             string factoryCode = GetFactoryCode(lotCode);
             string madeDateAsString = madeDate.ToShortDateString();
-            string madeDateAsTwoDigitYearString = madeDate.ToString("MM/dd/yy");
+            string madeDateAsTwoDigitYearString = madeDate.ToString("M/dd/yy");
 
             for (int i = 0; i < TitrationResults.Count; i++)
             {
-                if ((TitrationResults[i][2] == factoryCode && (TitrationResults[i][0] == madeDateAsString || TitrationResults[i][0] == madeDateAsTwoDigitYearString) && TitrationResults[i][4] == recipeCode) ||
-                    TitrationResults[i][3] == jobNumber && TitrationResults[i][4] == recipeCode)
+                if (TitrationResults[i][2] == factoryCode && (TitrationResults[i][0] == madeDateAsString ||
+                    (TitrationResults[i][0] == madeDateAsTwoDigitYearString)) && TitrationResults[i][4] == recipeCode)
                 {
                     indices.Add(i);
+
                     if (string.IsNullOrEmpty(jobNumber))
                     {
                         jobNumber = TitrationResults[i][3];
@@ -635,6 +651,102 @@ namespace COA_Tool.Excel
                 }
             }
 
+            // Runs a second check under a different factory
+            if (indices.Count == 0)
+            {
+                if (factoryCode == "H1")
+                    factoryCode = "L1";
+                else if (factoryCode == "L1")
+                    factoryCode = "H1";
+
+                for (int i = 0; i < TitrationResults.Count; i++)
+                {
+                    if (TitrationResults[i][2] == factoryCode && (TitrationResults[i][0] == madeDateAsString ||
+                        (TitrationResults[i][0] == madeDateAsTwoDigitYearString)) && TitrationResults[i][4] == recipeCode)
+                    {
+                        indices.Add(i);
+
+                        if (string.IsNullOrEmpty(jobNumber))
+                        {
+                            jobNumber = TitrationResults[i][3];
+                        }
+                    }
+                }
+            }
+            // Assuming some values were found, this second loop covers situations where some batches were titrated the previous day
+            else
+            {
+                for (int i = 0; i < TitrationResults.Count; i++)
+                {
+                    if (TitrationResults[i][3] == jobNumber)
+                    {
+                        indices.Add(i);
+                    }
+                }
+            }
+
+            // Searching via Best By is the last resort since the value is a custom string and thus prone to misspelling
+            if(indices.Count == 0)
+            {
+                indices = GetTitrationIndicesViaBestBy(recipeCode, madeDate, lotCode);
+            }
+
+            return indices;
+        }
+        private List<int> GetTitrationIndicesViaBestBy(string recipeCode, DateTime madeDate, string lotCode)
+        {
+            List<int> indices = new List<int>();
+            string jobNumber = string.Empty;
+            string factoryCode = GetFactoryCode(lotCode);
+            string bestBy = madeDate.AddDays(DaysToExpiryForRecipe(recipeCode)).ToString("M/d/yyyy");
+
+            for (int i = 0; i < TitrationResults.Count; i++)
+            {
+                // (Factory + Best By + Recipe))
+                if (TitrationResults[i][2] == factoryCode && TitrationResults[i][12] == bestBy
+                    && TitrationResults[i][4] == recipeCode)
+                {
+                    indices.Add(i);
+
+                    if (string.IsNullOrEmpty(jobNumber))
+                    {
+                        jobNumber = TitrationResults[i][3];
+                    }
+                }
+            }
+            // Runs a second check under a different factory
+            if (indices.Count == 0)
+            {
+                if (factoryCode == "H1")
+                    factoryCode = "L1";
+                else if (factoryCode == "L1")
+                    factoryCode = "H1";
+
+                for (int i = 0; i < TitrationResults.Count; i++)
+                {
+                    // (Factory + Best By + Recipe))
+                    if (TitrationResults[i][2] == factoryCode && TitrationResults[i][12] == bestBy
+                        && TitrationResults[i][4] == recipeCode)
+                    {
+                        indices.Add(i);
+
+                        if (string.IsNullOrEmpty(jobNumber))
+                        {
+                            jobNumber = TitrationResults[i][3];
+                        }
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < TitrationResults.Count; i++)
+                {
+                    if (TitrationResults[i][3] == jobNumber && TitrationResults[i][4] == recipeCode)
+                    {
+                        indices.Add(i);
+                    }
+                }
+            }
             return indices;
         }
         private float GetTitrationValue(List<int> indices, TitrationOffset offset)
@@ -688,7 +800,7 @@ namespace COA_Tool.Excel
 
             string factoryCode = GetFactoryCode(lotCode);
             string madeDateAsString = madeDate.ToShortDateString();
-            string madeDateAsTwoDigitYearString = madeDate.ToString("MM/dd/yy");
+            string madeDateAsTwoDigitYearString = madeDate.ToString("M/dd/yy");
 
             for (int i = 0; i < MicroResults.Count; i++)
             {
@@ -731,19 +843,20 @@ namespace COA_Tool.Excel
 
             return largestValue;
         }
-        private DateTime GetBestByDate(string lotCode)
+        /// <summary>
+        /// Retrieves shelf life for a given recipe from the Recipes list
+        /// </summary>
+        /// <param name="recipeCode"></param>
+        /// <returns></returns>
+        private int DaysToExpiryForRecipe(string recipeCode)
         {
-            int expiryDay = Convert.ToInt32(lotCode[9].ToString()) * 10;
-            expiryDay += Convert.ToInt32(lotCode[10].ToString());
+            foreach (List<string> row in Recipes)
+            {
+                if (row[0] == recipeCode)
+                    return Convert.ToInt32(row[1]);
+            }
 
-            int expiryMonth = Convert.ToInt32(lotCode[7].ToString()) * 10;
-            expiryMonth += Convert.ToInt32(lotCode[8].ToString());
-
-            int expiryYear = Convert.ToInt32(lotCode[11].ToString()) * 10;
-            expiryYear += Convert.ToInt32(lotCode[12].ToString());
-            expiryYear += 2000;
-
-            return new DateTime(expiryYear, expiryMonth, expiryDay);
+            return -1;
         }
         private string GetFactoryCode(string lotCode)
         {

@@ -18,13 +18,18 @@ namespace COA_Tool.Console
         public static void WriteMessageInCenter(string message)
         {
             int cursorRow = (int)((double)System.Console.WindowHeight * 0.5);
-            System.Console.SetCursorPosition(0, cursorRow);
-            System.Console.Write(new string(' ', System.Console.WindowWidth));
+            RemoveMessageInCenter();
 
             int cursorColumn = (int)((double)System.Console.WindowWidth * 0.5 - message.Length);
 
             System.Console.SetCursorPosition(cursorColumn, cursorRow);
             System.Console.WriteLine(message);
+        }
+        public static void RemoveMessageInCenter()
+        {
+            int cursorRow = (int)((double)System.Console.WindowHeight * 0.5);
+            System.Console.SetCursorPosition(0, cursorRow);
+            System.Console.Write(new string(' ', System.Console.WindowWidth));
         }
     }
 }
