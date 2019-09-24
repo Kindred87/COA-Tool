@@ -194,11 +194,7 @@ namespace COA_Tool.Excel
                 string lotCode = GetLotCode(i + (page - 1) * 4);
 
                 if (string.IsNullOrEmpty(lotCode))
-                {
-                    //lotCode = GetLotCode(i + 1 + (page - 1) * 4);
-                    //if (string.IsNullOrEmpty(lotCode))
                         continue;
-                }
 
                 worksheet.Cells[18, 2 + i].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
@@ -371,11 +367,7 @@ namespace COA_Tool.Excel
                 string lotCode = GetLotCode(i + (page - 1) * 6);
 
                 if (string.IsNullOrEmpty(lotCode))
-                {
-                    lotCode = GetLotCode(i + 1 + (page - 1) * 6);
-                    if (string.IsNullOrEmpty(lotCode))
                         continue;
-                }
 
                 worksheet.Cells[16, 2 + i, 30, 2 + i].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
