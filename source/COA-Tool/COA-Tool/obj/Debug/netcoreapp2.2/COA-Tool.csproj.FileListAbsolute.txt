@@ -9,3 +9,4 @@ C:\Users\colli\source\repos\COA-Tool\source\COA-Tool\COA-Tool\obj\Debug\netcorea
 C:\Users\colli\source\repos\COA-Tool\source\COA-Tool\COA-Tool\obj\Debug\netcoreapp2.2\COA-Tool.AssemblyInfo.cs
 C:\Users\colli\source\repos\COA-Tool\source\COA-Tool\COA-Tool\obj\Debug\netcoreapp2.2\COA-Tool.dll
 C:\Users\colli\source\repos\COA-Tool\source\COA-Tool\COA-Tool\obj\Debug\netcoreapp2.2\COA-Tool.pdb
+C:\Users\colli\source\repos\COA-Tool\source\COA-Tool\COA-Tool\obj\Debug\netcoreapp2.2\COA-Tool.csprojAssemblyReference.cache

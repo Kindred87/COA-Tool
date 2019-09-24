@@ -195,8 +195,8 @@ namespace COA_Tool.Excel
 
                 if (string.IsNullOrEmpty(lotCode))
                 {
-                    lotCode = GetLotCode(i + 1 + (page - 1) * 4);
-                    if (string.IsNullOrEmpty(lotCode))
+                    //lotCode = GetLotCode(i + 1 + (page - 1) * 4);
+                    //if (string.IsNullOrEmpty(lotCode))
                         continue;
                 }
 
@@ -226,7 +226,9 @@ namespace COA_Tool.Excel
                 worksheet.Cells[19, 2 + i].Value = madeDate.ToShortDateString();
                 worksheet.Cells[19, 2 + i].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
-                List<int> titrationIndices = GetTitrationIndicesViaMadeDate(recipeCode, madeDate, lotCode);
+                List<int> titrationIndices = GetTitrationIndices(recipeCode, madeDate, lotCode);
+                if (titrationIndices.Count == 0)
+                    titrationIndices = GetTitrationIndices(recipeCode, madeDate.AddDays(1), lotCode);
 
                 float acidity = GetTitrationValue(titrationIndices, TitrationOffset.Acidity);
                 worksheet.Cells[22, 2 + i].Value = acidity.ToString("0.00");
@@ -396,7 +398,9 @@ namespace COA_Tool.Excel
 
                 DateTime madeDate = GetMadeDate(productCode, lotCode);
 
-                List<int> titrationIndices = GetTitrationIndicesViaMadeDate(recipeCode, madeDate, lotCode);
+                List<int> titrationIndices = GetTitrationIndices(recipeCode, madeDate, lotCode);
+                if (titrationIndices.Count == 0)
+                    titrationIndices = GetTitrationIndices(recipeCode, madeDate.AddDays(1), lotCode);
 
                 float acidity = GetTitrationValue(titrationIndices, TitrationOffset.Acidity);
                 worksheet.Cells[21, 2 + i].Style.Numberformat.Format = "0.00";
@@ -629,13 +633,13 @@ namespace COA_Tool.Excel
 
             return new DateTime(expiryYear, expiryMonth, expiryDay).AddDays(daysToExpiry * -1);
         }
-        private List<int> GetTitrationIndicesViaMadeDate(string recipeCode, DateTime madeDate, string lotCode)
+        private List<int> GetTitrationIndices(string recipeCode, DateTime madeDate, string lotCode)
         {
             List<int> indices = new List<int>();
             string jobNumber = string.Empty;
             string factoryCode = GetFactoryCode(lotCode);
             string madeDateAsString = madeDate.ToShortDateString();
-            string madeDateAsTwoDigitYearString = madeDate.ToString("M/dd/yy");
+            string madeDateAsTwoDigitYearString = madeDate.ToString("M/d/yy");
 
             for (int i = 0; i < TitrationResults.Count; i++)
             {
@@ -673,80 +677,8 @@ namespace COA_Tool.Excel
                     }
                 }
             }
-            // Assuming some values were found, this second loop covers situations where some batches were titrated the previous day
-            else
-            {
-                for (int i = 0; i < TitrationResults.Count; i++)
-                {
-                    if (TitrationResults[i][3] == jobNumber)
-                    {
-                        indices.Add(i);
-                    }
-                }
-            }
 
-            // Searching via Best By is the last resort since the value is a custom string and thus prone to misspelling
-            if(indices.Count == 0)
-            {
-                indices = GetTitrationIndicesViaBestBy(recipeCode, madeDate, lotCode);
-            }
 
-            return indices;
-        }
-        private List<int> GetTitrationIndicesViaBestBy(string recipeCode, DateTime madeDate, string lotCode)
-        {
-            List<int> indices = new List<int>();
-            string jobNumber = string.Empty;
-            string factoryCode = GetFactoryCode(lotCode);
-            string bestBy = madeDate.AddDays(DaysToExpiryForRecipe(recipeCode)).ToString("M/d/yyyy");
-
-            for (int i = 0; i < TitrationResults.Count; i++)
-            {
-                // (Factory + Best By + Recipe))
-                if (TitrationResults[i][2] == factoryCode && TitrationResults[i][12] == bestBy
-                    && TitrationResults[i][4] == recipeCode)
-                {
-                    indices.Add(i);
-
-                    if (string.IsNullOrEmpty(jobNumber))
-                    {
-                        jobNumber = TitrationResults[i][3];
-                    }
-                }
-            }
-            // Runs a second check under a different factory
-            if (indices.Count == 0)
-            {
-                if (factoryCode == "H1")
-                    factoryCode = "L1";
-                else if (factoryCode == "L1")
-                    factoryCode = "H1";
-
-                for (int i = 0; i < TitrationResults.Count; i++)
-                {
-                    // (Factory + Best By + Recipe))
-                    if (TitrationResults[i][2] == factoryCode && TitrationResults[i][12] == bestBy
-                        && TitrationResults[i][4] == recipeCode)
-                    {
-                        indices.Add(i);
-
-                        if (string.IsNullOrEmpty(jobNumber))
-                        {
-                            jobNumber = TitrationResults[i][3];
-                        }
-                    }
-                }
-            }
-            else
-            {
-                for (int i = 0; i < TitrationResults.Count; i++)
-                {
-                    if (TitrationResults[i][3] == jobNumber && TitrationResults[i][4] == recipeCode)
-                    {
-                        indices.Add(i);
-                    }
-                }
-            }
             return indices;
         }
         private float GetTitrationValue(List<int> indices, TitrationOffset offset)

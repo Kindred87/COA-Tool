@@ -53,13 +53,13 @@ namespace COA_Tool.CSV
 
             foreach (string file in filePaths)
             {
-                List<List<string>> list = new List<List<string>>();
+                contents.Add(new List<List<string>>());
 
                 foreach (string line in File.ReadLines(file))
                 {
-                    list.Add(line.Split(new char[] { ',' }).ToList());
+                    if (line.StartsWith(",") == false)
+                        contents[contents.Count - 1].Add(line.Split(new char[] { ',' }).ToList());
                 }
-                contents.Add(list);
             }
 
             return contents;
