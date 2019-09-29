@@ -8,12 +8,16 @@ namespace COA_Tool.Console
     {
         public Util()
         {
-            SetSize();
+            
         }
-        private void SetSize()
+        public static void SetSize()
         {
             System.Console.WindowWidth = (int)((double)System.Console.LargestWindowWidth * 0.75);
             System.Console.WindowHeight = (int)((double)System.Console.LargestWindowHeight * 0.5);
+        }
+        public static void SetTitle()
+        {
+            System.Console.Title = "CoA Tool";
         }
         public static void WriteMessageInCenter(string message)
         {

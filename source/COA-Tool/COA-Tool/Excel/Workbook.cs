@@ -13,7 +13,7 @@ namespace COA_Tool.Excel
 {
     class Workbook
     {
-        public enum CustomerName { TaylorFarmsTennessee, Latitute36 };
+        public enum CustomerName { TaylorFarmsTennessee, Latitude36 };
         private enum TitrationOffset { Acidity = 5, Viscosity = 2, Salt = 4, pH = 6 }
         private enum MicroOffset { Yeast = 9, Mold = 11, Aerobic = 15, Coliform = 7, Lactic = 13 }
         private CustomerName CustomerNameForWorkbook;
@@ -59,7 +59,7 @@ namespace COA_Tool.Excel
                     if ((TableauData.Count - 1) % 4 > 0)
                         pageCount++;
                 }
-                else if (CustomerNameForWorkbook == CustomerName.Latitute36)
+                else if (CustomerNameForWorkbook == CustomerName.Latitude36)
                 {
                     pageCount = (TableauData.Count - 1) / 6;
                     if ((TableauData.Count - 1) % 6 > 0)
@@ -104,9 +104,9 @@ namespace COA_Tool.Excel
             {
                 PopulateContentsTaylorFarmTennessee(worksheet, page);
             }
-            else if (CustomerNameForWorkbook == CustomerName.Latitute36)
+            else if (CustomerNameForWorkbook == CustomerName.Latitude36)
             {
-                PopulateContentsLatitute36(worksheet, page);
+                PopulateContentsLatitude36(worksheet, page);
             }
         }
         private void PopulateContentsTaylorFarmTennessee(ExcelWorksheet worksheet, int page)
@@ -258,7 +258,7 @@ namespace COA_Tool.Excel
 
 
         }
-        private void PopulateContentsLatitute36(ExcelWorksheet worksheet, int page)
+        private void PopulateContentsLatitude36(ExcelWorksheet worksheet, int page)
         {
             worksheet.Column(1).Width = 21;
             worksheet.Column(2).Width = 13;
@@ -284,7 +284,7 @@ namespace COA_Tool.Excel
             worksheet.Cells["C8"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
             worksheet.Cells["C8:H9"].Merge = true;
 
-            worksheet.Cells["C11"].Value = "Latitute 36 (Ohio)";
+            worksheet.Cells["C11"].Value = "Latitude 36 (Ohio)";
             worksheet.Cells["C11"].Style.Font.Size = 12;
             worksheet.Cells["C11"].Style.Font.Bold = true;
             worksheet.Cells["C11"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;

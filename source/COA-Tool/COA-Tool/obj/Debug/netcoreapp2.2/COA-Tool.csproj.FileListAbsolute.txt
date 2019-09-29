@@ -4,7 +4,6 @@ C:\Users\colli\source\repos\COA-Tool\source\COA-Tool\COA-Tool\bin\Debug\netcorea
 C:\Users\colli\source\repos\COA-Tool\source\COA-Tool\COA-Tool\bin\Debug\netcoreapp2.2\COA-Tool.runtimeconfig.dev.json
 C:\Users\colli\source\repos\COA-Tool\source\COA-Tool\COA-Tool\bin\Debug\netcoreapp2.2\COA-Tool.dll
 C:\Users\colli\source\repos\COA-Tool\source\COA-Tool\COA-Tool\bin\Debug\netcoreapp2.2\COA-Tool.pdb
-C:\Users\colli\source\repos\COA-Tool\source\COA-Tool\COA-Tool\obj\Debug\netcoreapp2.2\COA-Tool.csproj.CoreCompileInputs.cache
 C:\Users\colli\source\repos\COA-Tool\source\COA-Tool\COA-Tool\obj\Debug\netcoreapp2.2\COA-Tool.AssemblyInfoInputs.cache
 C:\Users\colli\source\repos\COA-Tool\source\COA-Tool\COA-Tool\obj\Debug\netcoreapp2.2\COA-Tool.AssemblyInfo.cs
 C:\Users\colli\source\repos\COA-Tool\source\COA-Tool\COA-Tool\obj\Debug\netcoreapp2.2\COA-Tool.dll

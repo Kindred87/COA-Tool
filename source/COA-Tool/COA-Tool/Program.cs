@@ -9,13 +9,18 @@ namespace COA_Tool
     {
         static void Main(string[] args)
         {
-            Console.Util util = new Console.Util();
+            Console.Util.SetSize();
+            Console.Util.SetTitle();
+
             CSV.RequiredFiles requiredFiles = new CSV.RequiredFiles();
+
             if(requiredFiles.AllFilesReady == false)
             {
                 throw new Exception("File loading error");
             }
+
             System.Console.SetCursorPosition(0, 30);
+            
             CSV.Tableau tableau = new CSV.Tableau();
 
             System.Console.Write("Customer: ");
@@ -36,7 +41,7 @@ namespace COA_Tool
                 }
                 else if (key == System.ConsoleKey.D2)
                 {
-                    customer = Excel.Workbook.CustomerName.Latitute36;
+                    customer = Excel.Workbook.CustomerName.Latitude36;
                 }
 
                 Excel.Workbook workbook = new Excel.Workbook(order, requiredFiles.DelimitedTitrationResults, requiredFiles.DelimitedMicroResults, customer, requiredFiles.FinishedGoods, requiredFiles.Recipes);
