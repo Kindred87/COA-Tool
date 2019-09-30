@@ -236,3 +236,4 @@ C:\Users\colli\source\repos\COA-Tool\source\CoA-Tool\obj\Release\netcoreapp3.0\w
 C:\Users\colli\source\repos\COA-Tool\source\CoA-Tool\obj\Release\netcoreapp3.0\win-x64\CoA-Tool.csproj.CopyComplete
 C:\Users\colli\source\repos\COA-Tool\source\CoA-Tool\obj\Release\netcoreapp3.0\win-x64\CoA-Tool.dll
 C:\Users\colli\source\repos\COA-Tool\source\CoA-Tool\obj\Release\netcoreapp3.0\win-x64\CoA-Tool.pdb
+C:\Users\colli\source\repos\COA-Tool\source\CoA-Tool\bin\Release\netcoreapp3.0\win-x64\LH logo.png
