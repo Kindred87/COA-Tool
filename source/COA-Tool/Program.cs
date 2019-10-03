@@ -36,11 +36,11 @@ namespace CoA_Tool
             {
                 Excel.Workbook.CustomerName customer = Excel.Workbook.CustomerName.TaylorFarmsTennessee;
 
-                if (key == ConsoleKey.D1)
+                if (key == ConsoleKey.D1 || key == ConsoleKey.NumPad1)
                 {
                     customer = Excel.Workbook.CustomerName.TaylorFarmsTennessee;
                 }
-                else if (key == System.ConsoleKey.D2)
+                else if (key == ConsoleKey.D2 || key == ConsoleKey.NumPad2)
                 {
                     customer = Excel.Workbook.CustomerName.Latitude36;
                 }
