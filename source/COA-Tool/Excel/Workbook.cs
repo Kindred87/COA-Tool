@@ -55,8 +55,8 @@ namespace CoA_Tool.Excel
 
                 if (CustomerNameForWorkbook == CustomerName.TaylorFarmsTennessee)
                 {
-                    pageCount = (TableauData.Count - 1) / 4;
-                    if ((TableauData.Count - 1) % 4 > 0)
+                    pageCount = (TableauData.Count - 1) / 6;
+                    if ((TableauData.Count - 1) % 6 > 0)
                         pageCount++;
                 }
                 else if (CustomerNameForWorkbook == CustomerName.Latitude36)
