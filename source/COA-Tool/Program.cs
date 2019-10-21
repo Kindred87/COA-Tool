@@ -10,7 +10,7 @@ namespace CoA_Tool
         {
             Console.Util.SetSize();
             Console.Util.SetTitle();
-            System.Console.CursorVisible = false;
+            System.Console.CursorVisible = false; // Hidden during writing operations
 
             Excel.FinishedGoods finishedGoods = new Excel.FinishedGoods();
 

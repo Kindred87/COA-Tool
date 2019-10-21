@@ -18,12 +18,20 @@
 
   <ItemGroup>
     <Folder Include="Properties\" />
+    <Folder Include="Templates\" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="LH logo.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Latitude 36 (Ohio).txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="mkdir $(PublishDir)\Templates&#xD;&#xA;copy /Y &quot;$(SolutionDir)\*.txt&quot; &quot;$(PublishDir)\Templates&quot;" />
+  </Target>
 
 </Project>

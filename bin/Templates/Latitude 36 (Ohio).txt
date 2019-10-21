@@ -1,0 +1,14 @@
+Product
+Recipe/Item
+Lot Code
+Manufacturing Site
+
+Acidity
+pH
+Viscosity cps
+Yeast
+Mold
+Aerobic
+Coliform
+Lactics
+
