@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using CoA_Tool;
 
 namespace CoA_Tool
 {
@@ -20,45 +21,11 @@ namespace CoA_Tool
             {
                 throw new Exception("File loading error");
             }
-
-            System.Console.SetCursorPosition(0, 30);
             
             CSV.Tableau tableau = new CSV.Tableau();
 
-            System.Console.Write("Customer: ");
+            Template template = new Template();
 
-            System.Console.CursorVisible = true;
-
-            ConsoleKey key = System.Console.ReadKey().Key;
-
-            System.Console.CursorTop = System.Console.CursorTop - 1;
-
-            System.Console.Write(new string(' ', System.Console.WindowWidth));
-
-            switch(key)
-            {
-                case ConsoleKey.D1:
-                    CreateExternalCOA(tableau.FileContents, requiredFiles, finishedGoods, Excel.Workbook.CustomerName.TaylorFarmsTennessee);
-                    break;
-                case ConsoleKey.NumPad1:
-                    CreateExternalCOA(tableau.FileContents, requiredFiles, finishedGoods, Excel.Workbook.CustomerName.TaylorFarmsTennessee);
-                    break;
-                case ConsoleKey.D2:
-                    CreateExternalCOA(tableau.FileContents, requiredFiles, finishedGoods, Excel.Workbook.CustomerName.Latitude36);
-                    break;
-                case ConsoleKey.NumPad2:
-                    CreateExternalCOA(tableau.FileContents, requiredFiles, finishedGoods, Excel.Workbook.CustomerName.Latitude36);
-                    break;
-                case ConsoleKey.D3:
-                    CreateInternalCOA(requiredFiles, finishedGoods, Excel.Workbook.CustomerName.KootenaiAndCheese);
-                    break;
-                case ConsoleKey.NumPad3:
-                    CreateInternalCOA(requiredFiles, finishedGoods, Excel.Workbook.CustomerName.KootenaiAndCheese);
-                    break;
-                default:
-                    break;
-            }
-            
         }
         static void CreateExternalCOA(List<List<List<string>>> tableauData, CSV.Common common, Excel.FinishedGoods finishedGoods, Excel.Workbook.CustomerName customerName)
         {

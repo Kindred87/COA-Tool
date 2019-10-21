@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.IO;
+using CoA_Tool;
 
 
 namespace CoA_Tool
@@ -10,18 +12,64 @@ namespace CoA_Tool
     {
         public enum SearchTargets { Product, RecipeAndItem,  LotCode, ManufactureSite, Acidity, pH, ViscosityCPS, 
             Yeast, Mold, Aerobic, Coliform, Lactics}
-        public List<SearchTargets> TemplateContents = new List<SearchTargets>();
+
+        public List<SearchTargets> TemplateContents;
+
+        private Templates.SelectionMenu Menu;
+
         public Template ()
         {
+            // Almost entirely for development purposes
+            if (Directory.Exists(Directory.GetCurrentDirectory() + "\\Templates") == false)
+                Directory.CreateDirectory(Directory.GetCurrentDirectory() + "\\Templates");
 
+            TemplateContents = new List<SearchTargets>();
+
+            Menu = new Templates.SelectionMenu(GetOptions());
         }
         /// <summary>
         /// Fetches array of template options
         /// </summary>
         /// <returns></returns>
-        public string[] GetOptions()
+        private string[] GetOptions()
         {
-            return Directory.GetFiles(Directory.GetCurrentDirectory() + "/Templates", "*.txt");
+            string templateDirectory = Directory.GetCurrentDirectory() + "\\Templates";
+            
+            if(Directory.GetFiles(templateDirectory, "*.txt").Length == 0)
+            {
+                do
+                {
+                    Console.Util.WriteMessageInCenter("Could not find any templates in " + templateDirectory +
+                        "  Press any key once templates have been added", ConsoleColor.Red);
+
+                    System.Console.ReadKey();
+                    System.Console.Write("\b \b ");
+
+                } while (Directory.GetFiles(templateDirectory, "*.txt").Length == 0);
+
+                Console.Util.RemoveMessageInCenter();
+            }
+
+            string[] options = KeepOnlyFileNames(Directory.GetFiles(templateDirectory, "*.txt"));
+
+            return options;
+        }
+        /// <summary>
+        /// Reassigns array values from full file paths to ony file names, excluding extensions
+        /// </summary>
+        /// <param name="targetArray"></param>
+        /// <returns></returns>
+        private string[] KeepOnlyFileNames(string[] targetArray)
+        {
+            List<string> tempStore = new List<string>();
+
+            for (int i = 0; i < targetArray.Length; i++)
+            {
+                tempStore = targetArray[i].Split(new char[] { '.', '\\', '/' }).ToList();
+                targetArray[i] = tempStore[tempStore.Count - 2];
+            }
+
+            return targetArray;
         }
         /// <summary>
         /// Parses a template via name and populates TemplateContents accordingly
