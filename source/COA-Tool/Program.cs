@@ -88,6 +88,7 @@ namespace CoA_Tool
                 input = System.Console.ReadLine();
             } while (int.TryParse(input, out daysBackToInclude) == false);
 
+            // A string is used as the hashset can't easily differentiate arrays with matching contents
             HashSet<string> set = new HashSet<string>();
 
             foreach(List<string> line in common.DelimitedMicroResults)
@@ -109,7 +110,6 @@ namespace CoA_Tool
                             }
                             else
                             {
-                                // A string is used as the hashset can't easily differentiate arrays with matching contents
                                 set.Add(Convert.ToDateTime(line[9]).ToString("M-d-yy") + "," + line[10]); 
                             }
 
