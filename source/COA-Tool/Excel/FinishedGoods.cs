@@ -71,7 +71,7 @@ namespace CoA_Tool.Excel
             {
                 Console.Util.WriteMessageInCenter("Finished goods file could not be located.  Press a key to search again.", ConsoleColor.Red);
                 System.Console.ReadKey();
-                return FilePath(); // Forever loop is triggered due to critical importance of the file.  Stack overflow not expected.
+                return FilePath(); // Until the file is found
             }
         }
         /// <summary>
@@ -109,6 +109,7 @@ namespace CoA_Tool.Excel
                 {
                     foreach (ExcelWorksheet ws in package.Workbook.Worksheets)
                     {
+                        // Currently the most reliable criteria
                         if (ws.Name == "FG 1 NO. + 59 NO.")
                             return true;
                     }
