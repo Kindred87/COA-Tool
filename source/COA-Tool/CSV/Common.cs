@@ -46,7 +46,7 @@ namespace CoA_Tool.CSV
                 AllFilesReady = false;
         }
         /// <summary>
-        /// Checks for files based on criteria
+        /// Checks if correct files are loaded
         /// </summary>
         /// <param name="fileContents"></param>
         public bool FilesLoaded(IReadOnlyList<List<string>> fileContents)
@@ -109,7 +109,7 @@ namespace CoA_Tool.CSV
             return fileNames;
         }
         /// <summary>
-        /// Reads files to a List<string>
+        /// Loads file contents into a list
         /// </summary>
         /// <param name="filePaths"></param>
         /// <returns></returns>
@@ -128,6 +128,10 @@ namespace CoA_Tool.CSV
             Console.Util.RemoveMessageInCenter();
             return csvFileContents;
         }
+        /// <summary>
+        /// Loads file contents into a list
+        /// </summary>
+        /// <param name="filePaths"></param>
         private void LoadExcelFiles(List<string> filePaths)
         {
             Console.Util.WriteMessageInCenter("Loading Excel files...");
@@ -170,17 +174,6 @@ namespace CoA_Tool.CSV
 
                 Recipes[i - 2].Add(worksheet.Cells[i, 1].Value.ToString());
                 Recipes[i - 2].Add(worksheet.Cells[i, 7].Value.ToString());
-            }
-        }
-        /// <summary>
-        /// Deletes all files from given array of paths
-        /// </summary>
-        /// <param name="filePaths"></param>
-        private void DeleteFiles(string[] filePaths)
-        {
-            foreach (string path in filePaths)
-            {
-                File.Delete(path);
             }
         }
         /// <summary>
