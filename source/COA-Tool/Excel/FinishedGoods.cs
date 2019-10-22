@@ -109,10 +109,8 @@ namespace CoA_Tool.Excel
                 {
                     foreach (ExcelWorksheet ws in package.Workbook.Worksheets)
                     {
-                        if (ws.Cells["A1"].Value != null && ws.Cells["A1"].Value.ToString() == "Part Code")
-                        {
+                        if (ws.Name == "FG 1 NO. + 59 NO.")
                             return true;
-                        }
                     }
                 }
                 return false;
