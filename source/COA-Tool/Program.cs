@@ -13,20 +13,9 @@ namespace CoA_Tool
             Console.Util.SetTitle();
             System.Console.CursorVisible = false; // Only visible for text input
 
-            Excel.FinishedGoods finishedGoods = new Excel.FinishedGoods();
-
-            CSV.Common requiredFiles = new CSV.Common();
-
-            if(requiredFiles.AllFilesReady == false)
-            {
-                throw new Exception("File loading error");
-            }
-            
-            CSV.Tableau tableau = new CSV.Tableau();
-
             Template template = new Template();
 
-            
+            Excel.WorkbookByAlgorithm byAlgorithm = new Excel.WorkbookByAlgorithm(template);
 
         }
         static void CreateExternalCOA(List<List<List<string>>> tableauData, CSV.Common common, Excel.FinishedGoods finishedGoods)

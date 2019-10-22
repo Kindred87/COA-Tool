@@ -13,9 +13,11 @@ namespace CoA_Tool.Excel
 {
     class Workbook
     {
+        // Enums
         private enum TitrationOffset { Acidity = 5, Viscosity = 2, Salt = 4, pH = 6 }
         private enum MicroOffset { Yeast = 9, Mold = 11, Aerobic = 15, Coliform = 7, Lactic = 13, EColiform = 5  }
 
+        // Strings
         private string AcidMethod = "(AOAC 30.048 14th Ed.)  ";
         private string pHMethod = "(AOAC 30.012 14th Ed.)  ";
         private string ViscosityCPSMethod = "(Brookfield)  ";
@@ -29,20 +31,25 @@ namespace CoA_Tool.Excel
 
         public string[] InternalCOAData; // {made date, item code}
 
+        // Bools
         private bool SaveFile = false;
 
+        // Lists
         public List<List<string>> TableauData;
         private List<List<string>> TitrationResults;
         private List<List<string>> MicroResults;
         private List<List<string>> FinishedGoods;
         private List<List<string>> Recipes;
+
+        // Objects
+        Template WorkbookTemplate;
         public Workbook(List<List<string>> titrationResults, List<List<string>> microResults,
-            List<List<string>> finishedGoods, List<List<string>> recipes)
+            List<List<string>> finishedGoods, Template template)
         {
             TitrationResults = titrationResults;
             MicroResults = microResults;
             FinishedGoods = finishedGoods;
-            Recipes = recipes;
+            WorkbookTemplate = template;
         }
 
         public void Generate()
@@ -1065,16 +1072,6 @@ namespace CoA_Tool.Excel
         /// </summary>
         /// <param name="recipeCode"></param>
         /// <returns></returns>
-        private int DaysToExpiryForRecipe(string recipeCode)
-        {
-            foreach (List<string> row in Recipes)
-            {
-                if (row[0] == recipeCode)
-                    return Convert.ToInt32(row[1]);
-            }
-
-            return -1;
-        }
         private string GetFactoryCode(string lotCode)
         {
             string locationCode = lotCode[5].ToString();
