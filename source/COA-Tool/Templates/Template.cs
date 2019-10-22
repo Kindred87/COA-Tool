@@ -10,31 +10,54 @@ namespace CoA_Tool
 {
     class Template
     {
-        public enum SearchTargets { Product, RecipeAndItem,  LotCode, ManufactureSite, Acidity, pH, ViscosityCPS, 
-            Yeast, Mold, Aerobic, Coliform, Lactics}
+        // Enums
+        public enum Algorithm { Standard, DaysFromToday}
+        private enum ContentCategories { None, Algorithm, MainContentBlock, }
 
-        public List<SearchTargets> TemplateContents;
-
+        // Objects
         private Templates.SelectionMenu Menu;
+
+        // Enum variables
+        public Algorithm SelectedAlgorithm;
+
+        // Bools
+        public bool IncludeCustomerName;
+        public bool IncludeSalesOrder;
+        public bool IncludePurchaseOrder;
+        public bool IncludeGenerationDate;
+        public bool IncludeProductName;
+        public bool IncludeRecipeAndItem;
+        public bool IncludeLotCode;
+        public bool IncludeManufacturingSite;
+        public bool IncludeManufacturingDate;
+        public bool IncludeAcidity;
+        public bool IncludepH;
+        public bool IncludeViscosityCPS;
+        public bool IncludeYeast;
+        public bool IncludeMold;
+        public bool IncludeAerobic;
+        public bool IncludeColiform;
+        public bool IncludeLactics;
 
         public Template ()
         {
-            // Almost entirely for development purposes
+            // Most useful for development when running via Start in VS
             if (Directory.Exists(Directory.GetCurrentDirectory() + "\\Templates") == false)
                 Directory.CreateDirectory(Directory.GetCurrentDirectory() + "\\Templates");
-
-            TemplateContents = new List<SearchTargets>();
-
+            
             Menu = new Templates.SelectionMenu(GetOptions());
+
+            AssignOptionsFromFile(Menu.UserChoice);
         }
         /// <summary>
-        /// Fetches array of template options
+        /// Fetches names of available templates
         /// </summary>
         /// <returns></returns>
         private string[] GetOptions()
         {
             string templateDirectory = Directory.GetCurrentDirectory() + "\\Templates";
             
+            // A forever loop is triggered if no template files are found
             if(Directory.GetFiles(templateDirectory, "*.txt").Length == 0)
             {
                 do
@@ -55,13 +78,13 @@ namespace CoA_Tool
             return options;
         }
         /// <summary>
-        /// Reassigns array values from full file paths to ony file names, excluding extensions
+        /// Reassigns array values from full file paths to only file names, excluding extensions
         /// </summary>
         /// <param name="targetArray"></param>
         /// <returns></returns>
         private string[] KeepOnlyFileNames(string[] targetArray)
         {
-            List<string> tempStore = new List<string>();
+            List<string> tempStore;
 
             for (int i = 0; i < targetArray.Length; i++)
             {
@@ -72,55 +95,176 @@ namespace CoA_Tool
             return targetArray;
         }
         /// <summary>
-        /// Parses a template via name and populates TemplateContents accordingly
+        /// Parses the template file and assigns class variables accordingly
         /// </summary>
-        /// <param name="template"></param>
-        public void PopulateContents(string template)
+        /// <param name="templateName"></param>
+        private void AssignOptionsFromFile(string templateName)
         {
-            foreach(string line in File.ReadLines(Directory.GetCurrentDirectory() + "/Templates/" + template + ".txt"))
+            ContentCategories currentCategory = ContentCategories.None; // Default assignment, not used by any selection statements
+
+            List<string> delimitedLine; // Each line consists of an option title/name, an equals sign, and the option choice
+
+            Console.Util.WriteMessageInCenter("Loading " + Menu.UserChoice + " Template");
+
+            foreach(string line in File.ReadLines(Directory.GetCurrentDirectory() + "/Templates/" + templateName + ".txt"))
             {
-                switch(line)
+                delimitedLine = line.Split(new char[] { '=' }).ToList();
+
+                // Trims strings of whitespace
+                for(int i = 0; i < delimitedLine.Count; i++)
                 {
-                    case "Product":
-                        TemplateContents.Add(SearchTargets.Product);
+                    delimitedLine[i] = delimitedLine[i].Trim();
+                }
+                // Whether the line contains a category title is determined first as it informs succeeding selection statements
+                switch(line.ToLower())
+                {
+                    case "[algorithm]":
+                        currentCategory = ContentCategories.Algorithm;
                         break;
-                    case "Recipe/Item":
-                        TemplateContents.Add(SearchTargets.RecipeAndItem);
-                        break;
-                    case "Lot Code":
-                        TemplateContents.Add(SearchTargets.LotCode);
-                        break;
-                    case "Manufacturing Site":
-                        TemplateContents.Add(SearchTargets.ManufactureSite);
-                        break;
-                    case "Acidity":
-                        TemplateContents.Add(SearchTargets.Acidity);
-                        break;
-                    case "pH":
-                        TemplateContents.Add(SearchTargets.pH);
-                        break;
-                    case "Visocity cps":
-                        TemplateContents.Add(SearchTargets.ViscosityCPS);
-                        break;
-                    case "Yeast":
-                        TemplateContents.Add(SearchTargets.Yeast);
-                        break;
-                    case "Mold":
-                        TemplateContents.Add(SearchTargets.Mold);
-                        break;
-                    case "Aerobic":
-                        TemplateContents.Add(SearchTargets.Aerobic);
-                        break;
-                    case "Coliform":
-                        TemplateContents.Add(SearchTargets.Coliform);
-                        break;
-                    case "Lactics":
-                        TemplateContents.Add(SearchTargets.Lactics);
+                    case "[main content block]":
+                        currentCategory = ContentCategories.MainContentBlock;
                         break;
                     default:
                         break;
                 }
+                // Sets SelectedAlgorithm, if applicable
+                if(currentCategory == ContentCategories.Algorithm)
+                {
+                    // A switch statement is used to accomodate additions of template options
+                    switch(delimitedLine[0].ToLower())
+                    {
+                        case "type":
+                            switch(delimitedLine[1].ToLower())
+                            {
+                                case "daysfromtoday":
+                                    SelectedAlgorithm = Algorithm.DaysFromToday;
+                                    break;
+                                case "standard":
+                                    SelectedAlgorithm = Algorithm.Standard;
+                                    break;
+                                default:
+                                    break;
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                // Sets class bools for content inclusion
+                else if(currentCategory == ContentCategories.MainContentBlock)
+                {
+                    switch (delimitedLine[0].ToLower())
+                    {
+                        case "customer name":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludeCustomerName = true;
+                            else
+                                IncludeCustomerName = false;
+                            break;
+                        case "sales order":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludeSalesOrder = true;
+                            else
+                                IncludeSalesOrder = false;
+                            break;
+                        case "purchase order":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludePurchaseOrder = true;
+                            else
+                                IncludePurchaseOrder = false;
+                            break;
+                        case "generation date":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludeGenerationDate = true;
+                            else
+                                IncludeGenerationDate = false;
+                            break;
+                        case "product name":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludeProductName = true;
+                            else
+                                IncludeProductName = false;
+                            break;
+                        case "recipe/item":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludeRecipeAndItem = true;
+                            else
+                                IncludeRecipeAndItem = false;
+                            break;
+                        case "lot code":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludeLotCode = true;
+                            else
+                                IncludeLotCode = false;
+                            break;
+                        case "manufacturing site":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludeManufacturingSite = true;
+                            else
+                                IncludeManufacturingSite = false;
+                            break;
+                        case "manufacturing date":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludeManufacturingDate = true;
+                            else
+                                IncludeManufacturingDate = false;
+                            break;
+                        case "acidity":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludeAcidity = true;
+                            else
+                                IncludeAcidity = false;
+                            break;
+                        case "ph":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludepH = true;
+                            else
+                                IncludepH = false;
+                            break;
+                        case "viscosity cps":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludeViscosityCPS = true;
+                            else
+                                IncludeViscosityCPS = false;
+                            break;
+                        case "yeast":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludeYeast = true;
+                            else
+                                IncludeYeast = false;
+                            break;
+                        case "mold":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludeMold = true;
+                            else
+                                IncludeMold = false;
+                            break;
+                        case "aerobic":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludeAerobic = true;
+                            else
+                                IncludeAerobic = false;
+                            break;
+                        case "coliform":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludeColiform = true;
+                            else
+                                IncludeColiform = false;
+                            break;
+                        case "lactics":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludeLactics = true;
+                            else
+                                IncludeLactics = false;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                
             }
+
+            Console.Util.RemoveMessageInCenter(); // Removes message written just before foreach loop was initiated
         }
 
     }

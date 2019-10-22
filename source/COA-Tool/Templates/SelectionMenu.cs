@@ -18,7 +18,7 @@ namespace CoA_Tool.Templates
             UserChoice = GetUserChoice();
         }
         /// <summary>
-        /// Outputs all options to the console
+        /// Outputs all template options to the console
         /// </summary>
         private void InitialWrite()
         {
@@ -31,6 +31,10 @@ namespace CoA_Tool.Templates
                 System.Console.WriteLine("\t" + option);
             }
         }
+        /// <summary>
+        /// Handles menu navigation and selection, returns name of chosen template
+        /// </summary>
+        /// <returns></returns>
         private string GetUserChoice()
         {
             string choice = string.Empty;
@@ -43,6 +47,9 @@ namespace CoA_Tool.Templates
 
             return choice;
         }
+        /// <summary>
+        /// Rewrites the current selection in green
+        /// </summary>
         private void HighlightCurrentSelection()
         {
             System.Console.SetCursorPosition(0, 31 + CurrentSelection);
@@ -53,6 +60,9 @@ namespace CoA_Tool.Templates
             System.Console.Write("\t" + TemplateOptions[CurrentSelection]);
             System.Console.ForegroundColor = ConsoleColor.Gray;
         }
+        /// <summary>
+        /// Rewrites the current selection in gray
+        /// </summary>
         private void RemoveHighlightFromCurrentSelection()
         {
             System.Console.SetCursorPosition(0, 31 + CurrentSelection);

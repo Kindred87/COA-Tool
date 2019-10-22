@@ -21,7 +21,7 @@ namespace CoA_Tool.Excel
             Contents = FileContents(path);
         }
         /// <summary>
-        /// Returns select values from the first worksheet of the provided Excel file
+        /// Extracts needed values from the first worksheet of the provided Excel file
         /// </summary>
         /// <param name="filePath"></param>
         /// <returns></returns>
@@ -49,13 +49,12 @@ namespace CoA_Tool.Excel
             return contents;
         }
         /// <summary>
-        /// Returns path of Excel file with certain cell values from Desktop, Documents, or Downloads user directories.
+        /// Gets path of Excel file, searching in the Desktop and Downloads folders.
         /// </summary>
         /// <returns></returns>
         private string FilePath()
         {
             string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-            string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             string downloadsPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
             downloadsPath += "\\Downloads";
 
@@ -63,7 +62,7 @@ namespace CoA_Tool.Excel
 
             string path; // Did not inline instantiation due to clarity concerns
 
-            if (SearchDirectory(desktopPath, out path) || SearchDirectory(documentsPath, out path) || SearchDirectory(downloadsPath, out path))
+            if (SearchDirectory(desktopPath, out path) ||  SearchDirectory(downloadsPath, out path))
             {
                 Console.Util.RemoveMessageInCenter();
                 return path;

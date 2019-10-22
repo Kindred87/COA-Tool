@@ -11,7 +11,7 @@ namespace CoA_Tool
         {
             Console.Util.SetSize();
             Console.Util.SetTitle();
-            System.Console.CursorVisible = false; // Hidden during writing operations
+            System.Console.CursorVisible = false; // Only visible for text input
 
             Excel.FinishedGoods finishedGoods = new Excel.FinishedGoods();
 
@@ -26,20 +26,21 @@ namespace CoA_Tool
 
             Template template = new Template();
 
+            
+
         }
-        static void CreateExternalCOA(List<List<List<string>>> tableauData, CSV.Common common, Excel.FinishedGoods finishedGoods, Excel.Workbook.CustomerName customerName)
+        static void CreateExternalCOA(List<List<List<string>>> tableauData, CSV.Common common, Excel.FinishedGoods finishedGoods)
         {
             foreach(List<List<string>> order in tableauData)
             {
-                Excel.Workbook workbook = new Excel.Workbook(common.DelimitedTitrationResults, common.DelimitedMicroResults, customerName, finishedGoods.Contents, common.Recipes,
-                    Excel.Workbook.CustomerType.External);
+                Excel.Workbook workbook = new Excel.Workbook(common.DelimitedTitrationResults, common.DelimitedMicroResults, finishedGoods.Contents, common.Recipes);
                 workbook.TableauData = order;
 
                 Thread thread = new Thread(workbook.Generate);
                 thread.Start();
             }
         }
-        static void CreateInternalCOA(CSV.Common common, Excel.FinishedGoods finishedGoods, Excel.Workbook.CustomerName customerName)
+        static void CreateInternalCOA(CSV.Common common, Excel.FinishedGoods finishedGoods)
         {
             string input;
             int daysBackToInclude;
@@ -87,8 +88,7 @@ namespace CoA_Tool
 
             foreach(string productAndDateCombo in set)
             {
-                Excel.Workbook workbook = new Excel.Workbook(common.DelimitedTitrationResults, common.DelimitedMicroResults, customerName, finishedGoods.Contents, common.Recipes, 
-                    Excel.Workbook.CustomerType.Internal);
+                Excel.Workbook workbook = new Excel.Workbook(common.DelimitedTitrationResults, common.DelimitedMicroResults, finishedGoods.Contents, common.Recipes);
                 workbook.InternalCOAData = productAndDateCombo.Split(new char[] { ',' });
 
                 Thread thread = new Thread(workbook.Generate);
