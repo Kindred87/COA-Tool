@@ -14,247 +14,175 @@ namespace CoA_Tool.CSV
 
     class Common
     {
+        // Lists
         public List<List<string>> DelimitedMicroResults = new List<List<string>>();
         public List<List<string>> DelimitedTitrationResults = new List<List<string>>();
         
-        // List<string> = {Recipe code, days to expiry}
-        public List<List<string>> Recipes = new List<List<string>>();
-        public bool AllFilesReady;
         public Common()
         {
-            List<string> filePaths = GetFileNamesFromDesktop();
-            List<List<string>> csvFileContents = LoadCSVFiles(filePaths);
-
-
-            if (FilesLoaded(csvFileContents.AsReadOnly()) == true)
-            {
-
-                AllFilesReady = true;
-
-                foreach (string line in csvFileContents[IndexOfMicroResults(csvFileContents)])
-                {
-                    DelimitedMicroResults.Add(line.Split(new char[] { ',' }).ToList());
-                }
-                foreach (string line in csvFileContents[IndexOfTitrationResults(csvFileContents)])
-                {
-                    DelimitedTitrationResults.Add(line.Split(new char[] { ',' }).ToList());
-                }
-
-                LoadExcelFiles(filePaths);
-            }
-            else
-                AllFilesReady = false;
-        }
-        /// <summary>
-        /// Checks if correct files are loaded
-        /// </summary>
-        /// <param name="fileContents"></param>
-        public bool FilesLoaded(IReadOnlyList<List<string>> fileContents)
-        {
-            if (CheckForMicroResults(fileContents) == true)
-            {
-                System.Console.SetCursorPosition(10, 0);
-                System.Console.Write("Micro CSV: ");
-                System.Console.ForegroundColor = ConsoleColor.Green;
-                System.Console.Write("Loaded");
-                System.Console.ForegroundColor = ConsoleColor.Gray;
-            }
-            else
-            {
-                System.Console.SetCursorPosition(10, 0);
-                System.Console.Write("Micro CSV: ");
-                System.Console.ForegroundColor = ConsoleColor.Red;
-                System.Console.Write("Missing");
-                System.Console.ForegroundColor = ConsoleColor.Gray;
-                return false;
-            }
-
-            if (CheckForTitrationResults(fileContents) == true)
-            {
-                System.Console.SetCursorPosition(7, 1);
-                System.Console.Write("Dressing CSV: ");
-                System.Console.ForegroundColor = ConsoleColor.Green;
-                System.Console.Write("Loaded");
-                System.Console.ForegroundColor = ConsoleColor.Gray;
-            }
-            else
-            {
-                System.Console.SetCursorPosition(7, 1);
-                System.Console.Write("Dressing CSV: ");
-                System.Console.ForegroundColor = ConsoleColor.Red;
-                System.Console.Write("Missing");
-                System.Console.ForegroundColor = ConsoleColor.Gray;
-                return false;
-            }
-
-            return true;
 
         }
         /// <summary>
-        /// Gets the file paths of .csv files from the user's desktop directory
-        /// </summary>
-        /// <returns></returns>
-        private List<string> GetFileNamesFromDesktop()
-        {
-            Console.Util.WriteMessageInCenter("Locating files...");
-
-            string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-
-            List<string> fileNames = Directory.GetFiles(desktopPath, "*.csv").ToList();
-            foreach(string additionalPath in Directory.GetFiles(desktopPath, "*.xlsx"))
-            {
-                fileNames.Add(additionalPath);
-            }
-
-            return fileNames;
-        }
-        /// <summary>
-        /// Loads file contents into a list
+        /// Finds needed files and populates class lists with their contents
         /// </summary>
         /// <param name="filePaths"></param>
         /// <returns></returns>
-        private List<List<string>> LoadCSVFiles(List<string> filePaths)
+        public void LoadCSVFiles()
         {
-            Console.Util.WriteMessageInCenter("Loading CSV files...");
+            string microPath = string.Empty;
+            string titrationPath = string.Empty;
 
-            List<List<string>> csvFileContents = new List<List<string>>();
-
-            foreach (string path in filePaths)
+            while (microPath == string.Empty || titrationPath == string.Empty)
             {
-                if(path.EndsWith(".csv") || path.EndsWith(".CSV"))
-                    csvFileContents.Add(File.ReadAllLines(path).ToList());
+                GetFilePaths(out microPath, out titrationPath);
+
+                if(microPath == string.Empty)
+                {
+                    Console.Util.WriteMessageInCenter("Could not locate micro data on the desktop." +  
+                        "  Press a key once the file is ready to be loaded.", ConsoleColor.Red);
+                    System.Console.ReadKey();
+                    System.Console.Write("\b \b ");
+                }
+                if(titrationPath == string.Empty)
+                {
+                    Console.Util.WriteMessageInCenter("Could not locate titration data on the desktop." + 
+                        "  Press a key once the file is ready to be loaded.", ConsoleColor.Red);
+                    System.Console.ReadKey();
+                    System.Console.Write("\b \b ");
+                }
+            }
+
+            if (ReloadFileBecauseTooOld(microPath, titrationPath))
+                LoadCSVFiles();
+
+            Console.Util.WriteMessageInCenter("Loading micro data...");
+            foreach (string line in File.ReadLines(microPath))
+            {
+                DelimitedMicroResults.Add(line.Split(new char[] { ',' }).ToList());
+            }
+            Console.Util.WriteMessageInCenter("Loading titration data...");
+            foreach (string line in File.ReadLines(titrationPath))
+            {
+                DelimitedTitrationResults.Add(line.Split(new char[] { ',' }).ToList());
             }
 
             Console.Util.RemoveMessageInCenter();
-            return csvFileContents;
         }
         /// <summary>
-        /// Loads file contents into a list
+        /// Prompts user to optionally reload files if last update meets or exceeds 6 hours
         /// </summary>
-        /// <param name="filePaths"></param>
-        private void LoadExcelFiles(List<string> filePaths)
+        /// <param name="microPath"></param>
+        /// <param name="titrationPath"></param>
+        /// <returns></returns>
+        private bool ReloadFileBecauseTooOld(string microPath, string titrationPath)
         {
-            Console.Util.WriteMessageInCenter("Loading Excel files...");
+            int hoursSinceLastMicroUpdate = (int)(DateTime.Now - File.GetLastWriteTime(microPath)).TotalHours;
+            int hoursSinceLastTitrationUpdate = (int)(DateTime.Now - File.GetLastWriteTime(titrationPath)).TotalHours;
 
-            foreach(string path in filePaths)
+
+            if (hoursSinceLastMicroUpdate >= 6 || hoursSinceLastTitrationUpdate >= 6)
             {
-                if(path.EndsWith(".xlsx") || path.EndsWith(".XLSX"))
-                {
-                    FileInfo excelFile = new FileInfo(path);
+                string choicePrompt;
 
-                    using (ExcelPackage package = new ExcelPackage(excelFile))
+                if (hoursSinceLastMicroUpdate >= 6)
+                {
+                    choicePrompt = "Micro data hasn't been updated in " + hoursSinceLastMicroUpdate;
+                }
+                else
+                {
+                    choicePrompt = "Titration data hasn't been updated in " + hoursSinceLastTitrationUpdate;
+                }
+
+                choicePrompt += " hours.  Would you like to update the file before proceeding? Press Y or N";
+
+                Console.Util.WriteMessageInCenter(choicePrompt);
+
+                if (System.Console.ReadKey().Key == ConsoleKey.Y)
+                {
+                    System.Console.Write("\b \b ");
+                    Console.Util.WriteMessageInCenter("Press any key once the file has been updated.");
+                    System.Console.ReadKey();
+                    System.Console.Write("\b \b ");
+                    Console.Util.RemoveMessageInCenter();
+                    return true;
+                }
+                else
+                {
+                    System.Console.Write("\b \b "); // Deletes key char entered in if condition
+                    Console.Util.RemoveMessageInCenter();
+                    return false;
+                }
+            }
+            else
+                return false;
+        }
+        /// <summary>
+        /// Searches the desktop for needed CSV files 
+        /// </summary>
+        /// <param name="files"></param>
+        /// <returns></returns>
+        private void GetFilePaths(out string MicroFilePath, out string TitrationFilePath)
+        {
+            MicroFilePath = string.Empty;
+            TitrationFilePath = string.Empty;
+            string fileName;
+            char[] delimiter = { '/', '\\', };
+            
+
+            foreach (string csvFile in Directory.GetFiles(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "*.csv"))
+            {
+                string firstLine = string.Empty;
+
+                fileName = csvFile.Split(delimiter)[csvFile.Split(delimiter).Length - 1];
+
+                do
+                {
+                    try
                     {
-                        // There are 6 worksheets due to a hidden Vlookup sheet
-                        if(package.Workbook.Worksheets.Count == 6)
-                        {
-                            if(package.Workbook.Worksheets[6].Name == "All Recipes 5 NO.")
-                            {
-                                PopulateRecipes(package.Workbook.Worksheets[6]);
-                            }
-                        }
-                       
+                        firstLine = File.ReadLines(csvFile).First();
                     }
-                }
-            }
+                    catch (IOException)
+                    {
+                        Console.Util.WriteMessageInCenter(fileName + " is currently open.  Press any key once the file has been closed.", ConsoleColor.Red);
+                        System.Console.ReadKey();
+                        System.Console.Write("\b \b ");
+                    }
+                } while (firstLine == string.Empty) ;
 
-            Console.Util.RemoveMessageInCenter();
+                if (MatchesMicroContents(firstLine))
+                    MicroFilePath = csvFile;
 
-        }
-        /// <summary>
-        /// Intended for recipe data, fetches certain values from each row in the provided worksheet
-        /// </summary>
-        /// <param name="worksheet"></param>
-        /// <returns></returns>
-        private void PopulateRecipes(ExcelWorksheet worksheet)
-        {
-            // Skips header row
-            for(int i = 2; i <= worksheet.Dimension.Rows; i++)
-            {
-                Recipes.Add(new List<string>());
-
-                Recipes[i - 2].Add(worksheet.Cells[i, 1].Value.ToString());
-                Recipes[i - 2].Add(worksheet.Cells[i, 7].Value.ToString());
+                if (MatchesTitrationContents(firstLine))
+                    TitrationFilePath = csvFile;
             }
         }
         /// <summary>
-        /// Checks whether one of the given lists contains micro results
+        /// Checks if the string contains expected values from micro data
         /// </summary>
-        /// <param name="fileContents"></param>
+        /// <param name="firstLineOfFile"></param>
         /// <returns></returns>
-        private bool CheckForMicroResults(IReadOnlyList<List<string>> fileContents)
+        private bool MatchesMicroContents(string firstLineOfFile)
         {
-            char[] delimiter = { ',' };
+            string[] delimitedLine = firstLineOfFile.Split(new char[] { ',' });
 
-            for (int i = 0; i < fileContents.Count; i++)
-            {
-                string extract = fileContents[i][0].Split(delimiter, StringSplitOptions.RemoveEmptyEntries)[0];
-
-                if (extract == "H1" || extract == "L1" || extract == "S1")
-                {
-                    return true;
-                }
-            }
-            return false;
+            if (delimitedLine[0] == "H1" || delimitedLine[0] == "L1" || delimitedLine[0] == "S1" || delimitedLine[0] == "D1")
+                return true;
+            else
+                return false;
         }
         /// <summary>
-        /// Determines index of list containing micro results, returns -1 if no list is found
+        /// Checks if the string contains expected values from titration data
         /// </summary>
-        /// <param name="fileContents"></param>
+        /// <param name="firstLineOfFile"></param>
         /// <returns></returns>
-        private int IndexOfMicroResults(IReadOnlyList<List<string>> fileContents)
+        private bool MatchesTitrationContents(string firstLineOfFile)
         {
-            char[] delimiter = { ',' };
+            string[] delimitedLine = firstLineOfFile.Split(new char[] { ',' });
 
-            for (int i = 0; i < fileContents.Count; i++)
-            {
-                string extract = fileContents[i][0].Split(delimiter, StringSplitOptions.RemoveEmptyEntries)[0];
-
-                if (extract == "H1" || extract == "L1" || extract == "S1")
-                {
-                    return i;
-                }
-            }
-            return -1;
-        }
-        /// <summary>
-        /// Checks whether one of the given lists contains titration results
-        /// </summary>
-        /// <param name="fileContents"></param>
-        /// <returns></returns>
-        private bool CheckForTitrationResults(IReadOnlyList<List<string>> fileContents)
-        {
-            char[] delimiter = { ',' };
-
-            for (int i = 0; i < fileContents.Count; i++)
-            {
-                string extract = fileContents[i][0].Split(delimiter, StringSplitOptions.RemoveEmptyEntries)[6];
-
-                if (extract == "Hurricane" || extract == "Lowell" || extract == "Sandpoint")
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-        /// <summary>
-        /// Determines index of list containing titration results, returns -1 if no list is found
-        /// </summary>
-        /// <param name="fileContents"></param>
-        /// <returns></returns>
-        private int IndexOfTitrationResults(IReadOnlyList<List<string>> fileContents)
-        {
-            char[] delimiter = { ',' };
-
-            for (int i = 0; i < fileContents.Count; i++)
-            {
-                string extract = fileContents[i][0].Split(delimiter, StringSplitOptions.RemoveEmptyEntries)[6];
-
-                if (extract == "Sandpoint" || extract == "Hurricane" || extract == "Lowell")
-                {
-                    return i;
-                }
-            }
-            return -1;
+            if (delimitedLine[2] == "H1" || delimitedLine[2] == "L1" || delimitedLine[2] == "S1" || delimitedLine[2] == "D1")
+                return true;
+            else
+                return false;
         }
     }
 }

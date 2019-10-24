@@ -18,11 +18,11 @@ namespace CoA_Tool
             Excel.WorkbookByAlgorithm byAlgorithm = new Excel.WorkbookByAlgorithm(template);
 
         }
-        static void CreateExternalCOA(List<List<List<string>>> tableauData, CSV.Common common, Excel.FinishedGoods finishedGoods)
+        /*static void CreateExternalCOA(List<List<List<string>>> tableauData, CSV.Common common, Excel.FinishedGoods finishedGoods)
         {
             foreach(List<List<string>> order in tableauData)
             {
-                Excel.Workbook workbook = new Excel.Workbook(common.DelimitedTitrationResults, common.DelimitedMicroResults, finishedGoods.Contents, common.Recipes);
+                Excel.Workbook workbook = new Excel.Workbook(common.DelimitedTitrationResults, common.DelimitedMicroResults, finishedGoods.Contents);
                 workbook.TableauData = order;
 
                 Thread thread = new Thread(workbook.Generate);
@@ -83,7 +83,7 @@ namespace CoA_Tool
                 Thread thread = new Thread(workbook.Generate);
                 thread.Start();
             }
-        }
+        }*/
     }
 }
 

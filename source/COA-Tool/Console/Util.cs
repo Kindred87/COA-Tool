@@ -26,7 +26,7 @@ namespace CoA_Tool.Console
             System.Console.Title = "CoA Tool";
         }
         /// <summary>
-        /// Writes a string in the "center" of the console window
+        /// Writes a string in the center of the console window
         /// </summary>
         /// <param name="message"></param>
         public static void WriteMessageInCenter(string message)
@@ -40,7 +40,7 @@ namespace CoA_Tool.Console
             System.Console.WriteLine(message);
         }
         /// <summary>
-        /// Writes a string in the "center" of the console window
+        /// Writes a string in the center of the console window, color is reset to gray after writing
         /// </summary>
         /// <param name="message"></param>
         public static void WriteMessageInCenter(string message, System.ConsoleColor color)

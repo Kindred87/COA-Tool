@@ -6,11 +6,15 @@ namespace CoA_Tool.Excel
 {
     class WorkbookByAlgorithm
     {
+        //Objects
+        CSV.Common RequiredFiles;
         public WorkbookByAlgorithm(Template template)
         {
-            if(template.SelectedAlgorithm == Template.Algorithm.Standard)
-            {
+            RequiredFiles = new CSV.Common();
 
+            if (template.SelectedAlgorithm == Template.Algorithm.Standard)
+            {
+                RequiredFiles.LoadCSVFiles();
             }
             else if(template.SelectedAlgorithm == Template.Algorithm.DaysFromToday)
             {
@@ -18,12 +22,8 @@ namespace CoA_Tool.Excel
             }
             Excel.FinishedGoods finishedGoods = new Excel.FinishedGoods();
 
-            CSV.Common requiredFiles = new CSV.Common();
+            
 
-            if (requiredFiles.AllFilesReady == false)
-            {
-                throw new Exception("File loading error");
-            }
 
             CSV.Tableau tableau = new CSV.Tableau();
         }
