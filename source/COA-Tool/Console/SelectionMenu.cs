@@ -2,45 +2,55 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace CoA_Tool.Templates
+namespace CoA_Tool.Console
 {
     /// <summary>
     /// Handles user selection of templates
     /// </summary>
     class SelectionMenu
     {
-        private string[] TemplateOptions;
+        private string[] MenuOptions;
 
         private int CurrentSelection = 0;
 
         public string UserChoice;
-        public SelectionMenu(string[] options)
+        public SelectionMenu(string[] options, string menuTitle)
         {
-            TemplateOptions = options;
-            InitialWrite();
+            MenuOptions = options;
+            InitialWrite(menuTitle);
             UserChoice = GetUserChoice();
+            RemoveMenu(options.Length);
         }
         /// <summary>
         /// Outputs all template options to the console
         /// </summary>
-        private void InitialWrite()
+        /// <param name="menuTitle">This string is printed at the top of the menu, indicating what each option represents</param>
+        private void InitialWrite(string menuTitle)
         {
             System.Console.SetCursorPosition(0, 30);
 
-            System.Console.WriteLine("Templates: ");
+            System.Console.WriteLine(menuTitle);
 
-            foreach (string option in TemplateOptions)
+            foreach (string option in MenuOptions)
             {
                 System.Console.WriteLine("\t" + option);
             }
         }
+        private void RemoveMenu(int numberOfOptions)
+        {
+            for (int i = 0; i < numberOfOptions + 1; i++)
+            {
+                System.Console.SetCursorPosition(0, 30 + i);
+                System.Console.Write(new string(' ', System.Console.WindowWidth));
+            }
+        }
         /// <summary>
-        /// Handles menu navigation and selection, returns name of chosen template
+        /// Handles menu navigation and selection
         /// </summary>
-        /// <returns></returns>
+        /// <returns>String value of option</returns>
         private string GetUserChoice()
         {
-            string choice = string.Empty;
+            string choice;
 
             do
             {
@@ -60,7 +70,7 @@ namespace CoA_Tool.Templates
 
             System.Console.SetCursorPosition(0, 31 + CurrentSelection);
             System.Console.ForegroundColor = ConsoleColor.Green;
-            System.Console.Write("\t" + TemplateOptions[CurrentSelection]);
+            System.Console.Write("\t" + MenuOptions[CurrentSelection]);
             System.Console.ForegroundColor = ConsoleColor.Gray;
         }
         /// <summary>
@@ -72,7 +82,7 @@ namespace CoA_Tool.Templates
             System.Console.Write(new string(' ', System.Console.WindowWidth));
 
             System.Console.SetCursorPosition(0, 31 + CurrentSelection);
-            System.Console.Write("\t" + TemplateOptions[CurrentSelection]);
+            System.Console.Write("\t" + MenuOptions[CurrentSelection]);
         }
         /// <summary>
         /// Performs a menu-related action based on the key pressed, assinging a value to a string if applicable
@@ -84,10 +94,10 @@ namespace CoA_Tool.Templates
             switch (System.Console.ReadKey().Key)
             {
                 case ConsoleKey.Enter:
-                    choice = TemplateOptions[CurrentSelection];
+                    choice = MenuOptions[CurrentSelection];
                     break;
                 case ConsoleKey.RightArrow:
-                    choice = TemplateOptions[CurrentSelection];
+                    choice = MenuOptions[CurrentSelection];
                     break;
                 case ConsoleKey.UpArrow:
                     if (CurrentSelection - 1 >= 0)
@@ -100,7 +110,7 @@ namespace CoA_Tool.Templates
                         break;
                     
                 case ConsoleKey.DownArrow:
-                    if (CurrentSelection + 1 <= TemplateOptions.Length - 1)
+                    if (CurrentSelection + 1 <= MenuOptions.Length - 1)
                     {
                         RemoveHighlightFromCurrentSelection();
                         CurrentSelection++;

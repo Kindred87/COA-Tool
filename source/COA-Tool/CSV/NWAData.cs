@@ -95,14 +95,14 @@ namespace CoA_Tool.CSV
                     choicePrompt = "Titration data hasn't been updated in " + hoursSinceLastTitrationUpdate;
                 }
 
-                choicePrompt += " hours.  Would you like to update the file before proceeding? Press Y or N";
+                choicePrompt += " hours.  Would you first like to update the file and reload it? Press Y or N";
 
                 Console.Util.WriteMessageInCenter(choicePrompt);
 
                 if (System.Console.ReadKey().Key == ConsoleKey.Y)
                 {
                     System.Console.Write("\b \b ");
-                    Console.Util.WriteMessageInCenter("Press any key once the file has been updated.");
+                    Console.Util.WriteMessageInCenter("Press any key once the file is ready for reloading.");
                     System.Console.ReadKey();
                     System.Console.Write("\b \b ");
                     Console.Util.RemoveMessageInCenter();

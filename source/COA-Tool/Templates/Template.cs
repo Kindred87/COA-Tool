@@ -18,7 +18,7 @@ namespace CoA_Tool
         private enum ContentCategories { None, Algorithm, MainContentBlock, }
 
         // Objects
-        private Templates.SelectionMenu Menu;
+        private Console.SelectionMenu Menu;
 
         // Enum variables
         public Algorithm SelectedAlgorithm;
@@ -47,8 +47,12 @@ namespace CoA_Tool
             // Most useful for development when running via Start in VS
             if (Directory.Exists(Directory.GetCurrentDirectory() + "\\Templates") == false)
                 Directory.CreateDirectory(Directory.GetCurrentDirectory() + "\\Templates");
-            
-            Menu = new Templates.SelectionMenu(GetOptions());
+
+            Console.Util.WriteMessageInCenter("Please select a template");
+
+            Menu = new Console.SelectionMenu(GetOptions(), "Templates:");
+
+            Console.Util.RemoveMessageInCenter();
 
             AssignOptionsFromFile(Menu.UserChoice);
         }

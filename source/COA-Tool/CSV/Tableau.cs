@@ -12,18 +12,29 @@ namespace CoA_Tool.CSV
     class Tableau
     {
         public List<List<List<string>>> FileContents;
+
         public Tableau()
         {
-            List<string> filePaths = OnlyValidPathsFrom(GetCSVFilePaths());
+            List<string> downloadsFilePaths = OnlyValidPathsFrom(GetCSVFilePathsFromDownloads());
 
-            FileContents = LoadFiles(filePaths);
-            MoveFilesToDesktop(filePaths);
+            MoveFilesToDirectoryInDesktop(downloadsFilePaths);
+
+            if(BatchChoice() == "New batch")
+            {
+                // Load from /New Batch
+            }
+            else //  == "Previous batch"
+            {
+                // Load from // Previous Batch
+            }
+
+            LoadFiles(downloadsFilePaths);
         }
         /// <summary>
         /// Fetches list of csv file paths from the user's download folder
         /// </summary>
-        /// <returns></returns>
-        private string[] GetCSVFilePaths()
+        /// <returns></returns>  
+        private string[] GetCSVFilePathsFromDownloads()
         {
             string[] directory = Directory.GetCurrentDirectory().Split(new char[] { '/', '\\' }, StringSplitOptions.None);
             string userFolder = directory[0] + "/" + directory[1] + "/" + directory[2];
@@ -55,34 +66,49 @@ namespace CoA_Tool.CSV
         /// </summary>
         /// <param name="filePaths"></param>
         /// <returns></returns>
-        private List<List<List<string>>> LoadFiles(List<string> filePaths)
+        public void LoadFiles(List<string> filePaths)
         {
-            List<List<List<string>>> contents = new List<List<List<string>>>();
+            FileContents = new List<List<List<string>>>();
 
             foreach (string file in filePaths)
             {
-                contents.Add(new List<List<string>>());
+                FileContents.Add(new List<List<string>>());
 
                 foreach (string line in File.ReadLines(file))
                 {
                     if (line.StartsWith(",") == false)
-                        contents[contents.Count - 1].Add(line.Split(new char[] { ',' }).ToList());
+                        FileContents[FileContents.Count - 1].Add(line.Split(new char[] { ',' }).ToList());
                 }
             }
-            return contents;
         }
-        private void MoveFilesToDesktop(List<string> filePaths)
+        private void MoveFilesToDirectoryInDesktop(List<string> filePaths)
         {
-            if (Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/Tableau Files") == false)
-                Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/Tableau Files");
+            if (Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/Tableau Files/New Batch") == false)
+                Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/Tableau Files/New Batch");
 
             string newFileName;
 
             foreach(string filePath in filePaths)
             {
                 newFileName = File.ReadAllLines(filePath)[1].Split(new char[] { ',' })[3];
-                File.Move(filePath, Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/Tableau Files/" + newFileName + ".txt" , true);
+                File.Move(filePath, Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/Tableau Files/New Batch" + newFileName + ".txt" , true);
             }
+        }
+        /// <summary>
+        /// Prompts user to select between a new or previous batch
+        /// </summary>
+        /// <returns></returns>
+        private string BatchChoice()
+        {
+            Console.Util.WriteMessageInCenter("Select an option regarding Tableau lot information.");
+
+            string[] options = { "New batch", "Previous batch" };
+
+           Console.SelectionMenu menu = new Console.SelectionMenu(options, "    Use:");
+
+            Console.Util.RemoveMessageInCenter();
+
+            return menu.UserChoice;
         }
 
     }
