@@ -35,20 +35,18 @@ namespace CoA_Tool.CSV
         /// </summary>
         /// <param name="filePaths"></param>
         /// <returns></returns>
-        private List<string> OnlyValidPathsFrom(string[] filePaths)
+        private List<string> OnlyValidPathsFrom(string[] filePaths) 
         {
+            // A list is used because the number of needed indices is unknown, running a loop to determine that value would invalidate the performance gain
             List<string> validFiles = new List<string>();
+            string firstLine;
 
-            foreach (string file in filePaths)
+            foreach (string path in filePaths)
             {
-                foreach (string line in File.ReadLines(file))
-                {
-                    if (line.StartsWith("Ic Lot Number"))
-                    {
-                        validFiles.Add(file);
-                        break;
-                    }
-                }
+                firstLine = File.ReadLines(path).First();
+
+                if (firstLine.StartsWith("Ic Lot Number"))
+                    validFiles.Add(path);
             }
             return validFiles;
         }
