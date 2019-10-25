@@ -18,7 +18,7 @@ namespace CoA_Tool
             Excel.WorkbookByAlgorithm byAlgorithm = new Excel.WorkbookByAlgorithm(template);
 
         }
-        /*static void CreateExternalCOA(List<List<List<string>>> tableauData, CSV.Common common, Excel.FinishedGoods finishedGoods)
+        /*static void CreateExternalCOA(List<List<List<string>>> tableauData, CSV.NWAData common, Excel.FinishedGoods finishedGoods)
         {
             foreach(List<List<string>> order in tableauData)
             {
@@ -29,7 +29,7 @@ namespace CoA_Tool
                 thread.Start();
             }
         }
-        static void CreateInternalCOA(CSV.Common common, Excel.FinishedGoods finishedGoods)
+        static void CreateInternalCOA(CSV.NWAData common, Excel.FinishedGoods finishedGoods)
         {
             string input;
             int daysBackToInclude;

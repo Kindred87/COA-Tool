@@ -6,6 +6,9 @@ using System.Linq;
 
 namespace CoA_Tool.CSV
 {
+    /// <summary>
+    /// Handles location and loading of downloaded Tableau data
+    /// </summary>
     class Tableau
     {
         public List<List<List<string>>> FileContents;

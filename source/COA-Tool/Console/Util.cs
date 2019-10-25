@@ -4,6 +4,9 @@ using System.Text;
 
 namespace CoA_Tool.Console
 {
+    /// <summary>
+    /// Contains miscellaneous methods for console operations
+    /// </summary>
     class Util
     {
         public Util()

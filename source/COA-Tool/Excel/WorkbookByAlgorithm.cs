@@ -4,17 +4,20 @@ using System.Text;
 
 namespace CoA_Tool.Excel
 {
+    /// <summary>
+    /// Handles operations necessary for the template's algorithm before initiating document generation
+    /// </summary>
     class WorkbookByAlgorithm
     {
         //Objects
-        CSV.Common RequiredFiles;
+        CSV.NWAData NWAData;
         public WorkbookByAlgorithm(Template template)
         {
-            RequiredFiles = new CSV.Common();
+            NWAData = new CSV.NWAData();
 
             if (template.SelectedAlgorithm == Template.Algorithm.Standard)
             {
-                RequiredFiles.LoadCSVFiles();
+                NWAData.LoadCSVFiles();
             }
             else if(template.SelectedAlgorithm == Template.Algorithm.DaysFromToday)
             {

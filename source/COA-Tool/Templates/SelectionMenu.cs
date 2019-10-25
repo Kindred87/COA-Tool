@@ -4,6 +4,9 @@ using System.Text;
 
 namespace CoA_Tool.Templates
 {
+    /// <summary>
+    /// Handles user selection of templates
+    /// </summary>
     class SelectionMenu
     {
         private string[] TemplateOptions;

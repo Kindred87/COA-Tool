@@ -11,6 +11,9 @@ using OfficeOpenXml.Drawing;
 
 namespace CoA_Tool.Excel
 {
+    /// <summary>
+    /// Main document generation class, end of program flow
+    /// </summary>
     class Workbook
     {
         // Enums

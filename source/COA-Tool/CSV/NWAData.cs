@@ -11,14 +11,16 @@ using OfficeOpenXml;
 
 namespace CoA_Tool.CSV
 {
-
-    class Common
+    /// <summary>
+    /// Handles location and loading of CSV dumps from NWA
+    /// </summary>
+    class NWAData
     {
         // Lists
         public List<List<string>> DelimitedMicroResults = new List<List<string>>();
         public List<List<string>> DelimitedTitrationResults = new List<List<string>>();
         
-        public Common()
+        public NWAData()
         {
 
         }

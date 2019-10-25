@@ -10,7 +10,9 @@ using OfficeOpenXml.Drawing;
 
 namespace CoA_Tool.Excel
 {
-    
+    /// <summary>
+    /// Handles location and loading of finished goods data
+    /// </summary>
     class FinishedGoods
     {
         // File contents arranged as a grid.  See FileContents() for value descriptions.

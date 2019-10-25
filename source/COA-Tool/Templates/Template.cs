@@ -8,6 +8,9 @@ using CoA_Tool;
 
 namespace CoA_Tool
 {
+    /// <summary>
+    /// Contains information on how the Excel document is populated
+    /// </summary>
     class Template
     {
         // Enums
