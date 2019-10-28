@@ -14,10 +14,12 @@ namespace CoA_Tool.Excel
         public WorkbookByAlgorithm(Template template)
         {
             NWAData = new CSV.NWAData();
+            CSV.Tableau tableau = new CSV.Tableau();
 
             if (template.SelectedAlgorithm == Template.Algorithm.Standard)
             {
                 NWAData.LoadCSVFiles();
+                tableau.Load();
             }
             else if(template.SelectedAlgorithm == Template.Algorithm.DaysFromToday)
             {
@@ -28,7 +30,7 @@ namespace CoA_Tool.Excel
             
 
 
-            CSV.Tableau tableau = new CSV.Tableau();
+            
         }
     }
 }

@@ -5,21 +5,23 @@ using System.Text;
 namespace CoA_Tool.Console
 {
     /// <summary>
-    /// Handles user selection of templates
+    /// Represents a user-navigatable, single-choice menu
     /// </summary>
     class SelectionMenu
     {
-        private string[] MenuOptions;
+        private List<string> MenuOptions;
 
         private int CurrentSelection = 0;
 
         public string UserChoice;
-        public SelectionMenu(string[] options, string menuTitle)
+        public SelectionMenu(List<string> options, string menuTitle, string centerMessage)
         {
+            Util.WriteMessageInCenter(centerMessage);
             MenuOptions = options;
             InitialWrite(menuTitle);
             UserChoice = GetUserChoice();
-            RemoveMenu(options.Length);
+            RemoveMenu(options.Count);
+            Util.RemoveMessageInCenter();
         }
         /// <summary>
         /// Outputs all template options to the console
@@ -110,7 +112,7 @@ namespace CoA_Tool.Console
                         break;
                     
                 case ConsoleKey.DownArrow:
-                    if (CurrentSelection + 1 <= MenuOptions.Length - 1)
+                    if (CurrentSelection + 1 <= MenuOptions.Count- 1)
                     {
                         RemoveHighlightFromCurrentSelection();
                         CurrentSelection++;

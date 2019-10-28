@@ -44,15 +44,10 @@ namespace CoA_Tool
 
         public Template ()
         {
-            // Most useful for development when running via Start in VS
-            if (Directory.Exists(Directory.GetCurrentDirectory() + "\\Templates") == false)
-                Directory.CreateDirectory(Directory.GetCurrentDirectory() + "\\Templates");
+            if (Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\CoAs\\Templates") == false)
+                Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\CoAs\\Templates");
 
-            Console.Util.WriteMessageInCenter("Please select a template");
-
-            Menu = new Console.SelectionMenu(GetOptions(), "Templates:");
-
-            Console.Util.RemoveMessageInCenter();
+            Menu = new Console.SelectionMenu(GetOptions(), "Templates:", "Please select a template");
 
             AssignOptionsFromFile(Menu.UserChoice);
         }
@@ -60,9 +55,9 @@ namespace CoA_Tool
         /// Fetches names of available templates
         /// </summary>
         /// <returns></returns>
-        private string[] GetOptions()
+        private List<string> GetOptions()
         {
-            string templateDirectory = Directory.GetCurrentDirectory() + "\\Templates";
+            string templateDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\CoAs\\Templates";
             
             // A forever loop is triggered if no template files are found
             if(Directory.GetFiles(templateDirectory, "*.txt").Length == 0)
@@ -80,9 +75,7 @@ namespace CoA_Tool
                 Console.Util.RemoveMessageInCenter();
             }
 
-            string[] options = KeepOnlyFileNames(Directory.GetFiles(templateDirectory, "*.txt"));
-
-            return options;
+            return KeepOnlyFileNames(Directory.GetFiles(templateDirectory, "*.txt")).ToList();
         }
         /// <summary>
         /// Reassigns array values from full file paths to only file names, excluding extensions
