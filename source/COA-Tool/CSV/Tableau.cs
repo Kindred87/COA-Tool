@@ -30,6 +30,7 @@ namespace CoA_Tool.CSV
         {
             FileContents = new List<List<List<string>>>();
             DesktopSubDirectoryPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\CoAs\\Tableau Files";
+            EnsureDesktopSubDirectoriesExist();
         }
         // Public methods
         /// <summary>
@@ -109,7 +110,7 @@ namespace CoA_Tool.CSV
         {
             List<string> options = new List<string>();
 
-            int amountInProgress = Directory.GetFiles(DesktopSubDirectoryPath + "2) Current Batch\\1) In Progress", "*.csv").Length;
+            int amountInProgress = Directory.GetFiles(DesktopSubDirectoryPath + "\\2) Current Batch\\1) In Progress", "*.csv").Length;
 
             options.Add("New");
             options.Add("Previous");
@@ -137,7 +138,7 @@ namespace CoA_Tool.CSV
                 Directory.CreateDirectory(DesktopSubDirectoryPath + "\\1) New Batch");
 
             if (Directory.Exists(DesktopSubDirectoryPath + "\\3) Previous Batch") == false)
-                Directory.CreateDirectory(DesktopSubDirectoryPath) + "\\3) Previous Batch");
+                Directory.CreateDirectory(DesktopSubDirectoryPath + "\\3) Previous Batch");
 
             if (Directory.Exists(DesktopSubDirectoryPath + "\\2) Current Batch\\1) In Progress") == false)
                 Directory.CreateDirectory(DesktopSubDirectoryPath + "\\2) Current Batch\\1) In Progress");
