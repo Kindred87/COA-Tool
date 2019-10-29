@@ -16,7 +16,7 @@ namespace CoA_Tool.Excel
         public enum CustomerName { TaylorFarmsTennessee, Latitude36, KootenaiAndCheese };
         public enum CustomerType { External, Internal};
         private enum TitrationOffset { Acidity = 5, Viscosity = 2, Salt = 4, pH = 6 }
-        private enum MicroOffset { Yeast = 9, Mold = 11, Aerobic = 15, Coliform = 7, Lactic = 13, EColiform = 5  }
+        private enum MicroOffset { Yeast = 9, Mold = 11, Aerobic = 15, Coliform = 7, Lactic = 13, EColi = 5  }
         private CustomerName CustomerNameForWorkbook;
         private CustomerType CustomerTypeForWorkbook;
 
@@ -670,16 +670,16 @@ namespace CoA_Tool.Excel
 
                     worksheet.Cells[22, 2 + i].Style.Numberformat.Format = "#,##0";
 
-                    int eColiformCount = GetMicroValue(microIndices, MicroOffset.EColiform);
+                    int eColiCount = GetMicroValue(microIndices, MicroOffset.EColi);
 
-                    if (MicroValueInSpec(eColiformCount, MicroOffset.EColiform) == false)
+                    if (MicroValueInSpec(eColiCount, MicroOffset.EColi) == false)
                         worksheet.Cells[23, 2 + i].Style.Font.Color.SetColor(Color.Yellow);
 
-                    if (coliformCount == 0)
+                    if (eColiCount == 0)
                         worksheet.Cells[23, 2 + i].Value = "<10";
-                    else if (coliformCount > 0)
-                        worksheet.Cells[23, 2 + i].Value = coliformCount;
-                    else if (coliformCount == -1)
+                    else if (eColiCount > 0)
+                        worksheet.Cells[23, 2 + i].Value = eColiCount;
+                    else if (eColiCount == -1)
                         worksheet.Cells[23, 2 + i].Value = "N/A";
 
                     worksheet.Cells[23, 2 + i].Style.Numberformat.Format = "#,##0";
@@ -698,7 +698,7 @@ namespace CoA_Tool.Excel
 
                     worksheet.Cells[24, 2 + i].Style.Numberformat.Format = "#,##0";
 
-                    if(yeastCount != -1 || moldCount != -1 || aerobicCount != -1 || coliformCount != -1 || eColiformCount != -1 || lacticCount != -1 )
+                    if(yeastCount != -1 || moldCount != -1 || aerobicCount != -1 || coliformCount != -1 || eColiCount != -1 || lacticCount != -1 )
                         SaveFile = true;
                 }
             }
@@ -1014,7 +1014,7 @@ namespace CoA_Tool.Excel
                     sortedValues.Add(value);
                 else if (offset == MicroOffset.Yeast && value < 1000)
                     sortedValues.Add(value);
-                else if (offset == MicroOffset.EColiform && value == 0)
+                else if (offset == MicroOffset.EColi && value == 0)
                     sortedValues.Add(value);
                 }
 
