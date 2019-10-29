@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -30,7 +30,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="mkdir $(PublishDir)\Templates&#xD;&#xA;copy /Y &quot;$(SolutionDir)\*.txt&quot; &quot;$(PublishDir)\Templates&quot;" />
+    
   </Target>
 
 </Project>

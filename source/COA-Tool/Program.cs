@@ -11,7 +11,7 @@ namespace CoA_Tool
         {
             Console.Util.SetSize();
             Console.Util.SetTitle();
-            System.Console.CursorVisible = false; // Only visible for text input
+            System.Console.CursorVisible = false;
 
             Template template = new Template();
 
