@@ -100,7 +100,7 @@ namespace CoA_Tool.Excel
                         package.SaveAs(new FileInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/" + TableauData[1][3] + ".xlsx"));
                     else
                         package.SaveAs(new FileInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/Internal/" + InternalCOAData[1] +
-                            " (" + InternalCOAData[0] + ")" + ".xlsx"));
+                            " (" + Convert.ToDateTime(InternalCOAData[0]).ToString("MM-dd-yy") + ")" + ".xlsx"));
                 }
                 else
                 {
