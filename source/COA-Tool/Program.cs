@@ -91,6 +91,8 @@ namespace CoA_Tool
             // A string is used as the hashset can't easily differentiate arrays with matching contents
             HashSet<string> set = new HashSet<string>();
 
+            bool targetPartCode = false;
+
             foreach(List<string> line in common.DelimitedMicroResults)
             {
                 for (int i = 0; i < daysBackToInclude; i++)
@@ -99,6 +101,46 @@ namespace CoA_Tool
                     {
                         if(line[16] == "K1")
                         {
+                            switch(line[10].ToLower())
+                            {
+                                case "30026":
+                                    targetPartCode = true;
+                                    break;
+                                case "30026c":
+                                    targetPartCode = true;
+                                    break;
+                                case "30040":
+                                    targetPartCode = true;
+                                    break;
+                                case "30041":
+                                    targetPartCode = true;
+                                    break;
+                                case "30489":
+                                    targetPartCode = true;
+                                    break;
+                                case "30535":
+                                    targetPartCode = true;
+                                    break;
+                                case "30712":
+                                    targetPartCode = true;
+                                    break;
+                                case "30729":
+                                    targetPartCode = true;
+                                    break;
+                                case "31049":
+                                    targetPartCode = true;
+                                    break;
+                                case "31067":
+                                    targetPartCode = true;
+                                    break;
+                                default:
+                                    targetPartCode = false;
+                                    break;
+                            }
+
+                            if (targetPartCode == false)
+                                continue;
+
                             if(line[10].Contains('/') || line[10].Contains('\\'))
                             {
                                 char[] delimit = { '/', '\\' };
@@ -112,7 +154,6 @@ namespace CoA_Tool
                             {
                                 set.Add(Convert.ToDateTime(line[9]).ToString("M-d-yy") + "," + line[10]); 
                             }
-
                         }
                     }
                 }
