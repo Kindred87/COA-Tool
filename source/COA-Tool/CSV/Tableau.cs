@@ -29,8 +29,8 @@ namespace CoA_Tool.CSV
         public Tableau()
         {
             FileContents = new List<List<List<string>>>();
-            DesktopSubDirectoryPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\CoAs\\Tableau Files";
             EnsureDesktopSubDirectoriesExist();
+            DesktopSubDirectoryPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\CoAs\\Tableau Files";
         }
         // Public methods
         /// <summary>
@@ -71,10 +71,10 @@ namespace CoA_Tool.CSV
             }
         }
         /// <summary>
-        /// Moves given .txt files to one of several pre-determined directories
+        /// Moves given files to one of several pre-determined directories
         /// </summary>
-        /// <param name="filePaths"></param>
-        /// <param name="targetDirectory"></param>
+        /// <param name="filePaths">Each entry represents a file's absolute path</param>
+        /// <param name="targetDirectory">The output directory</param>
         public void MoveToDirectory(List<string> filePaths, LotDirectory targetDirectory)
         {
             EnsureDesktopSubDirectoriesExist();
@@ -103,7 +103,7 @@ namespace CoA_Tool.CSV
 
         // Private methods
         /// <summary>
-        /// Prompts user to select between a new or previous batch
+        /// Prompts user to select which batch of tableau files to generate CoAs from
         /// </summary>
         /// <returns></returns>
         private string BatchChoice()
@@ -183,7 +183,7 @@ namespace CoA_Tool.CSV
             }
         }
         /// <summary>
-        /// Calls all variations of CleanLotDirectory
+        /// Calls all variations of CleanLotDirectory (Searches for and deletes any file with a duplicate sales order)
         /// </summary>
         private void CleanAllLotDirectories()
         {
