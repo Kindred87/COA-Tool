@@ -15,17 +15,19 @@ namespace CoA_Tool.Excel
         {
             NWAData = new CSV.NWAData();
             CSV.Tableau tableau = new CSV.Tableau();
+            FinishedGoods finishedGoods = new FinishedGoods();
 
             if (template.SelectedAlgorithm == Template.Algorithm.Standard)
             {
                 NWAData.LoadCSVFiles();
                 tableau.Load();
+                finishedGoods.Load();
             }
             else if(template.SelectedAlgorithm == Template.Algorithm.DaysFromToday)
             {
-
+                NWAData.LoadCSVFiles();
             }
-            Excel.FinishedGoods finishedGoods = new Excel.FinishedGoods();
+            
 
             
 

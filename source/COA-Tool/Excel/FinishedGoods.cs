@@ -15,23 +15,26 @@ namespace CoA_Tool.Excel
     /// </summary>
     class FinishedGoods
     {
-        // File contents arranged as a grid.  See FileContents() for value descriptions.
+        
+        /// <summary>
+        /// File contents arranged as a pseudo-grid, where [y][x], see Load() for further info
+        /// </summary>
         public List<List<string>> Contents;
         public FinishedGoods()
         {
-            string path = FilePath();
-            Contents = FileContents(path);
         }
         /// <summary>
-        /// Extracts needed values from the first worksheet of the provided Excel file
+        /// Populates Contents with data from finished goods Excel document
         /// </summary>
         /// <param name="filePath"></param>
         /// <returns></returns>
-        private List<List<string>> FileContents(string filePath)
+        public void Load()
         {
-            List<List<string>> contents = new List<List<string>>();
+            string filePath = GetFilePath();
 
             FileInfo excelFile = new FileInfo(filePath);
+
+            Contents = new List<List<string>>();
 
             using (ExcelPackage package = new ExcelPackage(excelFile))
             {
@@ -39,22 +42,20 @@ namespace CoA_Tool.Excel
 
                 for (int i = 2; i < package.Workbook.Worksheets[1].Dimension.Rows; i++)
                 {
-                    contents.Add(new List<string>());
+                    Contents.Add(new List<string>());
 
-                    contents[i - 2].Add(package.Workbook.Worksheets[1].Cells[i, 1].Value.ToString()); // Part codes
-                    contents[i - 2].Add(package.Workbook.Worksheets[1].Cells[i, 2].Value.ToString()); // Part description
-                    contents[i - 2].Add(package.Workbook.Worksheets[1].Cells[i, 7].Value.ToString()); // Days to expiry
-                    contents[i - 2].Add(package.Workbook.Worksheets[1].Cells[i, 8].Value.ToString()); // Recipe
+                    Contents[i - 2].Add(package.Workbook.Worksheets[1].Cells[i, 1].Value.ToString()); // Part codes
+                    Contents[i - 2].Add(package.Workbook.Worksheets[1].Cells[i, 2].Value.ToString()); // Part description
+                    Contents[i - 2].Add(package.Workbook.Worksheets[1].Cells[i, 7].Value.ToString()); // Days to expiry
+                    Contents[i - 2].Add(package.Workbook.Worksheets[1].Cells[i, 8].Value.ToString()); // Recipe
                 }
             }
-
-            return contents;
         }
         /// <summary>
         /// Gets path of Excel file, searching in the Desktop and Downloads folders.
         /// </summary>
         /// <returns></returns>
-        private string FilePath()
+        private string GetFilePath()
         {
             string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             string downloadsPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -73,7 +74,7 @@ namespace CoA_Tool.Excel
             {
                 Console.Util.WriteMessageInCenter("Finished goods file could not be located.  Press a key to search again.", ConsoleColor.Red);
                 System.Console.ReadKey();
-                return FilePath(); // Until the file is found
+                return GetFilePath(); // Until the file is found
             }
         }
         /// <summary>
