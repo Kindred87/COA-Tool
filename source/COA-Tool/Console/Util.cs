@@ -9,10 +9,13 @@ namespace CoA_Tool.Console
     /// </summary>
     class Util
     {
+        // Constructor
         public Util()
         {
             
         }
+
+        // Public methods
         /// <summary>
         /// Resizes the console window
         /// </summary>
@@ -67,5 +70,7 @@ namespace CoA_Tool.Console
             System.Console.SetCursorPosition(0, cursorRow);
             System.Console.Write(new string(' ', System.Console.WindowWidth));
         }
+
+        // Private methods
     }
 }

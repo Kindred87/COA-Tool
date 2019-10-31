@@ -32,6 +32,7 @@ namespace CoA_Tool.CSV
             EnsureDesktopSubDirectoriesExist();
             DesktopSubDirectoryPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\CoAs\\Tableau Files";
         }
+
         // Public methods
         /// <summary>
         /// Populates FileContents with data from applicable CSV files

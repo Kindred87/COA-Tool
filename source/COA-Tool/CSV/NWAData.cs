@@ -16,14 +16,18 @@ namespace CoA_Tool.CSV
     /// </summary>
     class NWAData
     {
-        // Lists
+        // Class variables
+        //  Lists
         public List<List<string>> DelimitedMicroResults = new List<List<string>>();
         public List<List<string>> DelimitedTitrationResults = new List<List<string>>();
         
+        // Constructor
         public NWAData()
         {
 
         }
+
+        // Public methods
         /// <summary>
         /// Finds needed files and populates class lists with their contents
         /// </summary>
@@ -70,6 +74,8 @@ namespace CoA_Tool.CSV
 
             Console.Util.RemoveMessageInCenter();
         }
+
+        // Private methods
         /// <summary>
         /// Prompts user to optionally reload files if last update meets or exceeds 6 hours
         /// </summary>

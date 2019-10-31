@@ -20,7 +20,7 @@ namespace CoA_Tool.Excel
         private enum TitrationOffset { Acidity = 5, Viscosity = 2, Salt = 4, pH = 6 }
         private enum MicroOffset { Yeast = 9, Mold = 11, Aerobic = 15, Coliform = 7, Lactic = 13, EColiform = 5  }
 
-        // Strings
+        //  Strings
         private string AcidMethod = "(AOAC 30.048 14th Ed.)  ";
         private string pHMethod = "(AOAC 30.012 14th Ed.)  ";
         private string ViscosityCPSMethod = "(Brookfield)  ";
@@ -29,29 +29,26 @@ namespace CoA_Tool.Excel
         private string MoldMethod = "(AOAC 997.02)  ";
         private string AerobicMethod = "(AOAC 990.12)  ";
         private string ColiformMethod = "(AOAC 991.14)  ";
-        private string EColiformMethod = "(AOAC 991.14)  ";
+        private string EColiMethod = "(AOAC 991.14)  ";
         private string LacticMethod = "(AOAC 990.12)  ";
 
         public string[] InternalCOAData; // {made date, item code}
 
-        // Bools
+        //  Bools
         private bool SaveFile = false;
 
-        // Lists
+        //  Lists
         public List<List<string>> TableauData;
-        private List<List<string>> TitrationResults;
-        private List<List<string>> MicroResults;
-        private List<List<string>> FinishedGoods;
-        private List<List<string>> Recipes;
+        public List<List<string>> TitrationResults;
+        public List<List<string>> MicroResults;
+        public List<List<string>> FinishedGoods;
 
-        // Objects
+        //  Objects
         Template WorkbookTemplate;
-        public Workbook(List<List<string>> titrationResults, List<List<string>> microResults,
-            List<List<string>> finishedGoods, Template template)
+
+        // Constructor
+        public Workbook(Template template)
         {
-            TitrationResults = titrationResults;
-            MicroResults = microResults;
-            FinishedGoods = finishedGoods;
             WorkbookTemplate = template;
         }
 
@@ -61,7 +58,7 @@ namespace CoA_Tool.Excel
             {
                 int pageCount = 0;
 
-                /*if(CustomerTypeForWorkbook == CustomerType.External)
+                if(WorkbookTemplate.SelectedAlgorithm == Template.Algorithm.Standard)
                 {
                     pageCount = (TableauData.Count - 1) / 6;
                     if ((TableauData.Count - 1) % 6 > 0)
@@ -82,7 +79,7 @@ namespace CoA_Tool.Excel
                             pageCount++;
                     
                     
-                }*/
+                }
 
                 for (int i = 1; i <= pageCount; i++)
                 {
@@ -100,11 +97,11 @@ namespace CoA_Tool.Excel
                     if (Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/Internal") == false)
                         Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/Internal");
 
-                    /*if (CustomerTypeForWorkbook == CustomerType.External)
+                    if (WorkbookTemplate.SelectedAlgorithm == Template.Algorithm.Standard)
                         package.SaveAs(new FileInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/" + TableauData[1][3] + ".xlsx"));
                     else
                         package.SaveAs(new FileInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/Internal/" + InternalCOAData[1] +
-                            " (" + InternalCOAData[0] + ")" + ".xlsx")); */
+                            " (" + InternalCOAData[0] + ")" + ".xlsx")); 
                 }
                 else
                 {
@@ -125,7 +122,7 @@ namespace CoA_Tool.Excel
             worksheet.Cells["C11:H30"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
             worksheet.Cells["C11:H30"].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
 
-            worksheet.Column(1).Width = 16.3;
+            worksheet.Column(1).Width = 10.8;
             worksheet.Column(2).Width = 11.4;
             worksheet.Column(3).Width = 15.72;
             worksheet.Column(4).Width = 15.72;
@@ -134,20 +131,22 @@ namespace CoA_Tool.Excel
             worksheet.Column(7).Width = 15.72;
             worksheet.Column(8).Width = 15.72;
 
+            worksheet.Row(1).Height = 0;
+
             Image image = Image.FromFile("LH logo.png");
             ExcelPicture logo = worksheet.Drawings.AddPicture("Logo", image);
-            logo.SetSize(57);
-            logo.SetPosition(10, 414);
+            logo.SetSize(236, 123);
+            logo.SetPosition(0, 303);
 
             worksheet.Cells[1, 1, 60, 1].Style.Font.Size = 9;
             worksheet.Cells[1, 1, 60, 2].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
             worksheet.Cells[1, 2, 60, 2].Style.Font.Size = 6;
             worksheet.Cells[1, 2, 60, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
             
-            worksheet.Cells["C8"].Value = "Certificate of Analysis";
-            worksheet.Cells["C8"].Style.Font.SetFromFont(new Font("Calibri", 26, FontStyle.Bold));
-            worksheet.Cells["C8"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-            worksheet.Cells["C8:H9"].Merge = true;
+            worksheet.Cells["A8"].Value = "Certificate of Analysis";
+            worksheet.Cells["A8"].Style.Font.SetFromFont(new Font("Calibri", 26, FontStyle.Bold));
+            worksheet.Cells["A8"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            worksheet.Cells["A8:H9"].Merge = true;
 
             worksheet.Cells["C11"].Style.Font.Size = 12;
             worksheet.Cells["C11"].Style.Font.Bold = true;
@@ -182,20 +181,7 @@ namespace CoA_Tool.Excel
         /// <param name="worksheet"></param>
         private void PopulateContentsByCustomer(ExcelWorksheet worksheet, int page)
         {
-            /*switch(CustomerNameForWorkbook)
-            {
-                case CustomerName.TaylorFarmsTennessee:
-                    PopulateContentsTaylorFarmTennessee(worksheet, page);
-                    break;
-                case CustomerName.Latitude36:
-                    PopulateContentsLatitude36(worksheet, page);
-                    break;
-                case CustomerName.KootenaiAndCheese:
-                    PopulateContentsKootenaiAndCheese(worksheet, page);
-                    break;
-                default:
-                    break;
-            } */
+            PopulateContentsLatitude36(worksheet, page);
         }
         private void PopulateContentsTaylorFarmTennessee(ExcelWorksheet worksheet, int page)
         {
@@ -564,7 +550,7 @@ namespace CoA_Tool.Excel
             worksheet.Cells["B22"].Value = ColiformMethod;
 
             worksheet.Cells["A23"].Value = "E. Coliform cfu/gram";
-            worksheet.Cells["B23"].Value = EColiformMethod;
+            worksheet.Cells["B23"].Value = EColiMethod;
 
             worksheet.Cells["A24"].Value = "Lactics cfu/gram";
             worksheet.Cells["B24"].Value = LacticMethod;

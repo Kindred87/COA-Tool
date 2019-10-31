@@ -9,11 +9,14 @@ namespace CoA_Tool.Console
     /// </summary>
     class SelectionMenu
     {
+        // Class variables
         private List<string> MenuOptions;
 
         private int CurrentSelection = 0;
 
         public string UserChoice;
+
+        // Constructor
         public SelectionMenu(List<string> options, string menuTitle, string centerMessage)
         {
             Util.WriteMessageInCenter(centerMessage);
@@ -23,6 +26,10 @@ namespace CoA_Tool.Console
             RemoveMenu(options.Count);
             Util.RemoveMessageInCenter();
         }
+
+        // Public methods
+
+        // Private methods
         /// <summary>
         /// Outputs all template options to the console
         /// </summary>
@@ -124,5 +131,7 @@ namespace CoA_Tool.Console
                     break;
             }
         }
+
+        
     }
 }
