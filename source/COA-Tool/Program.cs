@@ -13,9 +13,7 @@ namespace CoA_Tool
             Console.Util.SetTitle();
             System.Console.CursorVisible = false;
 
-            Template template = new Template();
-
-            Excel.WorkbookByAlgorithm byAlgorithm = new Excel.WorkbookByAlgorithm(template);
+            Excel.SpawnGenerationThreads.Go(new Template());
 
         }
         /*static void CreateExternalCOA(List<List<List<string>>> tableauData, CSV.NWAData common, Excel.FinishedGoods finishedGoods)

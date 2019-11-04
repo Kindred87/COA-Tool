@@ -70,6 +70,34 @@ namespace CoA_Tool.Console
             System.Console.SetCursorPosition(0, cursorRow);
             System.Console.Write(new string(' ', System.Console.WindowWidth));
         }
+        /// <summary>
+        /// Converts a user's input to a DateTime object
+        /// </summary>
+        /// <param name="inputPrompt">The message prompt</param>
+        /// <returns></returns>
+        public static DateTime GetDateFromUser(string inputPrompt)
+        {
+            WriteMessageInCenter(inputPrompt);
+
+            string userInput;
+            DateTime inputAsDateTime;
+            int cursorRow = (int)((double)System.Console.WindowHeight * 0.5 + 1);
+            int cursorColumn = (int)((double)System.Console.WindowWidth * 0.5);
+            System.Console.CursorVisible = true;
+
+            do
+            {
+                System.Console.SetCursorPosition(cursorColumn, cursorRow);
+                userInput = System.Console.ReadLine();
+                System.Console.SetCursorPosition(0, cursorRow);
+                System.Console.Write(new string(' ', System.Console.WindowWidth));
+            } while (DateTime.TryParse(userInput, out inputAsDateTime) == false);
+
+            RemoveMessageInCenter();
+            System.Console.CursorVisible = false;
+
+            return inputAsDateTime;
+        }
 
         // Private methods
     }

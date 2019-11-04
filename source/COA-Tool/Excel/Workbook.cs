@@ -23,6 +23,7 @@ namespace CoA_Tool.Excel
         //  Strings
         private string AcidMethod = "(AOAC 30.048 14th Ed.)  ";
         private string pHMethod = "(AOAC 30.012 14th Ed.)  ";
+        private string ViscosityCMMethod = "(Bostwick)  ";
         private string ViscosityCPSMethod = "(Brookfield)  ";
         private string SaltMethod = "(AOAC 937.09 18th Ed.)  ";
         private string YeastMethod = "(AOAC 997.02)  ";
@@ -34,6 +35,35 @@ namespace CoA_Tool.Excel
 
         public string[] InternalCOAData; // {made date, item code}
 
+        // Integers
+        private int ProductAndNameRow;
+        private int RecipeItemRow;
+        private int LotCodeRow;
+        private int BatchRow;
+        private int BestByDateRow;
+        private int ManufacturingSiteRow;
+        private int ManufacturingDateRow;
+        private int AcidityRow;
+        private int PHRow;
+        private int ViscosityCMRow;
+        private int ViscosityCPSRow;
+        private int WaterAcitivityRow;
+        private int BrixSlurryRow;
+        private int YeastRow;
+        private int MoldRow;
+        private int AerobicRow;
+        private int ColiformRow;
+        private int EColiRow;
+        private int LacticsRow;
+        private int SalmonellaRow;
+        private int ListeriaRow;
+        private int ColorAndAppearanceRow;
+        private int FormRow;
+        private int FlavorAndOdorRow;
+
+        // DateTimes
+        public DateTime StartDate;
+
         //  Bools
         private bool SaveFile = false;
 
@@ -42,6 +72,9 @@ namespace CoA_Tool.Excel
         public List<List<string>> TitrationResults;
         public List<List<string>> MicroResults;
         public List<List<string>> FinishedGoods;
+
+        // Hashsets
+        private HashSet<string> BatchIndicesToIgnore;
 
         //  Objects
         Template WorkbookTemplate;
@@ -64,7 +97,7 @@ namespace CoA_Tool.Excel
                     if ((TableauData.Count - 1) % 6 > 0)
                         pageCount++;
                 }
-                else
+                else if(WorkbookTemplate.SelectedAlgorithm == Template.Algorithm.ResultsFromDateOnwards)
                 {
                     int itemCount = 0;
 
@@ -85,8 +118,7 @@ namespace CoA_Tool.Excel
                 {
                     ExcelWorksheet worksheet = package.Workbook.Worksheets.Add("Page" + i);
 
-                    PopulateUniversalContent(worksheet);
-                    PopulateContentsByCustomer(worksheet, i);
+                    PopulateWorksheetContents(worksheet, i);
                 }
 
                 if(SaveFile)
@@ -110,70 +142,619 @@ namespace CoA_Tool.Excel
             }
         }
         /// <summary>
-        /// Creates formatting and content shared by all document designs
+        /// Populates both static and dynamic content for the worksheet
         /// </summary>
-        /// <param name="worksheet"></param>
-        private void PopulateUniversalContent(ExcelWorksheet worksheet)
+        /// <param name="targetWorksheet"></param>
+        private void PopulateWorksheetContents(ExcelWorksheet targetWorksheet, int currentPage)
         {
-            worksheet.Cells.Style.Font.SetFromFont(new Font("Calibri", 11));
+            targetWorksheet.Cells.Style.Font.SetFromFont(new Font("Calibri", 11));
 
-            worksheet.View.ShowGridLines = false;
+            targetWorksheet.View.ShowGridLines = false;
 
-            worksheet.Cells["C11:H30"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-            worksheet.Cells["C11:H30"].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+            targetWorksheet.Cells["C11:H30"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            targetWorksheet.Cells["C11:H30"].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
 
-            worksheet.Column(1).Width = 10.8;
-            worksheet.Column(2).Width = 11.4;
-            worksheet.Column(3).Width = 15.72;
-            worksheet.Column(4).Width = 15.72;
-            worksheet.Column(5).Width = 15.72;
-            worksheet.Column(6).Width = 15.72;
-            worksheet.Column(7).Width = 15.72;
-            worksheet.Column(8).Width = 15.72;
+            targetWorksheet.Column(1).Width = 10.85;
+            targetWorksheet.Column(2).Width = 11.4;
+            targetWorksheet.Column(3).Width = 15.72;
+            targetWorksheet.Column(4).Width = 15.72;
+            targetWorksheet.Column(5).Width = 15.72;
+            targetWorksheet.Column(6).Width = 15.72;
+            targetWorksheet.Column(7).Width = 15.72;
+            targetWorksheet.Column(8).Width = 15.72;
 
-            worksheet.Row(1).Height = 0;
+            targetWorksheet.Row(1).Height = 0;
 
             Image image = Image.FromFile("LH logo.png");
-            ExcelPicture logo = worksheet.Drawings.AddPicture("Logo", image);
-            logo.SetSize(236, 123);
-            logo.SetPosition(0, 303);
+            ExcelPicture logo = targetWorksheet.Drawings.AddPicture("Logo", image);
+            logo.SetSize(234, 124);
+            logo.SetPosition(0, 301);
 
-            worksheet.Cells[1, 1, 60, 1].Style.Font.Size = 9;
-            worksheet.Cells[1, 1, 60, 2].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
-            worksheet.Cells[1, 2, 60, 2].Style.Font.Size = 6;
-            worksheet.Cells[1, 2, 60, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+            targetWorksheet.Cells["A8"].Value = "Certificate of Analysis";
+            targetWorksheet.Cells["A8"].Style.Font.SetFromFont(new Font("Calibri", 26, FontStyle.Bold));
+            targetWorksheet.Cells["A8"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            targetWorksheet.Cells["A8:H9"].Merge = true;
+
+            targetWorksheet.Cells[11, 1, 60, 2].Style.Font.Size = 9;
+            targetWorksheet.Cells[11, 1, 60, 8].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+
+            // Important data for later use
+
+            List<string> lotsToProcess = new List<string>();
+            for(int i = 6 * (currentPage - 1); i < 6 * currentPage; i++)
+            {
+                string lot = GetLotCode(i + 1);
+
+                if(lot != string.Empty)
+                    lotsToProcess.Add(lot);
+            }
             
-            worksheet.Cells["A8"].Value = "Certificate of Analysis";
-            worksheet.Cells["A8"].Style.Font.SetFromFont(new Font("Calibri", 26, FontStyle.Bold));
-            worksheet.Cells["A8"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-            worksheet.Cells["A8:H9"].Merge = true;
+            // Counters are used since document contents/placement is dynamic
+            int currentRow = 11;
+            int sizeOfFirstContentBlock = 0;
 
-            worksheet.Cells["C11"].Style.Font.Size = 12;
-            worksheet.Cells["C11"].Style.Font.Bold = true;
-            worksheet.Cells["C11"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-            worksheet.Cells["C11:H11"].Merge = true;
+            // For first content block
+            if (WorkbookTemplate.IncludeCustomerName)
+            {
+                sizeOfFirstContentBlock++;
+                
+                targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
+                targetWorksheet.Cells[currentRow, 1].Value = "Customer";
+                targetWorksheet.Cells[currentRow, 3, currentRow, 8].Merge = true;
+                targetWorksheet.Cells[currentRow, 3].Value = WorkbookTemplate.Menu.UserChoice;
 
-            worksheet.Cells["C12"].Style.Numberformat.Format = "0";
-            worksheet.Cells["C12"].Style.Font.Size = 12;
-            worksheet.Cells["C12"].Style.Font.Bold = true;
-            worksheet.Cells["C12"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-            worksheet.Cells["C12:H12"].Merge = true;
+                currentRow++;
+            } 
 
-            worksheet.Cells["C13"].Style.Font.Size = 12;
-            worksheet.Cells["C13"].Style.Numberformat.Format = "0";
-            worksheet.Cells["C13"].Style.Font.Bold = true;
-            worksheet.Cells["C13"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-            worksheet.Cells["C13:H13"].Merge = true;
+            if(WorkbookTemplate.IncludeSalesOrder)
+            {
+                sizeOfFirstContentBlock++;
 
-            worksheet.Cells["C14"].Value = DateTime.Now.Date.ToShortDateString();
-            worksheet.Cells["C14"].Style.Numberformat.Format = "m/d/yyyy";
-            worksheet.Cells["C14"].Style.Font.Size = 12;
-            worksheet.Cells["C14"].Style.Font.Bold = true;
-            worksheet.Cells["C14"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-            worksheet.Cells["C14:H14"].Merge = true;
+                targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
+                targetWorksheet.Cells[currentRow, 1].Value = "Customer S/O #";
+                targetWorksheet.Cells[currentRow, 3, currentRow, 8].Merge = true;
+                targetWorksheet.Cells[currentRow, 3].Value = TableauData[1][3];
+                targetWorksheet.Cells[currentRow, 3].Style.Numberformat.Format = "0";
 
-            worksheet.PrinterSettings.FitToPage = true;
-            worksheet.HeaderFooter.FirstFooter.CenteredText = "Document generated in approximation of REV 02 F142-087";
+                currentRow++;
+            }
+
+            if(WorkbookTemplate.IncludePurchaseOrder)
+            {
+                sizeOfFirstContentBlock++;
+
+                targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
+                targetWorksheet.Cells[currentRow, 1].Value = "PO #";
+                targetWorksheet.Cells[currentRow, 3, currentRow, 8].Merge = true;
+                targetWorksheet.Cells[currentRow, 3].Style.Numberformat.Format = "0";
+
+                currentRow++;
+            }
+
+            if(WorkbookTemplate.IncludeGenerationDate)
+            {
+                sizeOfFirstContentBlock++;
+
+                targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
+                targetWorksheet.Cells[currentRow, 1].Value = "Date";
+                targetWorksheet.Cells[currentRow, 3, currentRow, 8].Merge = true;
+                targetWorksheet.Cells[currentRow, 3].Value = TableauData[1][3];
+                targetWorksheet.Cells[currentRow, 3].Style.Numberformat.Format = "m/d/yyyy";
+                targetWorksheet.Cells[currentRow, 3].Value = DateTime.Now.Date.ToShortDateString();
+
+                currentRow++;
+
+            }
+
+            // For first content block
+            if(sizeOfFirstContentBlock > 0)
+            {
+                targetWorksheet.Cells[10, 3, 10, 8].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
+                targetWorksheet.Cells[11, 3, 10 + sizeOfFirstContentBlock, 8].Style.Font.Size = 12;
+                targetWorksheet.Cells[11, 3, 10 + sizeOfFirstContentBlock, 8].Style.Font.Bold = true;
+                targetWorksheet.Cells[11, 3, 10 + sizeOfFirstContentBlock, 8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                CreateTableOfBorders(6, sizeOfFirstContentBlock, 11, 3, targetWorksheet);
+            }
+
+            // For second content block
+
+            if (sizeOfFirstContentBlock > 0)
+                currentRow += 2; // An empty space between blocks and an empty space for the block's header if the block size > 0
+            else
+                currentRow = 12; // Allows the second block's header to use row 11
+
+            int sizeOfSecondContentBlock = 0;
+
+            if (WorkbookTemplate.IncludeProductName)
+            {
+                sizeOfSecondContentBlock++;
+
+                targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
+                targetWorksheet.Cells[currentRow, 1].Value = "Product";
+                targetWorksheet.Cells[currentRow, 3, currentRow, 8].Style.WrapText = true;
+
+                for(int i = 0; i < lotsToProcess.Count; i++)
+                {
+                    targetWorksheet.Cells[currentRow, 3 + i].Value = GetProductName(GetProductCode(lotsToProcess[i]));
+                }
+
+                currentRow++;
+            }
+
+            if(WorkbookTemplate.IncludeRecipeAndItem)
+            {
+                sizeOfSecondContentBlock++;
+
+                targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
+                targetWorksheet.Cells[currentRow, 1].Value = "Recipe/Item";
+
+                for(int i = 0; i < lotsToProcess.Count; i++)
+                {
+                    string productCode = GetProductCode(lotsToProcess[i]);
+                    targetWorksheet.Cells[currentRow, 3 + i].Value = GetRecipeCode(productCode) +
+                        "/" + productCode;
+                }
+
+                currentRow++;
+            }
+
+            if(WorkbookTemplate.IncludeLotCode)
+            {
+                sizeOfSecondContentBlock++;
+
+                targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
+                targetWorksheet.Cells[currentRow, 3, currentRow, 8].Style.Numberformat.Format = "0";
+                targetWorksheet.Cells[currentRow, 1].Value = "Lot Code";
+                
+                for (int i = 0; i < lotsToProcess.Count; i++)
+                {
+                    long convertedLotValue;
+
+                    if (Int64.TryParse(lotsToProcess[i], out convertedLotValue) && lotsToProcess[i].Length == 13)
+                    {
+                        targetWorksheet.Cells[currentRow, 3 + i].Value = convertedLotValue;
+                    }
+                    else if(lotsToProcess[i].Length > 13)
+                    {
+                        targetWorksheet.Cells[currentRow, 3 + i].Value = "Lot too long";
+                        targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                    }
+                    else if(lotsToProcess[i].Length < 13)
+                    {
+                        targetWorksheet.Cells[currentRow, 3 + i].Value = "Lot too short";
+                        targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                    }
+                    else
+                    {
+                        targetWorksheet.Cells[currentRow, 3 + i].Value = "Invalid lot";
+                        targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                    }
+                }
+                currentRow++;
+            }
+
+            if(WorkbookTemplate.IncludeBatch)
+            {
+                sizeOfSecondContentBlock++;
+
+                targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
+                targetWorksheet.Cells[currentRow, 1].Value = "Batch";
+
+                if(WorkbookTemplate.SelectedAlgorithm == Template.Algorithm.ResultsFromDateOnwards)
+                {
+                    for (int i = 0; i < lotsToProcess.Count; i++)
+                    {
+                        targetWorksheet.Cells[currentRow, 3 + i].Value = "";
+                    }
+                }
+                
+
+                currentRow++;
+            }
+
+            if(WorkbookTemplate.IncludeBestByDate)
+            {
+                sizeOfSecondContentBlock++;
+
+                targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
+                targetWorksheet.Cells[currentRow, 1].Value = "Best By Date";
+
+                BestByDateRow = currentRow;
+
+                currentRow++;
+            }
+
+            if(WorkbookTemplate.IncludeManufacturingDate)
+            {
+                sizeOfSecondContentBlock++;
+
+                targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
+                targetWorksheet.Cells[currentRow, 1].Value = "Manufacturing Date";
+
+                ManufacturingDateRow = currentRow;
+
+                currentRow++;
+            }
+
+            if(WorkbookTemplate.IncludeManufacturingSite)
+            {
+                sizeOfSecondContentBlock++;
+
+                targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
+                targetWorksheet.Cells[currentRow, 1].Value = "Manufacturing Site";
+
+                ManufacturingSiteRow = currentRow;
+
+                currentRow++;
+            }
+
+            // For both first and second content blocks: left-hand cell descriptions, second content block header, border drawing
+
+            int sumOfBlockRows = sizeOfFirstContentBlock + sizeOfSecondContentBlock;
+
+            if (sumOfBlockRows > 0)
+            {
+                if(sizeOfSecondContentBlock > 0)
+                {
+                    // Writes header for second content block
+                    int secondBlockHeaderRow;
+                    if (sizeOfFirstContentBlock == 0)
+                    {
+                        secondBlockHeaderRow = 11;
+                        sumOfBlockRows++; // Covers second block's header row
+                    }
+                    else
+                    {
+                        sumOfBlockRows += 2; // Covers empty rows separating segments
+                        secondBlockHeaderRow = 11 + sizeOfFirstContentBlock + 1; // 11 is starting row, 1 is empty space between blocks
+                    }
+
+                    targetWorksheet.Cells[secondBlockHeaderRow, 3].Value = "Product Information";
+                    targetWorksheet.Cells[secondBlockHeaderRow, 3, secondBlockHeaderRow, 8].Merge = true;
+                    targetWorksheet.Cells[secondBlockHeaderRow, 3].Style.Font.Bold = true;
+                    targetWorksheet.Cells[secondBlockHeaderRow, 3, secondBlockHeaderRow, 8].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
+                    targetWorksheet.Cells[secondBlockHeaderRow, 3, secondBlockHeaderRow + sizeOfSecondContentBlock, 
+                        8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                    CreateTableOfBorders(6, sizeOfSecondContentBlock, secondBlockHeaderRow + 1, 3, targetWorksheet);
+                }
+
+                targetWorksheet.Cells[11, 1, 10 + sumOfBlockRows, 2].Style.Font.Italic = true;
+                targetWorksheet.Cells[11, 1, 10 + sumOfBlockRows, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+            }
+
+            // For third content block
+
+            if (sumOfBlockRows > 0)
+                currentRow += 2; // An empty space between blocks and an empty space for the block's header if the total block size > 0
+            else
+                currentRow = 12; // Allows the third block's header to use row 11
+
+            int sizeOfThirdContentBlock = 0;
+            
+            if(WorkbookTemplate.IncludeAcidity)
+            {
+                sizeOfThirdContentBlock++;
+
+                targetWorksheet.Cells[currentRow, 1].Value = "% Acid (TA)";
+                targetWorksheet.Cells[currentRow, 2].Value = AcidMethod;
+                AcidityRow = currentRow;
+
+                currentRow++;
+            }
+
+            if(WorkbookTemplate.IncludepH)
+            {
+                sizeOfThirdContentBlock++;
+
+                targetWorksheet.Cells[currentRow, 1].Value = "pH";
+                targetWorksheet.Cells[currentRow, 2].Value = pHMethod;
+                PHRow = currentRow;
+
+                currentRow++;
+            }
+
+            if(WorkbookTemplate.IncludeViscosityCM)
+            {
+                sizeOfThirdContentBlock++;
+
+                targetWorksheet.Cells[currentRow, 1].Value = "Viscosity cm";
+                targetWorksheet.Cells[currentRow, 2].Value = ViscosityCMMethod;
+                ViscosityCMRow = currentRow;
+
+                currentRow++;
+            }
+
+            if(WorkbookTemplate.IncludeViscosityCPS)
+            {
+                sizeOfThirdContentBlock++;
+
+                targetWorksheet.Cells[currentRow, 1].Value = "Viscosity cps";
+                targetWorksheet.Cells[currentRow, 2].Value = ViscosityCPSMethod;
+                ViscosityCPSRow = currentRow;
+
+                currentRow++;
+            }
+
+            if(WorkbookTemplate.IncludeWaterActivity)
+            {
+                sizeOfThirdContentBlock++;
+
+                targetWorksheet.Cells[currentRow, 1].Value = "Water activity (aW)";
+                WaterAcitivityRow = currentRow;
+
+                currentRow++;
+            }
+
+            if(WorkbookTemplate.IncludeBrixSlurry)
+            {
+                sizeOfThirdContentBlock++;
+
+                targetWorksheet.Cells[currentRow, 1].Value = "Brix slurry";
+                BrixSlurryRow = currentRow;
+
+                currentRow++;
+            }
+
+            if(sizeOfThirdContentBlock > 0)
+            {
+                sumOfBlockRows += sizeOfThirdContentBlock;
+
+                int thirdBlockHeaderRow;
+
+                if (sumOfBlockRows - sizeOfThirdContentBlock == 0)
+                {
+                    thirdBlockHeaderRow = 11;
+                }
+                else
+                {
+                    thirdBlockHeaderRow = 11 + sumOfBlockRows - sizeOfThirdContentBlock + 1; // 11 is starting row, 1 is empty space between blocks
+                    sumOfBlockRows += 2;
+                }
+
+                CreateTableOfBorders(6, sizeOfThirdContentBlock, thirdBlockHeaderRow + 1, 3, targetWorksheet);
+
+                targetWorksheet.Cells[thirdBlockHeaderRow, 1].Value = "Test";
+                targetWorksheet.Cells[thirdBlockHeaderRow, 2].Value = "Method";
+                targetWorksheet.Cells[thirdBlockHeaderRow, 1, thirdBlockHeaderRow, 3].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                targetWorksheet.Cells[thirdBlockHeaderRow, 3, thirdBlockHeaderRow + sizeOfThirdContentBlock, 
+                    8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                targetWorksheet.Cells[thirdBlockHeaderRow, 3].Value = "Analytical Results";
+
+                targetWorksheet.Cells[thirdBlockHeaderRow, 3, thirdBlockHeaderRow, 8].Merge = true;
+                targetWorksheet.Cells[thirdBlockHeaderRow, 1, thirdBlockHeaderRow, 3].Style.Font.Bold = true;
+                targetWorksheet.Cells[thirdBlockHeaderRow, 1, thirdBlockHeaderRow, 8].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
+
+                targetWorksheet.Cells[thirdBlockHeaderRow + 1, 2, thirdBlockHeaderRow + sizeOfThirdContentBlock, 2].Style.Font.Size = 6;
+                targetWorksheet.Cells[thirdBlockHeaderRow + 1, 2, thirdBlockHeaderRow + sizeOfThirdContentBlock, 
+                    2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+            }
+
+            // For fourth content block
+
+            if (sumOfBlockRows > 0)
+                currentRow += 2; // An empty space between blocks and an empty space for the block's header if the total block size > 0
+            else
+                currentRow = 12; // Allows the third block's header to use row 11
+
+            int sizeOfFourthContentBlock = 0;
+
+            if(WorkbookTemplate.IncludeYeast)
+            {
+                sizeOfFourthContentBlock++;
+
+                targetWorksheet.Cells[currentRow, 1].Value = "Yeast";
+                targetWorksheet.Cells[currentRow, 2].Value = YeastMethod;
+                YeastRow = currentRow;
+
+                currentRow++;
+            }
+
+            if(WorkbookTemplate.IncludeMold)
+            {
+                sizeOfFourthContentBlock++;
+
+                targetWorksheet.Cells[currentRow, 1].Value = "Mold";
+                targetWorksheet.Cells[currentRow, 2].Value = MoldMethod;
+                MoldRow = currentRow;
+
+                currentRow++;
+            }
+
+            if(WorkbookTemplate.IncludeAerobic)
+            {
+                sizeOfFourthContentBlock++;
+
+                targetWorksheet.Cells[currentRow, 1].Value = "Aerobic";
+                targetWorksheet.Cells[currentRow, 2].Value = AerobicMethod;
+                AerobicRow = currentRow;
+
+                currentRow++;
+            }
+
+            if(WorkbookTemplate.IncludeColiform)
+            {
+                sizeOfFourthContentBlock++;
+
+                targetWorksheet.Cells[currentRow, 1].Value = "Total coliform";
+                targetWorksheet.Cells[currentRow, 2].Value = ColiformMethod;
+                ColiformRow = currentRow;
+
+                currentRow++;
+            }
+
+            if (WorkbookTemplate.IncludeEColi)
+            {
+                sizeOfFourthContentBlock++;
+
+                targetWorksheet.Cells[currentRow, 1].Value = "E. coliform";
+                targetWorksheet.Cells[currentRow, 2].Value = EColiMethod;
+                EColiRow = currentRow;
+
+                currentRow++;
+            }
+
+            if(WorkbookTemplate.IncludeLactics)
+            {
+                sizeOfFourthContentBlock++;
+
+                targetWorksheet.Cells[currentRow, 1].Value = "Lactics";
+                targetWorksheet.Cells[currentRow, 2].Value = LacticMethod;
+                LacticsRow = currentRow;
+
+                currentRow++;
+            }
+
+            if(WorkbookTemplate.IncludeSalmonella)
+            {
+                sizeOfFourthContentBlock++;
+
+                targetWorksheet.Cells[currentRow, 1].Value = "Salmonella";
+                SalmonellaRow = currentRow;
+
+                currentRow++;
+            }
+
+            if(WorkbookTemplate.IncludeListeria)
+            {
+                sizeOfFourthContentBlock++;
+
+                targetWorksheet.Cells[currentRow, 1].Value = "Listeria";
+                ListeriaRow = currentRow;
+
+                currentRow++;
+            }
+
+            if(sizeOfFourthContentBlock > 0)
+            {
+                sumOfBlockRows += sizeOfFourthContentBlock;
+
+                int fourthBlockHeaderRow;
+
+                if (sumOfBlockRows - sizeOfFourthContentBlock == 0)
+                {
+                    fourthBlockHeaderRow = 11;
+                }
+                else
+                {
+                    fourthBlockHeaderRow = 11 + sumOfBlockRows - sizeOfFourthContentBlock + 1; // 11 is starting row, 1 is empty space between blocks
+                    sumOfBlockRows += 2;
+                }
+
+                targetWorksheet.Cells[fourthBlockHeaderRow, 1].Value = "Test (cfu/gram)";
+                targetWorksheet.Cells[fourthBlockHeaderRow, 2].Value = "Method";
+                targetWorksheet.Cells[fourthBlockHeaderRow, 3].Value = "Microbiological Results";
+                targetWorksheet.Cells[fourthBlockHeaderRow, 1, fourthBlockHeaderRow, 3].Style.Font.Bold = true;
+                targetWorksheet.Cells[fourthBlockHeaderRow, 1, fourthBlockHeaderRow, 3].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                targetWorksheet.Cells[fourthBlockHeaderRow, 3, fourthBlockHeaderRow + sizeOfFourthContentBlock,
+                    8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                targetWorksheet.Cells[fourthBlockHeaderRow, 3, fourthBlockHeaderRow, 8].Merge = true;
+                targetWorksheet.Cells[fourthBlockHeaderRow, 1, fourthBlockHeaderRow, 8].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
+                targetWorksheet.Cells[fourthBlockHeaderRow + 1, 2, fourthBlockHeaderRow + sizeOfFourthContentBlock, 2].Style.Font.Size = 6;
+                targetWorksheet.Cells[fourthBlockHeaderRow + 1, 2, fourthBlockHeaderRow + sizeOfFourthContentBlock, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+
+                CreateTableOfBorders(6, sizeOfFourthContentBlock, fourthBlockHeaderRow + 1, 3, targetWorksheet);
+            }
+
+            // For fifth content block
+            if (sumOfBlockRows > 0)
+                currentRow += 2; // An empty space between blocks and an empty space for the block's header if the total block size > 0
+            else
+                currentRow = 12; // Allows the third block's header to use row 11
+
+            int sizeOfFifthContentBlock = 0;
+
+            if(WorkbookTemplate.IncludeColorAndAppearance)
+            {
+                sizeOfFifthContentBlock++;
+
+                targetWorksheet.Cells[currentRow, 1].Value = "Color/Appearance";
+                ColorAndAppearanceRow = currentRow;
+
+                currentRow++;
+            }
+
+            if(WorkbookTemplate.IncludeForm)
+            {
+                sizeOfFifthContentBlock++;
+                
+                targetWorksheet.Cells[currentRow, 1].Value = "Form";
+                FormRow = currentRow;
+
+                currentRow++;
+            }
+
+            if(WorkbookTemplate.IncludeFlavorAndOdor)
+            {
+                sizeOfFifthContentBlock++;
+
+                targetWorksheet.Cells[currentRow, 1].Value = "Flavor/Odor";
+                FlavorAndOdorRow = currentRow;
+                
+                currentRow++;
+            }
+
+            if(sizeOfFifthContentBlock > 0)
+            {
+                sumOfBlockRows += sizeOfFifthContentBlock;
+
+                int fifthBlockHeaderRow;
+
+                if (sumOfBlockRows - sizeOfFifthContentBlock == 0)
+                {
+                    fifthBlockHeaderRow = 11;
+                }
+                else
+                {
+                    fifthBlockHeaderRow = 11 + sumOfBlockRows - sizeOfFifthContentBlock + 1; // 11 is starting row, 1 is empty space between blocks
+                    sumOfBlockRows += 2;
+                }
+
+                targetWorksheet.Cells[fifthBlockHeaderRow, 1].Value = "Test";
+                targetWorksheet.Cells[fifthBlockHeaderRow, 3].Value = "Physical Characteristics";
+                targetWorksheet.Cells[fifthBlockHeaderRow, 1, fifthBlockHeaderRow, 3].Style.Font.Bold = true;
+                targetWorksheet.Cells[fifthBlockHeaderRow, 3, fifthBlockHeaderRow, 8].Merge = true;
+                targetWorksheet.Cells[fifthBlockHeaderRow, 3, fifthBlockHeaderRow + sizeOfFifthContentBlock,
+                    8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                targetWorksheet.Cells[fifthBlockHeaderRow, 1, fifthBlockHeaderRow, 8].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
+
+                CreateTableOfBorders(6, sizeOfFifthContentBlock, fifthBlockHeaderRow + 1, 3, targetWorksheet);
+            }
+
+            // For verified by and document disclaimer
+
+            currentRow += 1;
+
+            targetWorksheet.Cells[currentRow, 1].Value = "Verified By";
+            targetWorksheet.Cells[currentRow, 1, currentRow + 5, 8].Style.Font.Size = 11;
+            targetWorksheet.Cells[currentRow, 1].Style.Font.Bold = true;
+            targetWorksheet.Cells[currentRow, 1, currentRow, 8].Merge = true;
+            targetWorksheet.Cells[currentRow, 1, currentRow, 8].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
+
+            currentRow++;
+            targetWorksheet.Cells[currentRow, 1, currentRow, 8].Merge = true;
+            CreateTableOfBorders(8, 1, currentRow, 1, targetWorksheet);
+            targetWorksheet.Cells[currentRow - 1, 1, currentRow + 2, 8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+            currentRow += 2;
+            targetWorksheet.Cells[currentRow, 1, currentRow + 4, 8].Merge = true;
+            targetWorksheet.Cells[currentRow, 1].Style.WrapText = true;
+            targetWorksheet.Cells[currentRow, 1].Value = "Please be advised that the results herein are accurate and representative to " +
+                "the best of our knowledge, based on current data and information as of the date of this document.  This COA is intended " +
+                "only for the person or company specified hereon as the recipient.  This COA shall not be distributed to any person or " +
+                "company other than the intended recipient.  A person or company other than the one named hereon shall not rely or make " +
+                "use of the statements and results herein. ";
+
+            // For miscellaneous document items
+            targetWorksheet.PrinterSettings.FitToPage = true;
+            
+            targetWorksheet.HeaderFooter.EvenFooter.LeftAlignedText = "created: 04/22/2016";
+            targetWorksheet.HeaderFooter.EvenFooter.RightAlignedText = "10/31/2019 REV 03 F142-087";
+            targetWorksheet.HeaderFooter.OddFooter.LeftAlignedText = "created: 04/22/2016";
+            targetWorksheet.HeaderFooter.OddFooter.RightAlignedText = "10/31/2019 REV 03 F142-087";
+
+            SaveFile = true;
         }
         /// <summary>
         /// Determines which customer-specific worksheet design to use and calls the appropriate method

@@ -29,8 +29,8 @@ namespace CoA_Tool.CSV
         public Tableau()
         {
             FileContents = new List<List<List<string>>>();
-            EnsureDesktopSubDirectoriesExist();
             DesktopSubDirectoryPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\CoAs\\Tableau Files";
+            EnsureDesktopSubDirectoriesExist();
         }
 
         // Public methods
@@ -66,7 +66,7 @@ namespace CoA_Tool.CSV
 
                 foreach (string line in File.ReadLines(file))
                 {
-                    if (line.StartsWith(",") == false)
+                    if (line.StartsWith(",") == false && line != string.Empty)
                         FileContents[FileContents.Count - 1].Add(line.Split(new char[] { ',' }).ToList());
                 }
             }
@@ -135,6 +135,9 @@ namespace CoA_Tool.CSV
         /// </summary>
         private void EnsureDesktopSubDirectoriesExist()
         {
+            if (Directory.Exists(DesktopSubDirectoryPath) == false)
+                Directory.CreateDirectory(DesktopSubDirectoryPath);
+
             if (Directory.Exists(DesktopSubDirectoryPath + "\\1) New Batch") == false)
                 Directory.CreateDirectory(DesktopSubDirectoryPath + "\\1) New Batch");
 
@@ -171,11 +174,22 @@ namespace CoA_Tool.CSV
                 fullPath += "\\4) Deletion Queue\\";
 
             HashSet<string> salesOrderSet = new HashSet<string>();
-            string salesOrder;
+            string salesOrder = string.Empty;
 
             foreach(string file in CSVFilesFrom(fullPath))
             {
-                salesOrder = File.ReadLines(file).ElementAt(1).Split(new char[] { ',' })[3];
+                string secondLine = File.ReadLines(file).ElementAt(1);
+                if (secondLine != string.Empty)
+                    salesOrder = secondLine.Split(new char[] { ',' })[3];
+                else
+                {
+                    
+                    foreach(string line in File.ReadLines(file))
+                    {
+                        if (line.Contains("Qty"))
+                            salesOrder = line.Split(new char[] { ',' })[3];
+                    }
+                }
 
                 if (salesOrderSet.Contains(salesOrder))
                     File.Delete(file);

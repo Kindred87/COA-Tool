@@ -14,11 +14,11 @@ namespace CoA_Tool
     class Template
     {
         // Enums
-        public enum Algorithm { Standard, DaysFromToday}
+        public enum Algorithm { Standard, ResultsFromDateOnwards}
         private enum ContentCategories { None, Algorithm, MainContentBlock, }
 
         // Objects
-        private Console.SelectionMenu Menu;
+        public Console.SelectionMenu Menu { get; private set; }
 
         // Enum variables
         public Algorithm SelectedAlgorithm;
@@ -31,16 +31,27 @@ namespace CoA_Tool
         public bool IncludeProductName;
         public bool IncludeRecipeAndItem;
         public bool IncludeLotCode;
+        public bool IncludeBatch;
+        public bool IncludeBestByDate;
         public bool IncludeManufacturingSite;
         public bool IncludeManufacturingDate;
         public bool IncludeAcidity;
         public bool IncludepH;
+        public bool IncludeViscosityCM;
         public bool IncludeViscosityCPS;
+        public bool IncludeWaterActivity;
+        public bool IncludeBrixSlurry;
         public bool IncludeYeast;
         public bool IncludeMold;
         public bool IncludeAerobic;
         public bool IncludeColiform;
+        public bool IncludeEColi;
         public bool IncludeLactics;
+        public bool IncludeSalmonella;
+        public bool IncludeListeria;
+        public bool IncludeColorAndAppearance;
+        public bool IncludeForm;
+        public bool IncludeFlavorAndOdor;
 
         public Template ()
         {
@@ -106,7 +117,7 @@ namespace CoA_Tool
 
             Console.Util.WriteMessageInCenter("Loading " + Menu.UserChoice + " Template");
 
-            foreach(string line in File.ReadLines(Directory.GetCurrentDirectory() + "/Templates/" + templateName + ".txt"))
+            foreach(string line in File.ReadLines(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\CoAs\\Templates\\" + templateName + ".txt"))
             {
                 delimitedLine = line.Split(new char[] { '=' }).ToList();
 
@@ -136,8 +147,8 @@ namespace CoA_Tool
                         case "type":
                             switch(delimitedLine[1].ToLower())
                             {
-                                case "daysfromtoday":
-                                    SelectedAlgorithm = Algorithm.DaysFromToday;
+                                case "resultsfromdateonwards":
+                                    SelectedAlgorithm = Algorithm.ResultsFromDateOnwards;
                                     break;
                                 case "standard":
                                     SelectedAlgorithm = Algorithm.Standard;
@@ -197,6 +208,18 @@ namespace CoA_Tool
                             else
                                 IncludeLotCode = false;
                             break;
+                        case "batch":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludeBatch = true;
+                            else
+                                IncludeBatch = false;
+                            break;
+                        case "best by date":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludeBestByDate = true;
+                            else
+                                IncludeBestByDate = false;
+                            break;
                         case "manufacturing site":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeManufacturingSite = true;
@@ -221,11 +244,29 @@ namespace CoA_Tool
                             else
                                 IncludepH = false;
                             break;
+                        case "viscosity cm":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludeViscosityCM = true;
+                            else
+                                IncludeViscosityCM = false;
+                            break;
                         case "viscosity cps":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeViscosityCPS = true;
                             else
                                 IncludeViscosityCPS = false;
+                            break;
+                        case "water activity":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludeWaterActivity = true;
+                            else
+                                IncludeWaterActivity = false;
+                            break;
+                        case "brix slurry":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludeBrixSlurry = true;
+                            else
+                                IncludeBrixSlurry = false;
                             break;
                         case "yeast":
                             if (delimitedLine[1].ToLower() == "true")
@@ -251,11 +292,47 @@ namespace CoA_Tool
                             else
                                 IncludeColiform = false;
                             break;
+                        case "ecoli":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludeEColi = true;
+                            else
+                                IncludeEColi = false;
+                            break;
                         case "lactics":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeLactics = true;
                             else
                                 IncludeLactics = false;
+                            break;
+                        case "salmonella":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludeSalmonella = true;
+                            else
+                                IncludeSalmonella = false;
+                            break;
+                        case "listeria":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludeListeria = true;
+                            else
+                                IncludeListeria = false;
+                            break;
+                        case "color/appearance":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludeColorAndAppearance = true;
+                            else
+                                IncludeColorAndAppearance = false;
+                            break;
+                        case "form":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludeForm = true;
+                            else
+                                IncludeForm = false;
+                            break;
+                        case "flavor/odor":
+                            if (delimitedLine[1].ToLower() == "true")
+                                IncludeFlavorAndOdor = true;
+                            else
+                                IncludeFlavorAndOdor = false;
                             break;
                         default:
                             break;

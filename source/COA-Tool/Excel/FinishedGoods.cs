@@ -49,6 +49,8 @@ namespace CoA_Tool.Excel
                     Contents[i - 2].Add(package.Workbook.Worksheets[1].Cells[i, 7].Value.ToString()); // Days to expiry
                     Contents[i - 2].Add(package.Workbook.Worksheets[1].Cells[i, 8].Value.ToString()); // Recipe
                 }
+
+                Console.Util.RemoveMessageInCenter();
             }
         }
         /// <summary>
