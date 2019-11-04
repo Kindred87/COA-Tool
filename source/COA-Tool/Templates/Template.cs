@@ -206,6 +206,9 @@ namespace CoA_Tool
                             break;
 
                         case "target column":
+                            {
+                                bool assignedTarget
+                            }
                             break;
 
                         case "search criteria":
