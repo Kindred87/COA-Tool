@@ -14,7 +14,11 @@ namespace CoA_Tool
     class Template
     {
         // Enums
+        /// <summary>
+        /// General methods for generating unique varieties of CoAs
+        /// </summary>
         public enum Algorithm { Standard, ResultsFromDateOnwards}
+
         private enum ContentCategories { None, Algorithm, MainContentBlock, }
 
         // Objects
@@ -22,6 +26,9 @@ namespace CoA_Tool
 
         // Enum variables
         public Algorithm SelectedAlgorithm;
+
+        // Lists
+        public List<Templates.CustomSearch> CustomSearches;
 
         // Bools
         public bool IncludeCustomerName;
@@ -138,6 +145,13 @@ namespace CoA_Tool
                     default:
                         break;
                 }
+
+                // These are used with Console.SelectionMenu in switch defaults to notify...
+                // the user of invalid items in the template file
+                string promptForInvalidItem;
+                List<string> continueOption = new List<string>();
+                continueOption.Add("Continue");
+
                 // Sets SelectedAlgorithm, if applicable
                 if(currentCategory == ContentCategories.Algorithm)
                 {
@@ -154,10 +168,52 @@ namespace CoA_Tool
                                     SelectedAlgorithm = Algorithm.Standard;
                                     break;
                                 default:
+                                    promptForInvalidItem = delimitedLine[1] + " is not a valid algorithm type.";
+                                    new Console.SelectionMenu(continueOption, "", promptForInvalidItem);
                                     break;
                             }
                             break;
+
+                        case "data-group to search":
+                            {
+                                bool assignedDataGroup = false;
+
+                                switch (delimitedLine[1].ToLower())
+                                {
+                                    case "micro":
+                                        do // Find customSearch with unassigned datagroup, if can't, make a new customSearch and try again
+                                        {
+                                            foreach (Templates.CustomSearch customSearch in CustomSearches)
+                                            {
+                                                if (customSearch.DataGroup == Templates.CustomSearch.DataGroupToSearch.Unassigned)
+                                                {
+                                                    customSearch.DataGroup = Templates.CustomSearch.DataGroupToSearch.Micro;
+                                                    assignedDataGroup = true;
+                                                }
+                                            }
+                                            if (assignedDataGroup == false)
+                                            {
+                                                CustomSearches.Add(new Templates.CustomSearch());
+                                            }
+                                        } while (assignedDataGroup == false);
+                                        break;
+                                    default:
+                                        promptForInvalidItem = delimitedLine[1] + " is not a valid data-group to search.";
+                                        new Console.SelectionMenu(continueOption, "", promptForInvalidItem);
+                                        break;
+                                }
+                            }
+                            break;
+
+                        case "target column":
+                            break;
+
+                        case "search criteria":
+                            break;
+
                         default:
+                            promptForInvalidItem = delimitedLine[0] + " is not a valid algorithm item.";
+                            new Console.SelectionMenu(continueOption, "", promptForInvalidItem);
                             break;
                     }
                 }
@@ -335,6 +391,8 @@ namespace CoA_Tool
                                 IncludeFlavorAndOdor = false;
                             break;
                         default:
+                            promptForInvalidItem = delimitedLine[0] + " is not a valid content item.";
+                            new Console.SelectionMenu(continueOption, "", promptForInvalidItem);
                             break;
                     }
                 }
