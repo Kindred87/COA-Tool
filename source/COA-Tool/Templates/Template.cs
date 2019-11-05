@@ -17,7 +17,7 @@ namespace CoA_Tool
         /// <summary>
         /// General methods for generating unique varieties of CoAs
         /// </summary>
-        public enum Algorithm { Standard, ResultsFromDateOnwards}
+        public enum Algorithm { Standard, FromDateOnwards}
         private enum ContentCategories { None, Algorithm, FilterResults, MainContentBlock}
         /// <summary>
         /// Represents the different items that can be included in a CoA document
@@ -178,8 +178,8 @@ namespace CoA_Tool
                         case "type":
                             switch(delimitedLine[1].ToLower())
                             {
-                                case "resultsfromdateonwards":
-                                    SelectedAlgorithm = Algorithm.ResultsFromDateOnwards;
+                                case "fromdateonwards":
+                                    SelectedAlgorithm = Algorithm.FromDateOnwards;
                                     break;
 
                                 case "standard":

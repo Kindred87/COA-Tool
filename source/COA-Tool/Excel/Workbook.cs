@@ -97,7 +97,7 @@ namespace CoA_Tool.Excel
                     if ((TableauData.Count - 1) % 6 > 0)
                         pageCount++;
                 }
-                else if(WorkbookTemplate.SelectedAlgorithm == Template.Algorithm.ResultsFromDateOnwards)
+                else if(WorkbookTemplate.SelectedAlgorithm == Template.Algorithm.FromDateOnwards)
                 {
                     int itemCount = 0;
 
@@ -341,7 +341,7 @@ namespace CoA_Tool.Excel
                 targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
                 targetWorksheet.Cells[currentRow, 1].Value = "Batch";
 
-                if(WorkbookTemplate.SelectedAlgorithm == Template.Algorithm.ResultsFromDateOnwards)
+                if(WorkbookTemplate.SelectedAlgorithm == Template.Algorithm.FromDateOnwards)
                 {
                     for (int i = 0; i < lotsToProcess.Count; i++)
                     {

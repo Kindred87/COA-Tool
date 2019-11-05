@@ -41,7 +41,7 @@ namespace CoA_Tool.Excel
                 }
             }
             // For each group of relevant items that fall within the user-requested time span, spawn a workbook
-            else if (template.SelectedAlgorithm == Template.Algorithm.ResultsFromDateOnwards)
+            else if (template.SelectedAlgorithm == Template.Algorithm.FromDateOnwards)
             {
                 nwaData.LoadCSVFiles();
                 DateTime desiredStartDate = Console.Util.GetDateFromUser("Please enter a start date for the search algorithm.");
