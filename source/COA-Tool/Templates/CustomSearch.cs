@@ -16,29 +16,65 @@ namespace CoA_Tool.Templates
         {
             get
             {
-                if (DataGroup != DataGroupToSearch.Unassigned && SearchCriteria != string.Empty && TargetColumn >= 0)
+                if (DataGroup != DataGroupToSearch.Unassigned && SearchCriteria != string.Empty && SearchColumnOffset >= 0)
                     return true;
                 else
                     return false;
             }
         }
         /// <summary>
+        /// Indicates that the offset should be from a particular column
+        /// </summary>
+        public bool OffsetFromSpecificColumn;
+        
+        /// <summary>
         /// Files or data clusters to search for additional user-requested data
         /// </summary>
         public enum DataGroupToSearch { Unassigned, Titration, Micro };
 
-        public DataGroupToSearch DataGroup;
-
-        public int TargetColumn
+        public DataGroupToSearch DataGroup
         {
             get
             {
-                return TargetColumn;
+                return DataGroup;
+            }
+            set
+            {
+                if(SearchColumnOffset > -1) // In the event that SearchColumnOffset is assigned before DataGroup
+                    SearchColumnOffset = ++SearchColumnOffset; // Set property is reexecuted to properly assign SearchColumnOffset for the data group
+                                                   // value passed to SearchColumnOffset set property is subtracted by one
+            }
+        }
+
+        public int SearchColumnOffset
+        {
+            get
+            {
+                return SearchColumnOffset;
             }
             set
             {
                 // 0-based in program, 1-based in template file for users' sake
-                TargetColumn = value - 1;   
+                SearchColumnOffset = value - 1;   
+
+                if(DataGroup == DataGroupToSearch.Micro)
+                {
+                    
+                    if(SearchColumnOffset == 11 || SearchColumnOffset >= 35)
+                    {
+                        string invalidColumnPrompt = (SearchColumnOffset + 1) + " is not allowed for a target column value for micro data group";
+                        List<string> options = new List<string>();
+                        options.Add("Continue regardless.");
+                        options.Add("Exit application");
+                        if (new Console.SelectionMenu(options, "", invalidColumnPrompt).UserChoice == "Exit application")
+                            Environment.Exit(0);
+                    }
+                    else if (SearchColumnOffset > 11)
+                    {
+                        OffsetFromSpecificColumn = true;
+                        SearchColumnOffset -= 13;
+                    }
+                }
             }
         }
 
@@ -49,38 +85,8 @@ namespace CoA_Tool.Templates
         {
             DataGroup = DataGroupToSearch.Unassigned;
             SearchCriteria = string.Empty;
-            TargetColumn = -1;
-        }
-        /// <summary>
-        /// Sets DataGroup from a valid string, offers user to exit if string is invalid
-        /// </summary>
-        /// <param name="fromTemplateFile"></param>
-        public void SetDataGroup(string fromTemplateFile)
-        {
-            if(fromTemplateFile.ToLower() == "micro")
-            {
-
-            }
-            else if(fromTemplateFile.ToLower() == "dressing")
-            {
-
-            }
-            else
-            {
-                string prompt = "Selected template specifies " + fromTemplateFile + " for \"Data-Group To Search\", this is invalid and your search criteria will not be used";
-                
-                List<string> options = new List<string>();
-                options.Add("Continue regardless");
-                
-                options.Add("Exit program");
-                Console.SelectionMenu menu = new Console.SelectionMenu(options, "Choose to", prompt);
-
-                if(menu.UserChoice == "Exit program")
-                {
-                    Environment.Exit(0);
-                }
-                
-            }
+            SearchColumnOffset = -1;
+            OffsetFromSpecificColumn = false;
         }
     }
 }

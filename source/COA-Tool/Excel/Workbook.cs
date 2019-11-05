@@ -178,7 +178,7 @@ namespace CoA_Tool.Excel
             targetWorksheet.Cells[11, 1, 60, 2].Style.Font.Size = 9;
             targetWorksheet.Cells[11, 1, 60, 8].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
 
-            // Important data for later use
+            // For later use
 
             List<string> lotsToProcess = new List<string>();
             for(int i = 6 * (currentPage - 1); i < 6 * currentPage; i++)

@@ -18,11 +18,16 @@ namespace CoA_Tool
         /// General methods for generating unique varieties of CoAs
         /// </summary>
         public enum Algorithm { Standard, ResultsFromDateOnwards}
-
-        private enum ContentCategories { None, Algorithm, MainContentBlock, }
-
-        // Objects
-        public Console.SelectionMenu Menu { get; private set; }
+        /// <summary>
+        /// Represents the different items that can be included in a CoA document
+        /// </summary>
+        public enum ContentItems
+        {
+            CustomerName, SalesOrder, PurchaseOrder, GenerationDate, ProductName, RecipeAndItem, LotCode, Batch,
+            BestByDate, ManufacturingSite, ManufacturingDate, Acidity, pH, ViscosityCM, ViscosityCPS, WaterActivity, BrixSlurry, Yeast, Mold,
+            Aerobic, Coliform, EColi, Lactics, Salmonella, Listeria, ColorAndAppearance, Form, FlavorAndOdor
+        }
+        public Templates.CustomFilter CustomFilter;
 
         // Enum variables
         public Algorithm SelectedAlgorithm;
@@ -60,10 +65,14 @@ namespace CoA_Tool
         public bool IncludeForm;
         public bool IncludeFlavorAndOdor;
 
+        Console.SelectionMenu Menu;
+
         public Template ()
         {
             if (Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\CoAs\\Templates") == false)
                 Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\CoAs\\Templates");
+
+            CustomSearches = new List<Templates.CustomSearch>();
 
             Menu = new Console.SelectionMenu(GetOptions(), "Templates:", "Please select a template");
 
@@ -139,9 +148,15 @@ namespace CoA_Tool
                     case "[algorithm]":
                         currentCategory = ContentCategories.Algorithm;
                         break;
+
+                    case "[filter results]":
+                        currentCategory = ContentCategories.FilterResults;
+                        break;
+
                     case "[main content block]":
                         currentCategory = ContentCategories.MainContentBlock;
                         break;
+
                     default:
                         break;
                 }
@@ -149,14 +164,13 @@ namespace CoA_Tool
                 // These are used with Console.SelectionMenu in switch defaults to notify...
                 // the user of invalid items in the template file
                 string promptForInvalidItem;
-                List<string> continueOption = new List<string>();
-                continueOption.Add("Continue");
+                List<string> optionsForInvalidItem = new List<string>();
+                optionsForInvalidItem.Add("Continue regardless");
+                optionsForInvalidItem.Add("Exit application");
 
                 // Sets SelectedAlgorithm, if applicable
                 if(currentCategory == ContentCategories.Algorithm)
-                {
-                    // A switch statement is used to accomodate additions of template options
-                    switch(delimitedLine[0].ToLower())
+                    switch(delimitedLine[0].ToLower()) // A switch statement is used to accomodate additions of template options
                     {
                         case "type":
                             switch(delimitedLine[1].ToLower())
@@ -164,12 +178,15 @@ namespace CoA_Tool
                                 case "resultsfromdateonwards":
                                     SelectedAlgorithm = Algorithm.ResultsFromDateOnwards;
                                     break;
+
                                 case "standard":
                                     SelectedAlgorithm = Algorithm.Standard;
                                     break;
+
                                 default:
                                     promptForInvalidItem = delimitedLine[1] + " is not a valid algorithm type.";
-                                    new Console.SelectionMenu(continueOption, "", promptForInvalidItem);
+                                    if (new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem).UserChoice == "Exit application")
+                                        Environment.Exit(0);
                                     break;
                             }
                             break;
@@ -181,6 +198,19 @@ namespace CoA_Tool
                                 switch (delimitedLine[1].ToLower())
                                 {
                                     case "micro":
+
+                                        foreach(Templates.CustomSearch search in CustomSearches)
+                                        {
+                                            if(search.DataGroup != Templates.CustomSearch.DataGroupToSearch.Micro ||
+                                                search.DataGroup != Templates.CustomSearch.DataGroupToSearch.Unassigned)
+                                            {
+                                                Console.Util.WriteMessageInCenter("Program cannot proceed with mixed data-groups in algorithm information.  " +
+                                                    "  Press any key to exit application.", ConsoleColor.Red);
+                                                System.Console.ReadKey();
+                                                Environment.Exit(0);
+                                            }
+                                        }
+
                                         do // Find customSearch with unassigned datagroup, if can't, make a new customSearch and try again
                                         {
                                             foreach (Templates.CustomSearch customSearch in CustomSearches)
@@ -198,31 +228,91 @@ namespace CoA_Tool
                                         } while (assignedDataGroup == false);
                                         break;
                                     default:
-                                        promptForInvalidItem = delimitedLine[1] + " is not a valid data-group to search.";
-                                        new Console.SelectionMenu(continueOption, "", promptForInvalidItem);
+                                        promptForInvalidItem = delimitedLine[1] + " is not a valid algorithm data-group to search.";
+                                        if (new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem).UserChoice == "Exit application")
+                                            Environment.Exit(0);
                                         break;
                                 }
                             }
                             break;
 
-                        case "target column":
+                        case "search column":
                             {
-                                bool assignedTarget
+                                bool assignedSearchColumn = false;
+
+                                if(Int32.TryParse(delimitedLine[1], out int searchColumnValue))
+                                {
+                                    do // Find customSearch with unassigned datagroup, if can't, make a new customSearch and try again
+                                    {
+                                        foreach (Templates.CustomSearch customSearch in CustomSearches)
+                                        {
+                                            if (customSearch.SearchColumnOffset == -1) // -1 is the default value
+                                            {
+                                                customSearch.SearchColumnOffset = searchColumnValue;
+                                                assignedSearchColumn = true;
+                                            }
+                                        }
+                                        if (assignedSearchColumn == false)
+                                        {
+                                            CustomSearches.Add(new Templates.CustomSearch());
+                                        }
+                                    } while (assignedSearchColumn == false);
+                                }
+                                else
+                                {
+                                    promptForInvalidItem = delimitedLine[1] + " is not a valid number for algorithm search column";
+                                    if (new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem).UserChoice == "Exit application")
+                                        Environment.Exit(0);
+                                }
+
+                                
                             }
                             break;
 
                         case "search criteria":
+                            bool assignedSearchCriteria = false;
+
+                            do // Find customSearch with unassigned datagroup, if can't, make a new customSearch and try again
+                            {
+                                foreach (Templates.CustomSearch customSearch in CustomSearches)
+                                {
+                                    if (customSearch.SearchCriteria == string.Empty)
+                                    {
+                                        customSearch.SearchCriteria = delimitedLine[1];
+                                        assignedSearchCriteria = true;
+                                    }
+                                }
+                                if (assignedSearchCriteria == false)
+                                {
+                                    CustomSearches.Add(new Templates.CustomSearch());
+                                }
+                            } while (assignedSearchCriteria == false);
+                            break;
+
+                        case "":
                             break;
 
                         default:
                             promptForInvalidItem = delimitedLine[0] + " is not a valid algorithm item.";
-                            new Console.SelectionMenu(continueOption, "", promptForInvalidItem);
+                            new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem);
+                            break;
+                    }
+                
+                else if(currentCategory == ContentCategories.FilterResults)
+                {
+                    CustomFilter = new Templates.CustomFilter();
+                    switch (delimitedLine[0].ToLower())
+                    {
+                        case "":
+                            break;
+                        default:
+                            promptForInvalidItem = delimitedLine[0] + " is not a valid filter results item.";
+                            new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem);
                             break;
                     }
                 }
                 // Sets class bools for content inclusion
                 else if(currentCategory == ContentCategories.MainContentBlock)
-                {
                     switch (delimitedLine[0].ToLower())
                     {
                         case "customer name":
@@ -393,12 +483,14 @@ namespace CoA_Tool
                             else
                                 IncludeFlavorAndOdor = false;
                             break;
+                        case "":
+                            break;
                         default:
                             promptForInvalidItem = delimitedLine[0] + " is not a valid content item.";
-                            new Console.SelectionMenu(continueOption, "", promptForInvalidItem);
+                            new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem);
                             break;
                     }
-                }
+                
                 
             }
 
