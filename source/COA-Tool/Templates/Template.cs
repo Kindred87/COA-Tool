@@ -18,22 +18,23 @@ namespace CoA_Tool
         /// General methods for generating unique varieties of CoAs
         /// </summary>
         public enum Algorithm { Standard, ResultsFromDateOnwards}
+        private enum ContentCategories { None, Algorithm, FilterResults, MainContentBlock}
         /// <summary>
         /// Represents the different items that can be included in a CoA document
         /// </summary>
         public enum ContentItems
         {
-            CustomerName, SalesOrder, PurchaseOrder, GenerationDate, ProductName, RecipeAndItem, LotCode, Batch,
+            Unassigned, CustomerName, SalesOrder, PurchaseOrder, GenerationDate, ProductName, RecipeAndItem, LotCode, Batch,
             BestByDate, ManufacturingSite, ManufacturingDate, Acidity, pH, ViscosityCM, ViscosityCPS, WaterActivity, BrixSlurry, Yeast, Mold,
             Aerobic, Coliform, EColi, Lactics, Salmonella, Listeria, ColorAndAppearance, Form, FlavorAndOdor
         }
-        public Templates.CustomFilter CustomFilter;
 
         // Enum variables
         public Algorithm SelectedAlgorithm;
 
         // Lists
         public List<Templates.CustomSearch> CustomSearches;
+        public List<Templates.CustomFilter> CustomFilters;
 
         // Bools
         public bool IncludeCustomerName;
@@ -69,6 +70,8 @@ namespace CoA_Tool
 
         public Template ()
         {
+            SetInclusionBoolsAsFalse();
+
             if (Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\CoAs\\Templates") == false)
                 Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\CoAs\\Templates");
 
@@ -293,16 +296,193 @@ namespace CoA_Tool
                             break;
 
                         default:
-                            promptForInvalidItem = delimitedLine[0] + " is not a valid algorithm item.";
+                            promptForInvalidItem = delimitedLine[1] + " is not a valid algorithm item.";
                             new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem);
                             break;
                     }
                 
                 else if(currentCategory == ContentCategories.FilterResults)
                 {
-                    CustomFilter = new Templates.CustomFilter();
+                    // Used to track which filter to apply criteria to, assigned with filter in/out and content item
+                    int forCustomFilter = 0;
+
                     switch (delimitedLine[0].ToLower())
                     {
+                        case "filter in or out":
+                            {
+                                bool assignedFilter = false;
+                                do // Find customFilter with unassigned Filter, if can't, make a new customFilter and try again
+                                {
+                                    foreach (Templates.CustomFilter customFilter in CustomFilters)
+                                    {
+                                        if (customFilter.Filter == Templates.CustomFilter.FilterType.Unassigned)
+                                        {
+                                            forCustomFilter = CustomFilters.Count - 1;
+
+                                            if (delimitedLine[1].ToLower() == "in")
+                                                customFilter.Filter = Templates.CustomFilter.FilterType.In;
+                                            else
+                                                customFilter.Filter = Templates.CustomFilter.FilterType.Out;
+                                            
+                                            assignedFilter = true;
+                                        }
+                                    }
+                                    if (assignedFilter == false)
+                                        CustomSearches.Add(new Templates.CustomSearch());
+                                    
+                                } while (assignedFilter == false);
+                            }
+                            break;
+                        case "content item":
+                            {
+                                bool assignedContentItem = false;
+                                do // Find customFilter with unassigned ContentItem, if can't, make a new customFilter and try again
+                                {
+                                    foreach(Templates.CustomFilter customFilter in CustomFilters)
+                                    {
+                                        forCustomFilter = CustomFilters.Count - 1;
+
+                                        if (customFilter.ContentItem == ContentItems.Unassigned)
+                                            switch(delimitedLine[1].ToLower())
+                                            {
+                                                case "customer name":
+                                                    customFilter.ContentItem = ContentItems.CustomerName;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "sales order":
+                                                    customFilter.ContentItem = ContentItems.SalesOrder;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "purchase order":
+                                                    customFilter.ContentItem = ContentItems.PurchaseOrder;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "generation date":
+                                                    customFilter.ContentItem = ContentItems.GenerationDate;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "product name":
+                                                    customFilter.ContentItem = ContentItems.ProductName;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "recipe/item":
+                                                    customFilter.ContentItem = ContentItems.RecipeAndItem;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "lot code":
+                                                    customFilter.ContentItem = ContentItems.LotCode;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "batch":
+                                                    customFilter.ContentItem = ContentItems.Batch;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "best by date":
+                                                    customFilter.ContentItem = ContentItems.BestByDate;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "manufacturing site":
+                                                    customFilter.ContentItem = ContentItems.ManufacturingSite;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "manufacturing date":
+                                                    customFilter.ContentItem = ContentItems.ManufacturingDate;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "acidity":
+                                                    customFilter.ContentItem = ContentItems.Acidity;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "ph":
+                                                    customFilter.ContentItem = ContentItems.pH;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "viscosity cm":
+                                                    customFilter.ContentItem = ContentItems.ViscosityCM;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "viscosity cps":
+                                                    customFilter.ContentItem = ContentItems.ViscosityCPS;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "water activity":
+                                                    customFilter.ContentItem = ContentItems.WaterActivity;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "brix slurry":
+                                                    customFilter.ContentItem = ContentItems.BrixSlurry;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "yeast":
+                                                    customFilter.ContentItem = ContentItems.Yeast;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "mold":
+                                                    customFilter.ContentItem = ContentItems.Mold;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "aerobic":
+                                                    customFilter.ContentItem = ContentItems.Aerobic;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "coliform":
+                                                    customFilter.ContentItem = ContentItems.Coliform;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "ecoli":
+                                                    customFilter.ContentItem = ContentItems.EColi;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "lactics":
+                                                    customFilter.ContentItem = ContentItems.Lactics;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "salmonella":
+                                                    customFilter.ContentItem = ContentItems.Salmonella;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "listeria":
+                                                    customFilter.ContentItem = ContentItems.Listeria;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "color/appearance":
+                                                    customFilter.ContentItem = ContentItems.ColorAndAppearance;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "form":
+                                                    customFilter.ContentItem = ContentItems.Form;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "flavor/odor":
+                                                    
+                                                    break;
+                                                // CustomerName, SalesOrder, PurchaseOrder, GenerationDate, ProductName, RecipeAndItem, LotCode, Batch,
+                                                // BestByDate, ManufacturingSite, ManufacturingDate, Acidity, pH, ViscosityCM, ViscosityCPS, WaterActivity, BrixSlurry, Yeast, Mold,
+                                                // Aerobic, Coliform, EColi, Lactics, Salmonella, Listeria, ColorAndAppearance, Form, FlavorAndOdor
+                                                case "":
+                                                    break;
+                                                default:
+                                                    promptForInvalidItem = delimitedLine[1] + " is not a valid content item";
+                                                    new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem);
+                                                    break;
+                                            }
+
+                                        if (assignedContentItem == false)
+                                            CustomFilters.Add(new Templates.CustomFilter());
+                                    }
+                                } while (assignedContentItem == false);
+                            }
+                            break;
+                        case "criteria":
+                            {
+                                if(CustomFilters.Count == 0)
+                                {
+                                    CustomFilters.Add(new Templates.CustomFilter());
+                                }
+
+                                CustomFilters[forCustomFilter].Criteria.Add(delimitedLine[1]);
+                            }
+                            break;
                         case "":
                             break;
                         default:
@@ -318,170 +498,114 @@ namespace CoA_Tool
                         case "customer name":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeCustomerName = true;
-                            else
-                                IncludeCustomerName = false;
                             break;
                         case "sales order":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeSalesOrder = true;
-                            else
-                                IncludeSalesOrder = false;
                             break;
                         case "purchase order":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludePurchaseOrder = true;
-                            else
-                                IncludePurchaseOrder = false;
                             break;
                         case "generation date":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeGenerationDate = true;
-                            else
-                                IncludeGenerationDate = false;
                             break;
                         case "product name":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeProductName = true;
-                            else
-                                IncludeProductName = false;
                             break;
                         case "recipe/item":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeRecipeAndItem = true;
-                            else
-                                IncludeRecipeAndItem = false;
                             break;
                         case "lot code":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeLotCode = true;
-                            else
-                                IncludeLotCode = false;
                             break;
                         case "batch":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeBatch = true;
-                            else
-                                IncludeBatch = false;
                             break;
                         case "best by date":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeBestByDate = true;
-                            else
-                                IncludeBestByDate = false;
                             break;
                         case "manufacturing site":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeManufacturingSite = true;
-                            else
-                                IncludeManufacturingSite = false;
                             break;
                         case "manufacturing date":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeManufacturingDate = true;
-                            else
-                                IncludeManufacturingDate = false;
                             break;
                         case "acidity":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeAcidity = true;
-                            else
-                                IncludeAcidity = false;
                             break;
                         case "ph":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludepH = true;
-                            else
-                                IncludepH = false;
                             break;
                         case "viscosity cm":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeViscosityCM = true;
-                            else
-                                IncludeViscosityCM = false;
                             break;
                         case "viscosity cps":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeViscosityCPS = true;
-                            else
-                                IncludeViscosityCPS = false;
                             break;
                         case "water activity":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeWaterActivity = true;
-                            else
-                                IncludeWaterActivity = false;
                             break;
                         case "brix slurry":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeBrixSlurry = true;
-                            else
-                                IncludeBrixSlurry = false;
                             break;
                         case "yeast":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeYeast = true;
-                            else
-                                IncludeYeast = false;
                             break;
                         case "mold":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeMold = true;
-                            else
-                                IncludeMold = false;
                             break;
                         case "aerobic":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeAerobic = true;
-                            else
-                                IncludeAerobic = false;
                             break;
                         case "coliform":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeColiform = true;
-                            else
-                                IncludeColiform = false;
                             break;
                         case "ecoli":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeEColi = true;
-                            else
-                                IncludeEColi = false;
                             break;
                         case "lactics":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeLactics = true;
-                            else
-                                IncludeLactics = false;
                             break;
                         case "salmonella":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeSalmonella = true;
-                            else
-                                IncludeSalmonella = false;
                             break;
                         case "listeria":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeListeria = true;
-                            else
-                                IncludeListeria = false;
                             break;
                         case "color/appearance":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeColorAndAppearance = true;
-                            else
-                                IncludeColorAndAppearance = false;
                             break;
                         case "form":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeForm = true;
-                            else
-                                IncludeForm = false;
                             break;
                         case "flavor/odor":
                             if (delimitedLine[1].ToLower() == "true")
                                 IncludeFlavorAndOdor = true;
-                            else
-                                IncludeFlavorAndOdor = false;
                             break;
                         case "":
                             break;
@@ -495,6 +619,40 @@ namespace CoA_Tool
             }
 
             Console.Util.RemoveMessageInCenter(); // Removes message written just before foreach loop was initiated
+        }
+        /// <summary>
+        /// Sets all content inclusion bools to their intended default, false
+        /// </summary>
+        private void SetInclusionBoolsAsFalse()
+        {
+            IncludeCustomerName = false;
+            IncludeSalesOrder = false;
+            IncludePurchaseOrder = false;
+            IncludeGenerationDate = false;
+            IncludeProductName = false;
+            IncludeRecipeAndItem = false;
+            IncludeLotCode = false;
+            IncludeBatch = false;
+            IncludeBestByDate = false;
+            IncludeManufacturingDate = false;
+            IncludeManufacturingSite = false;
+            IncludeAcidity = false;
+            IncludepH = false;
+            IncludeViscosityCM = false;
+            IncludeViscosityCPS = false;
+            IncludeWaterActivity = false;
+            IncludeBrixSlurry = false;
+            IncludeYeast = false;
+            IncludeMold = false;
+            IncludeAerobic = false;
+            IncludeColiform = false;
+            IncludeEColi = false;
+            IncludeLactics = false;
+            IncludeSalmonella = false;
+            IncludeListeria = false;
+            IncludeColorAndAppearance = false;
+            IncludeForm = false;
+            IncludeFlavorAndOdor = false;
         }
 
     }
