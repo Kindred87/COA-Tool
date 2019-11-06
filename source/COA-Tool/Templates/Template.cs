@@ -18,7 +18,7 @@ namespace CoA_Tool
         /// General methods for generating unique varieties of CoAs
         /// </summary>
         public enum Algorithm { Standard, FromDateOnwards}
-        private enum ContentCategories { None, Algorithm, FilterResults, MainContentBlock}
+        private enum ContentCategories { None, Algorithm, FilterCOA, IncludeContentItems}
         /// <summary>
         /// Represents the different items that can be included in a CoA document
         /// </summary>
@@ -66,7 +66,7 @@ namespace CoA_Tool
         public bool IncludeForm;
         public bool IncludeFlavorAndOdor;
 
-        Console.SelectionMenu Menu;
+        public Console.SelectionMenu Menu;
 
         public Template ()
         {
@@ -152,12 +152,12 @@ namespace CoA_Tool
                         currentCategory = ContentCategories.Algorithm;
                         break;
 
-                    case "[filter results]":
-                        currentCategory = ContentCategories.FilterResults;
+                    case "[filter coa]":
+                        currentCategory = ContentCategories.FilterCOA;
                         break;
 
-                    case "[main content block]":
-                        currentCategory = ContentCategories.MainContentBlock;
+                    case "[include content items]":
+                        currentCategory = ContentCategories.IncludeContentItems;
                         break;
 
                     default:
@@ -239,11 +239,31 @@ namespace CoA_Tool
                             }
                             break;
 
-                        case "search column":
+                        case "where value":
+                            bool assignedSearchCriteria = false;
+
+                            do // Find customSearch with unassigned datagroup, if can't, make a new customSearch and try again
+                            {
+                                foreach (Templates.CustomSearch customSearch in CustomSearches)
+                                {
+                                    if (customSearch.SearchCriteria == string.Empty)
+                                    {
+                                        customSearch.SearchCriteria = delimitedLine[1];
+                                        assignedSearchCriteria = true;
+                                    }
+                                }
+                                if (assignedSearchCriteria == false)
+                                {
+                                    CustomSearches.Add(new Templates.CustomSearch());
+                                }
+                            } while (assignedSearchCriteria == false);
+                            break;
+
+                        case "in column":
                             {
                                 bool assignedSearchColumn = false;
 
-                                if(Int32.TryParse(delimitedLine[1], out int searchColumnValue))
+                                if (Int32.TryParse(delimitedLine[1], out int searchColumnValue))
                                 {
                                     do // Find customSearch with unassigned datagroup, if can't, make a new customSearch and try again
                                     {
@@ -267,29 +287,7 @@ namespace CoA_Tool
                                     if (new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem).UserChoice == "Exit application")
                                         Environment.Exit(0);
                                 }
-
-                                
                             }
-                            break;
-
-                        case "search criteria":
-                            bool assignedSearchCriteria = false;
-
-                            do // Find customSearch with unassigned datagroup, if can't, make a new customSearch and try again
-                            {
-                                foreach (Templates.CustomSearch customSearch in CustomSearches)
-                                {
-                                    if (customSearch.SearchCriteria == string.Empty)
-                                    {
-                                        customSearch.SearchCriteria = delimitedLine[1];
-                                        assignedSearchCriteria = true;
-                                    }
-                                }
-                                if (assignedSearchCriteria == false)
-                                {
-                                    CustomSearches.Add(new Templates.CustomSearch());
-                                }
-                            } while (assignedSearchCriteria == false);
                             break;
 
                         case "":
@@ -301,14 +299,14 @@ namespace CoA_Tool
                             break;
                     }
                 
-                else if(currentCategory == ContentCategories.FilterResults)
+                else if(currentCategory == ContentCategories.FilterCOA)
                 {
                     // Used to track which filter to apply criteria to, assigned with filter in/out and content item
                     int forCustomFilter = 0;
 
                     switch (delimitedLine[0].ToLower())
                     {
-                        case "filter in or out":
+                        case "whitelist or blacklist":
                             {
                                 bool assignedFilter = false;
                                 do // Find customFilter with unassigned Filter, if can't, make a new customFilter and try again
@@ -319,10 +317,10 @@ namespace CoA_Tool
                                         {
                                             forCustomFilter = CustomFilters.Count - 1;
 
-                                            if (delimitedLine[1].ToLower() == "in")
-                                                customFilter.Filter = Templates.CustomFilter.FilterType.In;
+                                            if (delimitedLine[1].ToLower() == "whitelist")
+                                                customFilter.Filter = Templates.CustomFilter.FilterType.Whitelist;
                                             else
-                                                customFilter.Filter = Templates.CustomFilter.FilterType.Out;
+                                                customFilter.Filter = Templates.CustomFilter.FilterType.Blacklist;
                                             
                                             assignedFilter = true;
                                         }
@@ -333,7 +331,7 @@ namespace CoA_Tool
                                 } while (assignedFilter == false);
                             }
                             break;
-                        case "content item":
+                        case "filter by item":
                             {
                                 bool assignedContentItem = false;
                                 do // Find customFilter with unassigned ContentItem, if can't, make a new customFilter and try again
@@ -429,7 +427,7 @@ namespace CoA_Tool
                                                     customFilter.ContentItem = ContentItems.Coliform;
                                                     assignedContentItem = true;
                                                     break;
-                                                case "ecoli":
+                                                case "e. coli":
                                                     customFilter.ContentItem = ContentItems.EColi;
                                                     assignedContentItem = true;
                                                     break;
@@ -473,7 +471,7 @@ namespace CoA_Tool
                                 } while (assignedContentItem == false);
                             }
                             break;
-                        case "criteria":
+                        case "where item":
                             {
                                 if(CustomFilters.Count == 0)
                                 {
@@ -486,125 +484,125 @@ namespace CoA_Tool
                         case "":
                             break;
                         default:
-                            promptForInvalidItem = delimitedLine[0] + " is not a valid filter results item.";
+                            promptForInvalidItem = delimitedLine[0] + " is not a valid filter item.";
                             new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem);
                             break;
                     }
                 }
                 // Sets class bools for content inclusion
-                else if(currentCategory == ContentCategories.MainContentBlock)
+                else if(currentCategory == ContentCategories.IncludeContentItems)
                     switch (delimitedLine[0].ToLower())
                     {
                         case "customer name":
-                            if (delimitedLine[1].ToLower() == "true")
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludeCustomerName = true;
                             break;
                         case "sales order":
-                            if (delimitedLine[1].ToLower() == "true")
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludeSalesOrder = true;
                             break;
                         case "purchase order":
-                            if (delimitedLine[1].ToLower() == "true")
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludePurchaseOrder = true;
                             break;
                         case "generation date":
-                            if (delimitedLine[1].ToLower() == "true")
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludeGenerationDate = true;
                             break;
                         case "product name":
-                            if (delimitedLine[1].ToLower() == "true")
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludeProductName = true;
                             break;
                         case "recipe/item":
-                            if (delimitedLine[1].ToLower() == "true")
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludeRecipeAndItem = true;
                             break;
                         case "lot code":
-                            if (delimitedLine[1].ToLower() == "true")
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludeLotCode = true;
                             break;
                         case "batch":
-                            if (delimitedLine[1].ToLower() == "true")
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludeBatch = true;
                             break;
                         case "best by date":
-                            if (delimitedLine[1].ToLower() == "true")
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludeBestByDate = true;
                             break;
                         case "manufacturing site":
-                            if (delimitedLine[1].ToLower() == "true")
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludeManufacturingSite = true;
                             break;
                         case "manufacturing date":
-                            if (delimitedLine[1].ToLower() == "true")
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludeManufacturingDate = true;
                             break;
                         case "acidity":
-                            if (delimitedLine[1].ToLower() == "true")
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludeAcidity = true;
                             break;
                         case "ph":
-                            if (delimitedLine[1].ToLower() == "true")
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludepH = true;
                             break;
                         case "viscosity cm":
-                            if (delimitedLine[1].ToLower() == "true")
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludeViscosityCM = true;
                             break;
                         case "viscosity cps":
-                            if (delimitedLine[1].ToLower() == "true")
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludeViscosityCPS = true;
                             break;
                         case "water activity":
-                            if (delimitedLine[1].ToLower() == "true")
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludeWaterActivity = true;
                             break;
                         case "brix slurry":
-                            if (delimitedLine[1].ToLower() == "true")
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludeBrixSlurry = true;
                             break;
                         case "yeast":
-                            if (delimitedLine[1].ToLower() == "true")
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludeYeast = true;
                             break;
                         case "mold":
-                            if (delimitedLine[1].ToLower() == "true")
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludeMold = true;
                             break;
                         case "aerobic":
-                            if (delimitedLine[1].ToLower() == "true")
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludeAerobic = true;
                             break;
                         case "coliform":
-                            if (delimitedLine[1].ToLower() == "true")
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludeColiform = true;
                             break;
-                        case "ecoli":
-                            if (delimitedLine[1].ToLower() == "true")
+                        case "e. coli":
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludeEColi = true;
                             break;
                         case "lactics":
-                            if (delimitedLine[1].ToLower() == "true")
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludeLactics = true;
                             break;
                         case "salmonella":
-                            if (delimitedLine[1].ToLower() == "true")
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludeSalmonella = true;
                             break;
                         case "listeria":
-                            if (delimitedLine[1].ToLower() == "true")
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludeListeria = true;
                             break;
                         case "color/appearance":
-                            if (delimitedLine[1].ToLower() == "true")
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludeColorAndAppearance = true;
                             break;
                         case "form":
-                            if (delimitedLine[1].ToLower() == "true")
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludeForm = true;
                             break;
                         case "flavor/odor":
-                            if (delimitedLine[1].ToLower() == "true")
+                            if (delimitedLine[1].ToLower() == "yes")
                                 IncludeFlavorAndOdor = true;
                             break;
                         case "":

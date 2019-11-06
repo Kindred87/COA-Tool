@@ -142,7 +142,7 @@ namespace CoA_Tool.Excel
             }
         }
         /// <summary>
-        /// Populates both static and dynamic content for the worksheet
+        /// Populates content for the worksheet
         /// </summary>
         /// <param name="targetWorksheet"></param>
         private void PopulateWorksheetContents(ExcelWorksheet targetWorksheet, int currentPage)
@@ -178,20 +178,14 @@ namespace CoA_Tool.Excel
             targetWorksheet.Cells[11, 1, 60, 2].Style.Font.Size = 9;
             targetWorksheet.Cells[11, 1, 60, 8].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
 
-            // For later use
-
-            List<string> lotsToProcess = new List<string>();
-            for(int i = 6 * (currentPage - 1); i < 6 * currentPage; i++)
-            {
-                string lot = GetLotCode(i + 1);
-
-                if(lot != string.Empty)
-                    lotsToProcess.Add(lot);
-            }
+            
             
             // Counters are used since document contents/placement is dynamic
             int currentRow = 11;
             int sizeOfFirstContentBlock = 0;
+
+            // Set to false if a filter is triggered
+            bool ContinueWorkingOnDocument = true;
 
             // For first content block
             if (WorkbookTemplate.IncludeCustomerName)
@@ -258,6 +252,15 @@ namespace CoA_Tool.Excel
             }
 
             // For second content block
+
+            List<string> lotsToProcess = new List<string>();
+            for (int i = 6 * (currentPage - 1); i < 6 * currentPage; i++)
+            {
+                string lot = GetLotCode(i + 1);
+
+                if (lot != string.Empty)
+                    lotsToProcess.Add(lot);
+            }
 
             if (sizeOfFirstContentBlock > 0)
                 currentRow += 2; // An empty space between blocks and an empty space for the block's header if the block size > 0

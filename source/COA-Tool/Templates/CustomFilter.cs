@@ -6,7 +6,7 @@ namespace CoA_Tool.Templates
 {
     class CustomFilter
     {
-        public enum FilterType { Unassigned, In, Out}
+        public enum FilterType { Unassigned, Whitelist, Blacklist}
 
         public FilterType Filter;
 
