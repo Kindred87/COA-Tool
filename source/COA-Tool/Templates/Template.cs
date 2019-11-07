@@ -309,18 +309,18 @@ namespace CoA_Tool
                         case "whitelist or blacklist":
                             {
                                 bool assignedFilter = false;
-                                do // Find customFilter with unassigned Filter, if can't, make a new customFilter and try again
+                                do // Find customFilter with unassigned FilterType, if can't, make a new customFilter and try again
                                 {
                                     foreach (Templates.CustomFilter customFilter in CustomFilters)
                                     {
-                                        if (customFilter.Filter == Templates.CustomFilter.FilterType.Unassigned)
+                                        if (customFilter.FilterType == Templates.CustomFilter.FilterTypes.Unassigned)
                                         {
                                             forCustomFilter = CustomFilters.Count - 1;
 
                                             if (delimitedLine[1].ToLower() == "whitelist")
-                                                customFilter.Filter = Templates.CustomFilter.FilterType.Whitelist;
+                                                customFilter.FilterType = Templates.CustomFilter.FilterTypes.Whitelist;
                                             else
-                                                customFilter.Filter = Templates.CustomFilter.FilterType.Blacklist;
+                                                customFilter.FilterType = Templates.CustomFilter.FilterTypes.Blacklist;
                                             
                                             assignedFilter = true;
                                         }

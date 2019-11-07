@@ -35,32 +35,6 @@ namespace CoA_Tool.Excel
 
         public string[] InternalCOAData; // {made date, item code}
 
-        // Integers
-        private int ProductAndNameRow;
-        private int RecipeItemRow;
-        private int LotCodeRow;
-        private int BatchRow;
-        private int BestByDateRow;
-        private int ManufacturingSiteRow;
-        private int ManufacturingDateRow;
-        private int AcidityRow;
-        private int PHRow;
-        private int ViscosityCMRow;
-        private int ViscosityCPSRow;
-        private int WaterAcitivityRow;
-        private int BrixSlurryRow;
-        private int YeastRow;
-        private int MoldRow;
-        private int AerobicRow;
-        private int ColiformRow;
-        private int EColiRow;
-        private int LacticsRow;
-        private int SalmonellaRow;
-        private int ListeriaRow;
-        private int ColorAndAppearanceRow;
-        private int FormRow;
-        private int FlavorAndOdorRow;
-
         // DateTimes
         public DateTime StartDate;
 
@@ -72,6 +46,8 @@ namespace CoA_Tool.Excel
         public List<List<string>> TitrationResults;
         public List<List<string>> MicroResults;
         public List<List<string>> FinishedGoods;
+
+        private List<List<string>> RecipeAndItemValuesFromFilterCheck;
 
         // Hashsets
         private HashSet<string> BatchIndicesToIgnore;
@@ -106,19 +82,21 @@ namespace CoA_Tool.Excel
                         if (line[9] == Convert.ToDateTime(InternalCOAData[0]).ToString("M/d/yy") && line[10] == InternalCOAData[1])
                             itemCount++;
                     }
-                    
                         pageCount = itemCount / 6;
                         if ((itemCount) % 6 > 0)
                             pageCount++;
-                    
-                    
                 }
+
+                bool continueWorkingOnDocument = true;
 
                 for (int i = 1; i <= pageCount; i++)
                 {
-                    ExcelWorksheet worksheet = package.Workbook.Worksheets.Add("Page" + i);
+                    if(continueWorkingOnDocument)
+                    {
+                        ExcelWorksheet worksheet = package.Workbook.Worksheets.Add("Page" + i);
 
-                    PopulateWorksheetContents(worksheet, i);
+                        PopulateWorksheetContents(worksheet, i, out continueWorkingOnDocument);
+                    }
                 }
 
                 if(SaveFile)
@@ -145,8 +123,10 @@ namespace CoA_Tool.Excel
         /// Populates content for the worksheet
         /// </summary>
         /// <param name="targetWorksheet"></param>
-        private void PopulateWorksheetContents(ExcelWorksheet targetWorksheet, int currentPage)
+        private void PopulateWorksheetContents(ExcelWorksheet targetWorksheet, int currentPage, out bool WorkOnNextWorksheet)
         {
+            WorkOnNextWorksheet = true;
+
             targetWorksheet.Cells.Style.Font.SetFromFont(new Font("Calibri", 11));
 
             targetWorksheet.View.ShowGridLines = false;
@@ -184,8 +164,6 @@ namespace CoA_Tool.Excel
             int currentRow = 11;
             int sizeOfFirstContentBlock = 0;
 
-            // Set to false if a filter is triggered
-            bool ContinueWorkingOnDocument = true;
 
             // For first content block
             if (WorkbookTemplate.IncludeCustomerName)
@@ -198,6 +176,7 @@ namespace CoA_Tool.Excel
                 targetWorksheet.Cells[currentRow, 3].Value = WorkbookTemplate.Menu.UserChoice;
 
                 currentRow++;
+
             } 
 
             if(WorkbookTemplate.IncludeSalesOrder)
@@ -295,8 +274,38 @@ namespace CoA_Tool.Excel
                 for(int i = 0; i < lotsToProcess.Count; i++)
                 {
                     string productCode = GetProductCode(lotsToProcess[i]);
-                    targetWorksheet.Cells[currentRow, 3 + i].Value = GetRecipeCode(productCode) +
+                    string writeToCell = GetRecipeCode(productCode) +
                         "/" + productCode;
+                    if(WorkbookTemplate.CustomFilters.Count > 0)
+                    {
+                        foreach (Templates.CustomFilter filter in WorkbookTemplate.CustomFilters)
+                        {
+                            if(filter.IsValidFilter && filter.ContentItem == Template.ContentItems.RecipeAndItem)
+                            {
+                                if(filter.FilterType == Templates.CustomFilter.FilterTypes.Whitelist)
+                                {
+                                    foreach (string criteria in filter.Criteria)
+                                    {
+                                        if(criteria != writeToCell)
+                                        {
+                                            return;
+                                        }
+                                    }
+                                }
+                                else // filter.FilterType == FilterTypes.Blacklist
+                                {
+                                    foreach(string criteria in filter.Criteria)
+                                    {
+                                        if(criteria == writeToCell)
+                                        {
+                                            return;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    targetWorksheet.Cells[currentRow, 3 + i].Value = writeToCell;
                 }
 
                 currentRow++;
@@ -351,8 +360,6 @@ namespace CoA_Tool.Excel
                         targetWorksheet.Cells[currentRow, 3 + i].Value = "";
                     }
                 }
-                
-
                 currentRow++;
             }
 
@@ -362,8 +369,6 @@ namespace CoA_Tool.Excel
 
                 targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
                 targetWorksheet.Cells[currentRow, 1].Value = "Best By Date";
-
-                BestByDateRow = currentRow;
 
                 currentRow++;
             }
@@ -375,8 +380,6 @@ namespace CoA_Tool.Excel
                 targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
                 targetWorksheet.Cells[currentRow, 1].Value = "Manufacturing Date";
 
-                ManufacturingDateRow = currentRow;
-
                 currentRow++;
             }
 
@@ -386,8 +389,6 @@ namespace CoA_Tool.Excel
 
                 targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
                 targetWorksheet.Cells[currentRow, 1].Value = "Manufacturing Site";
-
-                ManufacturingSiteRow = currentRow;
 
                 currentRow++;
             }
@@ -442,7 +443,6 @@ namespace CoA_Tool.Excel
 
                 targetWorksheet.Cells[currentRow, 1].Value = "% Acid (TA)";
                 targetWorksheet.Cells[currentRow, 2].Value = AcidMethod;
-                AcidityRow = currentRow;
 
                 currentRow++;
             }
@@ -453,7 +453,6 @@ namespace CoA_Tool.Excel
 
                 targetWorksheet.Cells[currentRow, 1].Value = "pH";
                 targetWorksheet.Cells[currentRow, 2].Value = pHMethod;
-                PHRow = currentRow;
 
                 currentRow++;
             }
@@ -464,7 +463,6 @@ namespace CoA_Tool.Excel
 
                 targetWorksheet.Cells[currentRow, 1].Value = "Viscosity cm";
                 targetWorksheet.Cells[currentRow, 2].Value = ViscosityCMMethod;
-                ViscosityCMRow = currentRow;
 
                 currentRow++;
             }
@@ -475,7 +473,6 @@ namespace CoA_Tool.Excel
 
                 targetWorksheet.Cells[currentRow, 1].Value = "Viscosity cps";
                 targetWorksheet.Cells[currentRow, 2].Value = ViscosityCPSMethod;
-                ViscosityCPSRow = currentRow;
 
                 currentRow++;
             }
@@ -485,7 +482,6 @@ namespace CoA_Tool.Excel
                 sizeOfThirdContentBlock++;
 
                 targetWorksheet.Cells[currentRow, 1].Value = "Water activity (aW)";
-                WaterAcitivityRow = currentRow;
 
                 currentRow++;
             }
@@ -495,7 +491,6 @@ namespace CoA_Tool.Excel
                 sizeOfThirdContentBlock++;
 
                 targetWorksheet.Cells[currentRow, 1].Value = "Brix slurry";
-                BrixSlurryRow = currentRow;
 
                 currentRow++;
             }
@@ -549,7 +544,6 @@ namespace CoA_Tool.Excel
 
                 targetWorksheet.Cells[currentRow, 1].Value = "Yeast";
                 targetWorksheet.Cells[currentRow, 2].Value = YeastMethod;
-                YeastRow = currentRow;
 
                 currentRow++;
             }
@@ -560,7 +554,6 @@ namespace CoA_Tool.Excel
 
                 targetWorksheet.Cells[currentRow, 1].Value = "Mold";
                 targetWorksheet.Cells[currentRow, 2].Value = MoldMethod;
-                MoldRow = currentRow;
 
                 currentRow++;
             }
@@ -571,7 +564,6 @@ namespace CoA_Tool.Excel
 
                 targetWorksheet.Cells[currentRow, 1].Value = "Aerobic";
                 targetWorksheet.Cells[currentRow, 2].Value = AerobicMethod;
-                AerobicRow = currentRow;
 
                 currentRow++;
             }
@@ -582,7 +574,6 @@ namespace CoA_Tool.Excel
 
                 targetWorksheet.Cells[currentRow, 1].Value = "Total coliform";
                 targetWorksheet.Cells[currentRow, 2].Value = ColiformMethod;
-                ColiformRow = currentRow;
 
                 currentRow++;
             }
@@ -593,7 +584,6 @@ namespace CoA_Tool.Excel
 
                 targetWorksheet.Cells[currentRow, 1].Value = "E. coliform";
                 targetWorksheet.Cells[currentRow, 2].Value = EColiMethod;
-                EColiRow = currentRow;
 
                 currentRow++;
             }
@@ -604,7 +594,6 @@ namespace CoA_Tool.Excel
 
                 targetWorksheet.Cells[currentRow, 1].Value = "Lactics";
                 targetWorksheet.Cells[currentRow, 2].Value = LacticMethod;
-                LacticsRow = currentRow;
 
                 currentRow++;
             }
@@ -614,7 +603,6 @@ namespace CoA_Tool.Excel
                 sizeOfFourthContentBlock++;
 
                 targetWorksheet.Cells[currentRow, 1].Value = "Salmonella";
-                SalmonellaRow = currentRow;
 
                 currentRow++;
             }
@@ -624,7 +612,6 @@ namespace CoA_Tool.Excel
                 sizeOfFourthContentBlock++;
 
                 targetWorksheet.Cells[currentRow, 1].Value = "Listeria";
-                ListeriaRow = currentRow;
 
                 currentRow++;
             }
@@ -673,7 +660,6 @@ namespace CoA_Tool.Excel
                 sizeOfFifthContentBlock++;
 
                 targetWorksheet.Cells[currentRow, 1].Value = "Color/Appearance";
-                ColorAndAppearanceRow = currentRow;
 
                 currentRow++;
             }
@@ -683,7 +669,6 @@ namespace CoA_Tool.Excel
                 sizeOfFifthContentBlock++;
                 
                 targetWorksheet.Cells[currentRow, 1].Value = "Form";
-                FormRow = currentRow;
 
                 currentRow++;
             }
@@ -693,7 +678,6 @@ namespace CoA_Tool.Excel
                 sizeOfFifthContentBlock++;
 
                 targetWorksheet.Cells[currentRow, 1].Value = "Flavor/Odor";
-                FlavorAndOdorRow = currentRow;
                 
                 currentRow++;
             }
@@ -756,7 +740,7 @@ namespace CoA_Tool.Excel
             targetWorksheet.HeaderFooter.EvenFooter.RightAlignedText = "10/31/2019 REV 03 F142-087";
             targetWorksheet.HeaderFooter.OddFooter.LeftAlignedText = "created: 04/22/2016";
             targetWorksheet.HeaderFooter.OddFooter.RightAlignedText = "10/31/2019 REV 03 F142-087";
-
+            
             SaveFile = true;
         }
         /// <summary>
@@ -1354,6 +1338,11 @@ namespace CoA_Tool.Excel
             }
 
         }
+        /// <summary>
+        /// Retrieves lot code from Workbook's tableau data by given index
+        /// </summary>
+        /// <param name="tableauItemRow">The 0-based index to retrieve from</param>
+        /// <returns></returns>
         private string GetLotCode(int tableauItemRow)
         {
             if (tableauItemRow > TableauData.Count - 1)
@@ -1658,6 +1647,51 @@ namespace CoA_Tool.Excel
                 return "H1";
             else
                 return string.Empty;
+        }
+        private bool DoesFilterInvalidateDocument()
+        {
+            if(WorkbookTemplate.CustomFilters.Count > 0)
+            {
+                if(WorkbookTemplate.SelectedAlgorithm == Template.Algorithm.Standard) // Get tableau lots if true
+                {
+                    List<string> lotCodes = new List<string>();
+
+                    for (int i = 1; i < TableauData.Count; i++)
+                    {
+                        lotCodes.Add(GetLotCode(i));
+                    }
+                }
+                foreach(Templates.CustomFilter filter in WorkbookTemplate.CustomFilters)
+                {
+                    if (filter.IsValidFilter)
+                    {
+                        switch(filter.ContentItem)
+                        {
+                            case Template.ContentItems.RecipeAndItem:
+                                if(filter.FilterType == Templates.CustomFilter.FilterTypes.Whitelist)
+                                {
+                                    if(WorkbookTemplate.SelectedAlgorithm == Template.Algorithm.Standard)
+                                    {
+
+                                    }
+                                    else // SelectedAlgorithm == Algorithm.FromDateOnwards
+                                    {
+
+                                    }
+                                }
+                                else // FilterType == Blacklist
+                                {
+
+                                }
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+
+            return false;
         }
     }
 }
