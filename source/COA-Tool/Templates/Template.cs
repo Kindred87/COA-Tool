@@ -6,7 +6,7 @@ using System.IO;
 using CoA_Tool;
 
 
-namespace CoA_Tool
+namespace CoA_Tool.Templates
 {
     /// <summary>
     /// Contains information on how the Excel document is populated
@@ -33,8 +33,8 @@ namespace CoA_Tool
         public Algorithm SelectedAlgorithm;
 
         // Lists
-        public List<Templates.CustomSearch> CustomSearches;
-        public List<Templates.CustomFilter> CustomFilters;
+        public List<CustomSearch> CustomSearches;
+        public List<CustomFilter> CustomFilters;
 
         // Bools
         public bool IncludeCustomerName;
@@ -66,7 +66,20 @@ namespace CoA_Tool
         public bool IncludeForm;
         public bool IncludeFlavorAndOdor;
 
+        // Objects
         public Console.SelectionMenu Menu;
+
+        // Strings
+        /// <summary>
+        /// Synonymous with the template's file name
+        /// </summary>
+        public string CustomerName
+        {
+            get
+            {
+                return Menu.UserChoice;
+            }
+        }
 
         public Template ()
         {
@@ -75,7 +88,8 @@ namespace CoA_Tool
             if (Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\CoAs\\Templates") == false)
                 Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\CoAs\\Templates");
 
-            CustomSearches = new List<Templates.CustomSearch>();
+            CustomSearches = new List<CustomSearch>();
+            CustomFilters = new List<CustomFilter>();
 
             Menu = new Console.SelectionMenu(GetOptions(), "Templates:", "Please select a template");
 
@@ -150,15 +164,15 @@ namespace CoA_Tool
                 {
                     case "[algorithm]":
                         currentCategory = ContentCategories.Algorithm;
-                        break;
+                        continue;
 
                     case "[filter coa]":
                         currentCategory = ContentCategories.FilterCOA;
-                        break;
+                        continue;
 
                     case "[include content items]":
                         currentCategory = ContentCategories.IncludeContentItems;
-                        break;
+                        continue;
 
                     default:
                         break;
@@ -194,7 +208,7 @@ namespace CoA_Tool
                             }
                             break;
 
-                        case "data-group to search":
+                        case "search in":
                             {
                                 bool assignedDataGroup = false;
 
@@ -202,12 +216,12 @@ namespace CoA_Tool
                                 {
                                     case "micro":
 
-                                        foreach(Templates.CustomSearch search in CustomSearches)
+                                        foreach(CustomSearch search in CustomSearches)
                                         {
-                                            if(search.DataGroup != Templates.CustomSearch.DataGroupToSearch.Micro ||
-                                                search.DataGroup != Templates.CustomSearch.DataGroupToSearch.Unassigned)
+                                            if(search.DataGroup != CustomSearch.DataGroupToSearch.Micro ||
+                                                search.DataGroup != CustomSearch.DataGroupToSearch.Unassigned)
                                             {
-                                                Console.Util.WriteMessageInCenter("Program cannot proceed with mixed data-groups in algorithm information.  " +
+                                                Console.Util.WriteMessageInCenter("Program cannot proceed with mixed \"search in\" targets in algorithm information.  " +
                                                     "  Press any key to exit application.", ConsoleColor.Red);
                                                 System.Console.ReadKey();
                                                 Environment.Exit(0);
@@ -216,22 +230,26 @@ namespace CoA_Tool
 
                                         do // Find customSearch with unassigned datagroup, if can't, make a new customSearch and try again
                                         {
-                                            foreach (Templates.CustomSearch customSearch in CustomSearches)
+                                            foreach (CustomSearch customSearch in CustomSearches)
                                             {
-                                                if (customSearch.DataGroup == Templates.CustomSearch.DataGroupToSearch.Unassigned)
+                                                if (customSearch.DataGroup == CustomSearch.DataGroupToSearch.Unassigned)
                                                 {
-                                                    customSearch.DataGroup = Templates.CustomSearch.DataGroupToSearch.Micro;
+                                                    customSearch.DataGroup = CustomSearch.DataGroupToSearch.Micro;
                                                     assignedDataGroup = true;
                                                 }
                                             }
                                             if (assignedDataGroup == false)
                                             {
-                                                CustomSearches.Add(new Templates.CustomSearch());
+                                                CustomSearches.Add(new CustomSearch());
                                             }
                                         } while (assignedDataGroup == false);
                                         break;
+
+                                    case "":
+                                        break;
+
                                     default:
-                                        promptForInvalidItem = delimitedLine[1] + " is not a valid algorithm data-group to search.";
+                                        promptForInvalidItem = delimitedLine[1] + " is not a valid item to search in.";
                                         if (new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem).UserChoice == "Exit application")
                                             Environment.Exit(0);
                                         break;
@@ -244,7 +262,7 @@ namespace CoA_Tool
 
                             do // Find customSearch with unassigned datagroup, if can't, make a new customSearch and try again
                             {
-                                foreach (Templates.CustomSearch customSearch in CustomSearches)
+                                foreach (CustomSearch customSearch in CustomSearches)
                                 {
                                     if (customSearch.SearchCriteria == string.Empty)
                                     {
@@ -254,7 +272,7 @@ namespace CoA_Tool
                                 }
                                 if (assignedSearchCriteria == false)
                                 {
-                                    CustomSearches.Add(new Templates.CustomSearch());
+                                    CustomSearches.Add(new CustomSearch());
                                 }
                             } while (assignedSearchCriteria == false);
                             break;
@@ -267,7 +285,7 @@ namespace CoA_Tool
                                 {
                                     do // Find customSearch with unassigned datagroup, if can't, make a new customSearch and try again
                                     {
-                                        foreach (Templates.CustomSearch customSearch in CustomSearches)
+                                        foreach (CustomSearch customSearch in CustomSearches)
                                         {
                                             if (customSearch.SearchColumnOffset == -1) // -1 is the default value
                                             {
@@ -277,11 +295,11 @@ namespace CoA_Tool
                                         }
                                         if (assignedSearchColumn == false)
                                         {
-                                            CustomSearches.Add(new Templates.CustomSearch());
+                                            CustomSearches.Add(new CustomSearch());
                                         }
                                     } while (assignedSearchColumn == false);
                                 }
-                                else
+                                else if(delimitedLine[1] != "")
                                 {
                                     promptForInvalidItem = delimitedLine[1] + " is not a valid number for algorithm search column";
                                     if (new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem).UserChoice == "Exit application")
@@ -294,7 +312,7 @@ namespace CoA_Tool
                             break;
 
                         default:
-                            promptForInvalidItem = delimitedLine[1] + " is not a valid algorithm item.";
+                            promptForInvalidItem = "\"" + delimitedLine[0] + "\"" +" is not a valid algorithm item.";
                             new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem);
                             break;
                     }
@@ -311,22 +329,22 @@ namespace CoA_Tool
                                 bool assignedFilter = false;
                                 do // Find customFilter with unassigned FilterType, if can't, make a new customFilter and try again
                                 {
-                                    foreach (Templates.CustomFilter customFilter in CustomFilters)
+                                    foreach (CustomFilter customFilter in CustomFilters)
                                     {
-                                        if (customFilter.FilterType == Templates.CustomFilter.FilterTypes.Unassigned)
+                                        if (customFilter.FilterType == CustomFilter.FilterTypes.Unassigned)
                                         {
                                             forCustomFilter = CustomFilters.Count - 1;
 
                                             if (delimitedLine[1].ToLower() == "whitelist")
-                                                customFilter.FilterType = Templates.CustomFilter.FilterTypes.Whitelist;
+                                                customFilter.FilterType = CustomFilter.FilterTypes.Whitelist;
                                             else
-                                                customFilter.FilterType = Templates.CustomFilter.FilterTypes.Blacklist;
+                                                customFilter.FilterType = CustomFilter.FilterTypes.Blacklist;
                                             
                                             assignedFilter = true;
                                         }
                                     }
                                     if (assignedFilter == false)
-                                        CustomSearches.Add(new Templates.CustomSearch());
+                                        CustomFilters.Add(new CustomFilter());
                                     
                                 } while (assignedFilter == false);
                             }
@@ -336,7 +354,7 @@ namespace CoA_Tool
                                 bool assignedContentItem = false;
                                 do // Find customFilter with unassigned ContentItem, if can't, make a new customFilter and try again
                                 {
-                                    foreach(Templates.CustomFilter customFilter in CustomFilters)
+                                    foreach(CustomFilter customFilter in CustomFilters)
                                     {
                                         forCustomFilter = CustomFilters.Count - 1;
 
@@ -452,22 +470,24 @@ namespace CoA_Tool
                                                     assignedContentItem = true;
                                                     break;
                                                 case "flavor/odor":
-                                                    
+                                                    customFilter.ContentItem = ContentItems.FlavorAndOdor;
+                                                    assignedContentItem = true;
                                                     break;
-                                                // CustomerName, SalesOrder, PurchaseOrder, GenerationDate, ProductName, RecipeAndItem, LotCode, Batch,
-                                                // BestByDate, ManufacturingSite, ManufacturingDate, Acidity, pH, ViscosityCM, ViscosityCPS, WaterActivity, BrixSlurry, Yeast, Mold,
-                                                // Aerobic, Coliform, EColi, Lactics, Salmonella, Listeria, ColorAndAppearance, Form, FlavorAndOdor
                                                 case "":
+                                                    assignedContentItem = true; // Having no value is considered valid
                                                     break;
                                                 default:
                                                     promptForInvalidItem = delimitedLine[1] + " is not a valid content item";
                                                     new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem);
                                                     break;
                                             }
-
-                                        if (assignedContentItem == false)
-                                            CustomFilters.Add(new Templates.CustomFilter());
                                     }
+
+                                    if (assignedContentItem == false)
+                                    {
+                                        CustomFilters.Add(new CustomFilter());
+                                    }
+
                                 } while (assignedContentItem == false);
                             }
                             break;
@@ -475,7 +495,7 @@ namespace CoA_Tool
                             {
                                 if(CustomFilters.Count == 0)
                                 {
-                                    CustomFilters.Add(new Templates.CustomFilter());
+                                    CustomFilters.Add(new CustomFilter());
                                 }
 
                                 CustomFilters[forCustomFilter].Criteria.Add(delimitedLine[1]);

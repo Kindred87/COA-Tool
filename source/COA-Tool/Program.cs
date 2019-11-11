@@ -13,14 +13,14 @@ namespace CoA_Tool
             Console.Util.SetTitle();
             System.Console.CursorVisible = false;
 
-            Excel.SpawnGenerationThreads.Go(new Template());
+            Excel.SpawnGenerationThreads.Go(new Templates.Template());
 
         }
         /*static void CreateExternalCOA(List<List<List<string>>> tableauData, CSV.NWAData common, Excel.FinishedGoods finishedGoods)
         {
             foreach(List<List<string>> order in tableauData)
             {
-                Excel.Workbook workbook = new Excel.Workbook(common.DelimitedTitrationResults, common.DelimitedMicroResults, finishedGoods.Contents);
+                Excel.WorkbookData workbook = new Excel.WorkbookData(common.DelimitedTitrationResults, common.DelimitedMicroResults, finishedGoods.Contents);
                 workbook.TableauData = order;
 
                 Thread thread = new Thread(workbook.Generate);
@@ -75,7 +75,7 @@ namespace CoA_Tool
 
             foreach(string productAndDateCombo in set)
             {
-                Excel.Workbook workbook = new Excel.Workbook(common.DelimitedTitrationResults, common.DelimitedMicroResults, finishedGoods.Contents, common.Recipes);
+                Excel.WorkbookData workbook = new Excel.WorkbookData(common.DelimitedTitrationResults, common.DelimitedMicroResults, finishedGoods.Contents, common.Recipes);
                 workbook.InternalCOAData = productAndDateCombo.Split(new char[] { ',' });
 
                 Thread thread = new Thread(workbook.Generate);

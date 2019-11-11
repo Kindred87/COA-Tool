@@ -10,27 +10,27 @@ namespace CoA_Tool.Excel
     /// </summary>
     static class SpawnGenerationThreads
     {
-        public static void Go(Template template)
+        public static void Go(Templates.Template template)
         {
             // Objects are instantiated with minimum processing until pertinent loading methods are called for the selected algorithm
             CSV.NWAData nwaData = new CSV.NWAData();
-            CSV.Tableau tableau = new CSV.Tableau();
+            CSV.TableauData tableau = new CSV.TableauData();
             FinishedGoods finishedGoods = new FinishedGoods();
             int numberOfDocumentsToGenerate = 0;
 
             // For each sales order in tableau, spawn a workbook
-            if (template.SelectedAlgorithm == Template.Algorithm.Standard)
+            if (template.SelectedAlgorithm == Templates.Template.Algorithm.Standard)
             {
                 nwaData.LoadCSVFiles();
                 tableau.Load();
                 finishedGoods.Load();
 
-                foreach (List<List<string>> order in tableau.FileContents)
+                foreach (CSV.SalesOrder salesOrder in tableau.SalesOrders)
                 {
                     Console.Util.WriteMessageInCenter("Generating " + ++numberOfDocumentsToGenerate + " CoA documents");
-                    Workbook workbook = new Workbook(template)
+                    WorkbookData workbook = new WorkbookData(template)
                     {
-                        TableauData = order,
+                        SalesOrder = salesOrder,
                         FinishedGoods = finishedGoods.Contents,
                         MicroResults = nwaData.DelimitedMicroResults,
                         TitrationResults = nwaData.DelimitedTitrationResults
@@ -41,12 +41,12 @@ namespace CoA_Tool.Excel
                 }
             }
             // For each group of relevant items that fall within the user-requested time span, spawn a workbook
-            else if (template.SelectedAlgorithm == Template.Algorithm.FromDateOnwards)
+            else if (template.SelectedAlgorithm == Templates.Template.Algorithm.FromDateOnwards)
             {
                 nwaData.LoadCSVFiles();
                 DateTime desiredStartDate = Console.Util.GetDateFromUser("Please enter a start date for the search algorithm.");
 
-                Workbook workbook = new Workbook(template)
+                WorkbookData workbook = new WorkbookData(template)
                 {
                     MicroResults = nwaData.DelimitedMicroResults,
                     TitrationResults = nwaData.DelimitedTitrationResults,

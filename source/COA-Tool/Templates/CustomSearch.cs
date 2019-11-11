@@ -32,47 +32,50 @@ namespace CoA_Tool.Templates
         /// </summary>
         public enum DataGroupToSearch { Unassigned, Titration, Micro };
 
+        private DataGroupToSearch _dataGroup;
         public DataGroupToSearch DataGroup
         {
             get
             {
-                return DataGroup;
+                return _dataGroup;
             }
             set
             {
                 if(SearchColumnOffset > -1) // In the event that SearchColumnOffset is assigned before DataGroup
+                {
                     SearchColumnOffset = ++SearchColumnOffset; // Set property is reexecuted to properly assign SearchColumnOffset for the data group
-                                                   // value passed to SearchColumnOffset set property is subtracted by one
+                                                               // value passed to SearchColumnOffset set property is subtracted by one
+                }
             }
         }
-
+        private int _searchColumnOffset;
         public int SearchColumnOffset
         {
             get
             {
-                return SearchColumnOffset;
+                return _searchColumnOffset;
             }
             set
             {
                 // 0-based in program, 1-based in template file for users' sake
-                SearchColumnOffset = value - 1;   
+                _searchColumnOffset = value - 1;   
 
                 if(DataGroup == DataGroupToSearch.Micro)
                 {
                     
-                    if(SearchColumnOffset == 11 || SearchColumnOffset >= 35)
+                    if(_searchColumnOffset == 11 || _searchColumnOffset >= 35)
                     {
-                        string invalidColumnPrompt = (SearchColumnOffset + 1) + " is not allowed for a target column value for micro data group";
+                        string invalidColumnPrompt = (_searchColumnOffset + 1) + " is not allowed for a target column value for micro data group";
                         List<string> options = new List<string>();
                         options.Add("Continue regardless.");
                         options.Add("Exit application");
                         if (new Console.SelectionMenu(options, "", invalidColumnPrompt).UserChoice == "Exit application")
                             Environment.Exit(0);
                     }
-                    else if (SearchColumnOffset > 11)
+                    else if (_searchColumnOffset > 11)
                     {
                         OffsetFromSpecificColumn = true;
-                        SearchColumnOffset -= 13;
+                        _searchColumnOffset -= 13;
                     }
                 }
             }
@@ -85,7 +88,7 @@ namespace CoA_Tool.Templates
         {
             DataGroup = DataGroupToSearch.Unassigned;
             SearchCriteria = string.Empty;
-            SearchColumnOffset = -1;
+            SearchColumnOffset = 0; // Equates to -1
             OffsetFromSpecificColumn = false;
         }
     }

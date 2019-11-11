@@ -7,35 +7,39 @@ using System.Linq;
 namespace CoA_Tool.CSV
 {
     /// <summary>
-    /// Handles location and loading of downloaded Tableau data
+    /// Handles location and loading of downloaded TableauData data
     /// </summary>
-    class Tableau
+    class TableauData
     {
-        // Class variables
+        // Enums
         /// <summary>
-        /// Associated with sub-directories within "Desktop\\CoAs\\Tableau Files"
+        /// Associated with sub-directories within "Desktop\\CoAs\\TableauData Files"
         /// </summary>
         public enum LotDirectory { NewBatch, InProgress, Complete, PreviousBatch, DeletionQueue}
+
+        // Lists
         /// <summary>
-        /// Data loaded from Tableau files
+        /// Each index represents a unique sales order
         /// </summary>
-        public List<List<List<string>>> FileContents;
+        public List<SalesOrder> SalesOrders;
+
+        // String
         /// <summary>
-        /// "Desktop\\CoAs\\Tableau Files", assigned in constructor
+        /// "Desktop\\CoAs\\TableauData Files", assigned in constructor
         /// </summary>
         public string DesktopSubDirectoryPath;
 
         // Constructor
-        public Tableau()
+        public TableauData()
         {
-            FileContents = new List<List<List<string>>>();
+            SalesOrders = new List<SalesOrder>();
             DesktopSubDirectoryPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\CoAs\\Tableau Files";
             EnsureDesktopSubDirectoriesExist();
         }
 
         // Public methods
         /// <summary>
-        /// Populates FileContents with data from applicable CSV files
+        /// Populates SalesOrders with sale order
         /// </summary>
         /// <returns></returns>
         public void Load()
@@ -48,7 +52,7 @@ namespace CoA_Tool.CSV
 
             if (choice == "New")
             {
-                MoveToDirectory(CSVFilesFrom(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\Downloads\\"), LotDirectory.NewBatch);
+                MoveBetweenDirectories(CSVFilesFrom(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\Downloads\\"), LotDirectory.NewBatch);
                 filePaths = (CSVFilesFrom(DesktopSubDirectoryPath + "\\1) New Batch"));
             }
             else if (choice.StartsWith("In")) // The full string contains dynamic values, "In Progress (n file/s)"
@@ -62,13 +66,7 @@ namespace CoA_Tool.CSV
 
             foreach (string file in filePaths)
             {
-                FileContents.Add(new List<List<string>>());
-
-                foreach (string line in File.ReadLines(file))
-                {
-                    if (line.StartsWith(",") == false && line != string.Empty)
-                        FileContents[FileContents.Count - 1].Add(line.Split(new char[] { ',' }).ToList());
-                }
+                SalesOrders.Add(new SalesOrder(file));
             }
         }
         /// <summary>
@@ -76,7 +74,7 @@ namespace CoA_Tool.CSV
         /// </summary>
         /// <param name="filePaths">Each entry represents a file's absolute path</param>
         /// <param name="targetDirectory">The output directory</param>
-        public void MoveToDirectory(List<string> filePaths, LotDirectory targetDirectory)
+        public void MoveBetweenDirectories(List<string> filePaths, LotDirectory targetDirectory)
         {
             EnsureDesktopSubDirectoriesExist();
 
@@ -101,7 +99,19 @@ namespace CoA_Tool.CSV
                 File.Move(filePath, DesktopSubDirectoryPath + nextSubDirectory + newFileName + ".csv" , true);
             }
         }
-
+        /// <summary>
+        /// Removes sales orders with missing information from SalesOrders
+        /// </summary>
+        public void RemoveInvalidSalesOrders()
+        {
+            for(int i = 0; i < SalesOrders.Count - 1; i++)
+            {
+                if(SalesOrders[i].ValidSalesOrder == false)
+                {
+                    SalesOrders.RemoveAt(i);
+                }
+            }
+        }
         // Private methods
         /// <summary>
         /// Prompts user to select which batch of tableau files to generate CoAs from
@@ -126,7 +136,7 @@ namespace CoA_Tool.CSV
                     options[1] += " file)";
             }
                 
-           Console.SelectionMenu menu = new Console.SelectionMenu(options, "    Batch:", "Select an option regarding Tableau lot information.");
+           Console.SelectionMenu menu = new Console.SelectionMenu(options, "    Batch:", "Select an option regarding TableauData lot information.");
 
            return menu.UserChoice;
         }
@@ -227,17 +237,68 @@ namespace CoA_Tool.CSV
             // A list is used because the number of needed indices is unknown
             List<string> validFiles = new List<string>();
 
-            string firstLine;
-
             foreach (string path in filePaths)
             {
-                firstLine = File.ReadLines(path).First();
-
-                if (firstLine.StartsWith("Ic Lot Number"))
+                if(IsFileValid(path))
+                {
                     validFiles.Add(path);
+                }
             }
             return validFiles;
         }
+        /// <summary>
+        /// Checks if file contains qualifying criteria, includes IOException handling
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <returns></returns>
+        private bool IsFileValid(string filePath)
+        {
+            string firstLine;
 
+            try
+            {
+                firstLine = File.ReadLines(filePath).First();
+
+                if (firstLine.StartsWith("Ic Lot Number"))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            catch (IOException)
+            {
+                string[] delimitedPath = filePath.Split(new char[] { '/', '\\' });
+
+                string fileName = delimitedPath[delimitedPath.Length - 1];
+
+                List<string> menuOptions = new List<string>();
+                menuOptions.Add("Skip file");
+                menuOptions.Add("Reload file");
+
+                if (new Console.SelectionMenu(menuOptions, "", fileName + " is being accessed by another program.  Skip this file or try loading it again?").UserChoice == "Reload file")
+                {
+                    return IsFileValid(filePath);
+                }
+                else
+                {
+                    menuOptions.Clear();
+                    menuOptions.Add("Yes");
+                    menuOptions.Add("No");
+
+                    if(new Console.SelectionMenu(menuOptions, "", "Are you sure you want to skip loading " + fileName + "?").UserChoice == "No")
+                    {
+                        return IsFileValid(filePath);
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                    
+                }
+            }
+        }
     }
 }

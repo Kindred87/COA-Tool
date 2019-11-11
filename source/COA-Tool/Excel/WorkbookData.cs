@@ -14,7 +14,7 @@ namespace CoA_Tool.Excel
     /// <summary>
     /// Main document generation class, end of program flow
     /// </summary>
-    class Workbook
+    class WorkbookData
     {
         // Enums
         private enum TitrationOffset { Acidity = 5, Viscosity = 2, Salt = 4, pH = 6 }
@@ -53,10 +53,11 @@ namespace CoA_Tool.Excel
         private HashSet<string> BatchIndicesToIgnore;
 
         //  Objects
-        Template WorkbookTemplate;
+        private Templates.Template WorkbookTemplate;
+        public CSV.SalesOrder SalesOrder { get; set; }
 
         // Constructor
-        public Workbook(Template template)
+        public WorkbookData(Templates.Template template)
         {
             WorkbookTemplate = template;
         }
@@ -67,13 +68,15 @@ namespace CoA_Tool.Excel
             {
                 int pageCount = 0;
 
-                if(WorkbookTemplate.SelectedAlgorithm == Template.Algorithm.Standard)
+                if(WorkbookTemplate.SelectedAlgorithm == Templates.Template.Algorithm.Standard)
                 {
-                    pageCount = (TableauData.Count - 1) / 6;
-                    if ((TableauData.Count - 1) % 6 > 0)
+                    pageCount = (SalesOrder.Lots.Count- 1) / 6;
+                    if ((SalesOrder.Lots.Count - 1) % 6 > 0)
+                    {
                         pageCount++;
+                    }
                 }
-                else if(WorkbookTemplate.SelectedAlgorithm == Template.Algorithm.FromDateOnwards)
+                else if(WorkbookTemplate.SelectedAlgorithm == Templates.Template.Algorithm.FromDateOnwards)
                 {
                     int itemCount = 0;
 
@@ -87,16 +90,11 @@ namespace CoA_Tool.Excel
                             pageCount++;
                 }
 
-                bool continueWorkingOnDocument = true;
-
                 for (int i = 1; i <= pageCount; i++)
                 {
-                    if(continueWorkingOnDocument)
-                    {
-                        ExcelWorksheet worksheet = package.Workbook.Worksheets.Add("Page" + i);
-
-                        PopulateWorksheetContents(worksheet, i, out continueWorkingOnDocument);
-                    }
+                    ExcelWorksheet worksheet = package.Workbook.Worksheets.Add("Page " + i);
+                    new Worksheet.Page(WorkbookTemplate, worksheet);
+                    SaveFile = true;
                 }
 
                 if(SaveFile)
@@ -107,8 +105,8 @@ namespace CoA_Tool.Excel
                     if (Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/Internal") == false)
                         Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/Internal");
 
-                    if (WorkbookTemplate.SelectedAlgorithm == Template.Algorithm.Standard)
-                        package.SaveAs(new FileInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/" + TableauData[1][3] + ".xlsx"));
+                    if (WorkbookTemplate.SelectedAlgorithm == Templates.Template.Algorithm.Standard)
+                        package.SaveAs(new FileInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/" + SalesOrder.OrderNumber + ".xlsx"));
                     else
                         package.SaveAs(new FileInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/Internal/" + InternalCOAData[1] +
                             " (" + InternalCOAData[0] + ")" + ".xlsx")); 
@@ -280,7 +278,7 @@ namespace CoA_Tool.Excel
                     {
                         foreach (Templates.CustomFilter filter in WorkbookTemplate.CustomFilters)
                         {
-                            if(filter.IsValidFilter && filter.ContentItem == Template.ContentItems.RecipeAndItem)
+                            if(filter.IsValidFilter && filter.ContentItem == Templates.Template.ContentItems.RecipeAndItem)
                             {
                                 if(filter.FilterType == Templates.CustomFilter.FilterTypes.Whitelist)
                                 {
@@ -353,7 +351,7 @@ namespace CoA_Tool.Excel
                 targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
                 targetWorksheet.Cells[currentRow, 1].Value = "Batch";
 
-                if(WorkbookTemplate.SelectedAlgorithm == Template.Algorithm.FromDateOnwards)
+                if(WorkbookTemplate.SelectedAlgorithm == Templates.Template.Algorithm.FromDateOnwards)
                 {
                     for (int i = 0; i < lotsToProcess.Count; i++)
                     {
@@ -1339,7 +1337,7 @@ namespace CoA_Tool.Excel
 
         }
         /// <summary>
-        /// Retrieves lot code from Workbook's tableau data by given index
+        /// Retrieves lot code from WorkbookData's tableau data by given index
         /// </summary>
         /// <param name="tableauItemRow">The 0-based index to retrieve from</param>
         /// <returns></returns>
@@ -1652,7 +1650,7 @@ namespace CoA_Tool.Excel
         {
             if(WorkbookTemplate.CustomFilters.Count > 0)
             {
-                if(WorkbookTemplate.SelectedAlgorithm == Template.Algorithm.Standard) // Get tableau lots if true
+                if(WorkbookTemplate.SelectedAlgorithm == Templates.Template.Algorithm.Standard) // Get tableau lots if true
                 {
                     List<string> lotCodes = new List<string>();
 
@@ -1667,10 +1665,10 @@ namespace CoA_Tool.Excel
                     {
                         switch(filter.ContentItem)
                         {
-                            case Template.ContentItems.RecipeAndItem:
+                            case Templates.Template.ContentItems.RecipeAndItem:
                                 if(filter.FilterType == Templates.CustomFilter.FilterTypes.Whitelist)
                                 {
-                                    if(WorkbookTemplate.SelectedAlgorithm == Template.Algorithm.Standard)
+                                    if(WorkbookTemplate.SelectedAlgorithm == Templates.Template.Algorithm.Standard)
                                     {
 
                                     }
