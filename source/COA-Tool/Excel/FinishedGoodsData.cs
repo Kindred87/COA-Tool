@@ -11,16 +11,16 @@ using OfficeOpenXml.Drawing;
 namespace CoA_Tool.Excel
 {
     /// <summary>
-    /// Handles location and loading of finished goods data
+    /// Handles processes relating to a finished good datasheet
     /// </summary>
-    class FinishedGoods
+    class FinishedGoodsData
     {
         
         /// <summary>
         /// File contents arranged as a pseudo-grid, where [y][x], see Load() for further info
         /// </summary>
         public List<List<string>> Contents;
-        public FinishedGoods()
+        public FinishedGoodsData()
         {
         }
         /// <summary>
@@ -123,6 +123,69 @@ namespace CoA_Tool.Excel
             }
             else
                 return false;
+        }
+        /// <summary>
+        /// Retrieves the name associated with the provided product code
+        /// </summary>
+        /// <param name="productCode">The five digit finished good product code</param>
+        /// <returns></returns>
+        public string ProductNameFor(string productCode)
+        {
+            foreach (List<string> line in Contents)
+            {
+                if (line[0] == productCode)
+                {
+                    return line[1];
+                }
+            }
+            return string.Empty;
+        }
+        /// <summary>
+        /// Retrieves the recipe code associated with the provided product code
+        /// </summary>
+        /// <param name="productCode">The five digit finished good product code</param>
+        /// <returns></returns>
+        public string RecipeCodeFor(string productCode)
+        {
+            foreach (List<string> line in Contents)
+            {
+                if (line[0] == productCode)
+                {
+                    return line[3];
+                }
+            }
+            return "Could not locate";
+        }
+        /// <summary>
+        /// Determines the made date of a product based on its lot code
+        /// </summary>
+        /// <param name="productCode">The product code for the product in question</param>
+        /// <param name="lotCode">The lotcode for the product in question</param>
+        /// <returns></returns>
+        public DateTime GetMadeDate(string lotCode)
+        {
+            string productCode = CSV.SalesOrder.ProductCodeFromLot(lotCode);
+            int daysToExpiry = 0;
+
+            foreach (List<string> line in Contents)
+            {
+                if (line[0] == productCode)
+                {
+                    daysToExpiry = Convert.ToInt32(line[2]);
+                }
+            }
+
+            int expiryDay = Convert.ToInt32(lotCode[9].ToString()) * 10;
+            expiryDay += Convert.ToInt32(lotCode[10].ToString());
+
+            int expiryMonth = Convert.ToInt32(lotCode[7].ToString()) * 10;
+            expiryMonth += Convert.ToInt32(lotCode[8].ToString());
+
+            int expiryYear = Convert.ToInt32(lotCode[11].ToString()) * 10;
+            expiryYear += Convert.ToInt32(lotCode[12].ToString());
+            expiryYear += 2000;
+
+            return new DateTime(expiryYear, expiryMonth, expiryDay).AddDays(daysToExpiry * -1);
         }
     }
 }

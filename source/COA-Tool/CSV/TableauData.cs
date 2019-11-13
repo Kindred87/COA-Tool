@@ -112,6 +112,7 @@ namespace CoA_Tool.CSV
                 }
             }
         }
+        
         // Private methods
         /// <summary>
         /// Prompts user to select which batch of tableau files to generate CoAs from
@@ -300,5 +301,6 @@ namespace CoA_Tool.CSV
                 }
             }
         }
+
     }
 }

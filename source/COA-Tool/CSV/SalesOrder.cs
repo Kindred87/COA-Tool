@@ -2,9 +2,13 @@
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
+using System.Linq;
 
 namespace CoA_Tool.CSV
 {
+    /// <summary>
+    /// Represents a collection of lots in a sales order
+    /// </summary>
     class SalesOrder
     {
         /// <summary>
@@ -13,7 +17,7 @@ namespace CoA_Tool.CSV
         public string OrderNumber;
 
         /// <summary>
-        /// Contains all lots for the sales order
+        /// Contains all lots for the sales order, set by Load()
         /// </summary>
         public List<string> Lots;
 
@@ -39,13 +43,13 @@ namespace CoA_Tool.CSV
         {
             Lots = new List<string>();
             OrderNumber = string.Empty;
-            LoadData(targetFilePath);
+            Load(targetFilePath);
         }
         /// <summary>
         /// Parses lot information file and sets Lots and OrderNumber
         /// </summary>
         /// <param name="filePath"></param>
-        private void LoadData(string filePath)
+        private void Load(string filePath)
         {
             try
             {
@@ -58,6 +62,7 @@ namespace CoA_Tool.CSV
                         if (delimitedLine.Length == 6)
                         {
                             Lots.Add(delimitedLine[0]);
+                            Lots[Lots.Count - 1] = Lots.Last().Replace(" ", ""); // Reassigns string with whitespace removed
                             OrderNumber = delimitedLine[3];
                         }
                     }
@@ -79,7 +84,7 @@ namespace CoA_Tool.CSV
 
                 if(new Console.SelectionMenu(menuOptions, "", fileName + " is being accessed by another program.  Skip this file or try loading it again?").UserChoice == "Reload file")
                 {
-                    LoadData(filePath);
+                    Load(filePath);
                 }
                 else
                 {
@@ -89,7 +94,7 @@ namespace CoA_Tool.CSV
 
                     if (new Console.SelectionMenu(menuOptions, "", "Are you sure you want to skip loading " + fileName + "?").UserChoice == "No")
                     {
-                        LoadData(filePath);
+                        Load(filePath);
                     }
                     else
                     {
@@ -98,6 +103,136 @@ namespace CoA_Tool.CSV
                     
                 }
             }
+        }
+        /// <summary>
+        /// Retrieves product code from a lot at the provided index in Lots
+        /// </summary>
+        /// <param name="lotIndex">The zero-based index of the lot in Lots</param> 
+        /// <returns></returns>
+        public string ProductCodeFromLot(int lotIndex)
+        {
+            string lotCode = Lots[lotIndex];
+
+            string productCode = lotCode[0].ToString();
+            productCode += lotCode[1];
+            productCode += lotCode[2];
+            productCode += lotCode[3];
+            productCode += lotCode[4];
+
+            return productCode;
+        }
+        /// <summary>
+        /// Retrieves product code from a given lot
+        /// </summary>
+        /// <param name="lot">The lot containing the product code</param>
+        /// <returns></returns>
+        public static string ProductCodeFromLot(string lotCode)
+        {
+            string productCode = lotCode[0].ToString();
+            productCode += lotCode[1];
+            productCode += lotCode[2];
+            productCode += lotCode[3];
+            productCode += lotCode[4];
+
+            return productCode;
+        }
+        /// <summary>
+        /// Determines manufacturing site for a given lot
+        /// </summary>
+        /// <param name="lotCode">The target lot</param>
+        /// <returns></returns>
+        public string ManufacturingSiteFromLot(string lotCode)
+        {
+            string locationCode = lotCode[5].ToString();
+            locationCode += lotCode[6];
+
+            if (locationCode == "01")
+            {
+                return "Sandpoint, ID";
+            }
+            else if (locationCode == "02")
+            {
+                return "Lowell, MI";
+            }
+            else if (locationCode == "03")
+            {
+                return "Hurricane, UT";
+            }
+            else
+            {
+                return locationCode;
+            }
+
+        }
+        /// <summary>
+        /// Determines the manufacturing site for the lot at the given index in Lots
+        /// </summary>
+        /// <param name="index">The zero-based index of the lot in Lots</param>
+        /// <returns></returns>
+        public string ManufacturingSiteFromLot(int index)
+        {
+            string lotCode = Lots[index];
+
+            string locationCode = lotCode[5].ToString();
+            locationCode += lotCode[6];
+
+            if (locationCode == "01")
+            {
+                return "Sandpoint, ID";
+            }
+            else if (locationCode == "02")
+            {
+                return "Lowell, MI";
+            }
+            else if (locationCode == "03")
+            {
+                return "Hurricane, UT";
+            }
+            else
+            {
+                return locationCode;
+            }
+
+        }
+        /// <summary>
+        /// Determines the alphanumeric factory code from the provided lot
+        /// </summary>
+        /// <param name="lotCode">The lot from which to determine the factory code</param>
+        /// <returns></returns>
+        public string FactoryCodeFromLot(string lotCode)
+        {
+            string locationCode = lotCode[5].ToString();
+            locationCode += lotCode[6];
+
+            if (locationCode == "01")
+                return "S1";
+            else if (locationCode == "02")
+                return "L1";
+            else if (locationCode == "03")
+                return "H1";
+            else
+                return string.Empty;
+        }
+        /// <summary>
+        /// Determines the alphanumeric factory code from the lot at the provided index in Lots
+        /// </summary>
+        /// <param name="index">The index of the lot in Lots</param>
+        /// <returns></returns>
+        public string FactoryCodeFromLot(int index)
+        {
+            string lotCode = Lots[index];
+
+            string locationCode = lotCode[5].ToString();
+            locationCode += lotCode[6];
+
+            if (locationCode == "01")
+                return "S1";
+            else if (locationCode == "02")
+                return "L1";
+            else if (locationCode == "03")
+                return "H1";
+            else
+                return string.Empty;
         }
     }
 }

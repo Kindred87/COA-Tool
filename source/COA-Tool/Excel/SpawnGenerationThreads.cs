@@ -15,7 +15,7 @@ namespace CoA_Tool.Excel
             // Objects are instantiated with minimum processing until pertinent loading methods are called for the selected algorithm
             CSV.NWAData nwaData = new CSV.NWAData();
             CSV.TableauData tableau = new CSV.TableauData();
-            FinishedGoods finishedGoods = new FinishedGoods();
+            FinishedGoodsData finishedGoods = new FinishedGoodsData();
             int numberOfDocumentsToGenerate = 0;
 
             // For each sales order in tableau, spawn a workbook
@@ -28,15 +28,9 @@ namespace CoA_Tool.Excel
                 foreach (CSV.SalesOrder salesOrder in tableau.SalesOrders)
                 {
                     Console.Util.WriteMessageInCenter("Generating " + ++numberOfDocumentsToGenerate + " CoA documents");
-                    WorkbookData workbook = new WorkbookData(template)
-                    {
-                        SalesOrder = salesOrder,
-                        FinishedGoods = finishedGoods.Contents,
-                        MicroResults = nwaData.DelimitedMicroResults,
-                        TitrationResults = nwaData.DelimitedTitrationResults
-                    };
+                    COADocument workbook = new COADocument(template, salesOrder, nwaData, tableau, finishedGoods);
 
-                    Thread thread = new Thread(workbook.Generate);
+                    Thread thread = new Thread(workbook.StandardGeneration);
                     thread.Start();
                 }
             }
@@ -45,16 +39,6 @@ namespace CoA_Tool.Excel
             {
                 nwaData.LoadCSVFiles();
                 DateTime desiredStartDate = Console.Util.GetDateFromUser("Please enter a start date for the search algorithm.");
-
-                WorkbookData workbook = new WorkbookData(template)
-                {
-                    MicroResults = nwaData.DelimitedMicroResults,
-                    TitrationResults = nwaData.DelimitedTitrationResults,
-                    StartDate = desiredStartDate
-                };
-
-                Thread thread = new Thread(workbook.Generate);
-                thread.Start();
             }
         }
     }

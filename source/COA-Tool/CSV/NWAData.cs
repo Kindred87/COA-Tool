@@ -20,7 +20,9 @@ namespace CoA_Tool.CSV
         //  Lists
         public List<List<string>> DelimitedMicroResults = new List<List<string>>();
         public List<List<string>> DelimitedTitrationResults = new List<List<string>>();
-        
+        public enum TitrationOffset { Acidity = 5, Viscosity = 2, Salt = 4, pH = 6 }
+        public enum MicroOffset { Yeast = 9, Mold = 11, Aerobic = 15, Coliform = 7, Lactic = 13, EColiform = 5 }
+
         // Constructor
         public NWAData()
         {
@@ -191,6 +193,94 @@ namespace CoA_Tool.CSV
                 return true;
             else
                 return false;
+        }
+        public List<int> FindTitrationIndices(string recipeCode, DateTime madeDate, string factoryCode)
+        {
+            List<int> indices = new List<int>();
+            string jobNumber = string.Empty;
+            string madeDateAsString = madeDate.ToShortDateString();
+            string madeDateAsTwoDigitYearString = madeDate.ToString("M/d/yy");
+
+            for (int i = 0; i < DelimitedTitrationResults.Count; i++)
+            {
+                if (DelimitedTitrationResults[i][2] == factoryCode && (DelimitedTitrationResults[i][0] == madeDateAsString ||
+                    (DelimitedTitrationResults[i][0] == madeDateAsTwoDigitYearString)) && DelimitedTitrationResults[i][4] == recipeCode)
+                {
+                    indices.Add(i);
+
+                    if (string.IsNullOrEmpty(jobNumber))
+                    {
+                        jobNumber = DelimitedTitrationResults[i][3];
+                    }
+                }
+            }
+
+            // Runs a second check under a different factory
+            if (indices.Count == 0)
+            {
+                if (factoryCode == "H1")
+                    factoryCode = "L1";
+                else if (factoryCode == "L1")
+                    factoryCode = "H1";
+
+                for (int i = 0; i < DelimitedTitrationResults.Count; i++)
+                {
+                    if (DelimitedTitrationResults[i][2] == factoryCode && (DelimitedTitrationResults[i][0] == madeDateAsString ||
+                        (DelimitedTitrationResults[i][0] == madeDateAsTwoDigitYearString)) && DelimitedTitrationResults[i][4] == recipeCode)
+                    {
+                        indices.Add(i);
+
+                        if (string.IsNullOrEmpty(jobNumber))
+                        {
+                            jobNumber = DelimitedTitrationResults[i][3];
+                        }
+                    }
+                }
+            }
+            return indices;
+        }
+        public float GetTitrationValue(List<int> indices, TitrationOffset offset)
+        {
+            List<float> results = new List<float>();
+
+            foreach (int index in indices)
+            {
+                for (int i = 0; i < DelimitedTitrationResults[index].Count; i++)
+                {
+                    string value = DelimitedTitrationResults[index][i];
+
+                    if (value == "Original" || value == "ReTest_1" || value == "ReTest_2" || value == "ReTest_3" || value == "ReTest_4" || value == "ReTest_5")
+                    {
+                        if (DelimitedTitrationResults[index][i + (int)offset] != "*")
+                            results.Add(Convert.ToSingle(DelimitedTitrationResults[index][i + (int)offset]));
+                    }
+                }
+            }
+
+            float sum = 0;
+
+            foreach (float value in results)
+            {
+                sum += value;
+            }
+
+            float average = sum / results.Count;
+
+            int closestValueIndex = 0;
+            float smallestDifference = 10000000000;
+            float currentDifference;
+
+            for (int i = 0; i < results.Count; i++)
+            {
+                currentDifference = results[i] - average >= 0 ? results[i] - average : average - results[i];
+
+                if (currentDifference < smallestDifference)
+                {
+                    smallestDifference = currentDifference;
+                    closestValueIndex = i;
+                }
+            }
+            return results.Count == 0 ? -1 : results[closestValueIndex];
         }
     }
 }

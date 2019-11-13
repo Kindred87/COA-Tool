@@ -9,52 +9,104 @@ using System.IO;
 using OfficeOpenXml.Drawing;
 using System.Linq;
 
+
 namespace CoA_Tool.Excel
 {
     /// <summary>
-    /// Responsible for populating an Excel worksheet with necessary data
+    /// Responsible for generating final output document
     /// </summary>
-    class WorksheetData
+    class COADocument
     {
-        // Lists
+        //  Strings
+        private string AcidMethod = "(AOAC 30.048 14th Ed.)  ";
+        private string pHMethod = "(AOAC 30.012 14th Ed.)  ";
+        private string ViscosityCMMethod = "(Bostwick)  ";
+        private string ViscosityCPSMethod = "(Brookfield)  ";
+        private string SaltMethod = "(AOAC 937.09 18th Ed.)  ";
+        private string YeastMethod = "(AOAC 997.02)  ";
+        private string MoldMethod = "(AOAC 997.02)  ";
+        private string AerobicMethod = "(AOAC 990.12)  ";
+        private string ColiformMethod = "(AOAC 991.14)  ";
+        private string EColiMethod = "(AOAC 991.14)  ";
+        private string LacticMethod = "(AOAC 990.12)  ";
 
-        // Strings
-        public string CustomerName
+        // DateTimes
+        public DateTime StartDate;
+
+        // Hashsets
+        private HashSet<string> BatchIndicesToIgnore;
+
+        //  Objects
+        private Templates.Template WorkbookTemplate;
+        private CSV.SalesOrder SalesOrder { get; set; }
+        private CSV.NWAData NWAData { get; set; }
+        private CSV.TableauData TableauData { get; set; }
+        private FinishedGoodsData FinishedGoodsData { get; set; }
+
+        // Constructor
+        public COADocument(Templates.Template template, CSV.SalesOrder salesOrder, CSV.NWAData nwaData, CSV.TableauData tableau, FinishedGoodsData finishedGoods)
         {
-            get
-            {
-                return Template.Menu.UserChoice;
-            }
-        }
-        public string AcidMethod = "(AOAC 30.048 14th Ed.)  ";
-        public string pHMethod = "(AOAC 30.012 14th Ed.)  ";
-        public string ViscosityCMMethod = "(Bostwick)  ";
-        public string ViscosityCPSMethod = "(Brookfield)  ";
-        public string SaltMethod = "(AOAC 937.09 18th Ed.)  ";
-        public string YeastMethod = "(AOAC 997.02)  ";
-        public string MoldMethod = "(AOAC 997.02)  ";
-        public string AerobicMethod = "(AOAC 990.12)  ";
-        public string ColiformMethod = "(AOAC 991.14)  ";
-        public string EColiMethod = "(AOAC 991.14)  ";
-        public string LacticMethod = "(AOAC 990.12)  ";
-
-        // Longs
-        public long LotCode { get; set; }
-        
-
-        // Objects
-        private Templates.Template Template;
-        public WorksheetData(Templates.Template template, ExcelWorksheet excelWorksheet)
-        {
-            Template = template;
-            PopulateGeneralData(excelWorksheet);
-            PrepareMainContents(Convert.ToInt32(excelWorksheet.Name.Substring(5)));
+            WorkbookTemplate = template;
+            SalesOrder = salesOrder;
+            NWAData = nwaData;
+            TableauData = tableau;
+            FinishedGoodsData = finishedGoods;
         }
         /// <summary>
+        /// Generate a workbook using the standard algorithm
+        /// </summary>
+        public void StandardGeneration()
+        {
+            using (ExcelPackage package = new ExcelPackage())
+            {
+                int pageCount = 0;
+
+                pageCount = (SalesOrder.Lots.Count- 1) / 6;
+                if ((SalesOrder.Lots.Count - 1) % 6 > 0)
+                {
+                    pageCount++;
+                }
+                
+                for (int currentPage = 1; currentPage <= pageCount; currentPage++)
+                {
+                    ExcelWorksheet worksheet = package.Workbook.Worksheets.Add("Page " + currentPage);
+                    PopulateGeneralWorksheetData(worksheet);
+
+                    List<string> lotsToProcess = new List<string>();
+
+                    for (int i = 6 * (currentPage - 1); i < 6 * currentPage; i++)
+                    {
+                        lotsToProcess.Add(SalesOrder.Lots[i]); // i is zero-based
+                    }
+
+                    List<List<int>> TitrationIndices = new List<List<int>>();
+
+                    foreach(string lot in lotsToProcess)
+                    {
+                        string recipeCode = FinishedGoodsData.RecipeCodeFor(CSV.SalesOrder.ProductCodeFromLot(lot));
+                        DateTime madeDate = FinishedGoodsData.GetMadeDate(lot);
+                        string factoryCode = SalesOrder.ManufacturingSiteFromLot(lot);
+                        TitrationIndices.Add(NWAData.FindTitrationIndices(recipeCode, madeDate, factoryCode));
+                    }
+                    // TODO: Fetch micro and titration indices and pass them to method for greater flexibility
+                    PopulateMainWorksheetContents(worksheet, currentPage);
+                    
+                }
+                
+                if (Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs") == false)
+                {
+                    Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs");
+                }
+                        
+                package.SaveAs(new FileInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/" + SalesOrder.OrderNumber + ".xlsx"));
+            }
+        }
+        
+        /// /// <summary>
         /// Sets static data and settings for the worksheet
         /// </summary>
         /// <param name="targetWorksheet"></param>
-        private void PopulateGeneralData(ExcelWorksheet targetWorksheet)
+        private void PopulateGeneralWorksheetData(ExcelWorksheet targetWorksheet)
         {
             targetWorksheet.Cells.Style.Font.SetFromFont(new Font("Calibri", 11));
 
@@ -62,11 +114,6 @@ namespace CoA_Tool.Excel
 
             targetWorksheet.Cells["A1:H55"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
             targetWorksheet.Cells["A1:H55"].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
-
-            Image image = Image.FromFile("LH logo.png");
-            ExcelPicture logo = targetWorksheet.Drawings.AddPicture("Logo", image);
-            logo.SetSize(234, 124);
-            logo.SetPosition(0, 301);
 
             targetWorksheet.Column(1).Width = 10.85;
             targetWorksheet.Column(2).Width = 11.4;
@@ -79,6 +126,11 @@ namespace CoA_Tool.Excel
 
             targetWorksheet.Row(1).Height = 0;
 
+            Image image = Image.FromFile("LH logo.png");
+            ExcelPicture logo = targetWorksheet.Drawings.AddPicture("Logo", image);
+            logo.SetSize(234, 124); // Is affected by row and column resizing
+            logo.SetPosition(0, 301); // Is affected by row and column resizing
+
             targetWorksheet.Cells[11, 1, 60, 2].Style.Font.Size = 9;
             targetWorksheet.Cells[11, 1, 60, 8].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
 
@@ -90,63 +142,48 @@ namespace CoA_Tool.Excel
             targetWorksheet.HeaderFooter.OddFooter.RightAlignedText = "10/31/2019 REV 03 F142-087";
 
         }
-        private List<ContentBlock> PrepareMainContents(int worksheetNumber)
+        /// <summary>
+        /// Populates dynamic content for the worksheet
+        /// </summary>
+        /// <param name="targetWorksheet"></param>
+        private void PopulateMainWorksheetContents(ExcelWorksheet targetWorksheet, int currentPage)
         {
-            int currentRow = 11;
+            targetWorksheet.Cells["A8"].Value = "Certificate of Analysis";
+            targetWorksheet.Cells["A8"].Style.Font.SetFromFont(new Font("Calibri", 26, FontStyle.Bold));
+            targetWorksheet.Cells["A8"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            targetWorksheet.Cells["A8:H9"].Merge = true;
 
-            ContentBlock generalInfoBlock = new ContentBlock(currentRow);
-
-            if(Template.IncludeCustomerName)
-            {
-                generalInfoBlock.AddRow();
-                generalInfoBlock.Rows.Last().Cells[1].SetCellValue("Customer", Cell.OutputType.String);
-                generalInfoBlock.Rows.Last().Cells[1].Italisized = true;
-
-                currentRow++;
-            }
-
-            List<ContentBlock> contentBlocks = new List<ContentBlock>();
-
-            contentBlocks.Add(generalInfoBlock);
-
-            return contentBlocks;
-        }
-        private void PopulateMainContents(ExcelWorksheet targetWorksheet)
-        {
             // Counters are used since document contents/placement is dynamic
             int currentRow = 11;
             int sizeOfFirstContentBlock = 0;
-            int worksheetNumber = Convert.ToInt32(targetWorksheet.Name.Substring(5)); // Worksheet name is "Page n"
-
 
             // For first content block
-            if (Template.IncludeCustomerName)
+            if (WorkbookTemplate.IncludeCustomerName)
             {
                 sizeOfFirstContentBlock++;
-
+                
                 targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
                 targetWorksheet.Cells[currentRow, 1].Value = "Customer";
                 targetWorksheet.Cells[currentRow, 3, currentRow, 8].Merge = true;
-                targetWorksheet.Cells[currentRow, 3].Value = Template.Menu.UserChoice;
+                targetWorksheet.Cells[currentRow, 3].Value = WorkbookTemplate.Menu.UserChoice;
 
                 currentRow++;
+            } 
 
-            }
-
-            if (Template.IncludeSalesOrder)
+            if(WorkbookTemplate.IncludeSalesOrder)
             {
                 sizeOfFirstContentBlock++;
 
                 targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
                 targetWorksheet.Cells[currentRow, 1].Value = "Customer S/O #";
                 targetWorksheet.Cells[currentRow, 3, currentRow, 8].Merge = true;
-                targetWorksheet.Cells[currentRow, 3].Value = TableauData[1][3];
+                targetWorksheet.Cells[currentRow, 3].Value = SalesOrder.OrderNumber;
                 targetWorksheet.Cells[currentRow, 3].Style.Numberformat.Format = "0";
 
                 currentRow++;
             }
 
-            if (Template.IncludePurchaseOrder)
+            if(WorkbookTemplate.IncludePurchaseOrder)
             {
                 sizeOfFirstContentBlock++;
 
@@ -158,14 +195,13 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if (Template.IncludeGenerationDate)
+            if(WorkbookTemplate.IncludeGenerationDate)
             {
                 sizeOfFirstContentBlock++;
 
                 targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
                 targetWorksheet.Cells[currentRow, 1].Value = "Date";
                 targetWorksheet.Cells[currentRow, 3, currentRow, 8].Merge = true;
-                targetWorksheet.Cells[currentRow, 3].Value = TableauData[1][3];
                 targetWorksheet.Cells[currentRow, 3].Style.Numberformat.Format = "m/d/yyyy";
                 targetWorksheet.Cells[currentRow, 3].Value = DateTime.Now.Date.ToShortDateString();
 
@@ -174,7 +210,7 @@ namespace CoA_Tool.Excel
             }
 
             // For first content block
-            if (sizeOfFirstContentBlock > 0)
+            if(sizeOfFirstContentBlock > 0)
             {
                 targetWorksheet.Cells[10, 3, 10, 8].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
                 targetWorksheet.Cells[11, 3, 10 + sizeOfFirstContentBlock, 8].Style.Font.Size = 12;
@@ -187,12 +223,10 @@ namespace CoA_Tool.Excel
             // For second content block
 
             List<string> lotsToProcess = new List<string>();
-            for (int i = 6 * (worksheetNumber - 1); i < 6 * worksheetNumber; i++)
-            {
-                string lot = GetLotCode(i + 1);
 
-                if (lot != string.Empty)
-                    lotsToProcess.Add(lot);
+            for (int i = 6 * (currentPage - 1); i < 6 * currentPage; i++)
+            {
+                lotsToProcess.Add(SalesOrder.Lots[i]); // i is zero-based
             }
 
             if (sizeOfFirstContentBlock > 0)
@@ -202,7 +236,7 @@ namespace CoA_Tool.Excel
 
             int sizeOfSecondContentBlock = 0;
 
-            if (Template.IncludeProductName)
+            if (WorkbookTemplate.IncludeProductName)
             {
                 sizeOfSecondContentBlock++;
 
@@ -210,7 +244,7 @@ namespace CoA_Tool.Excel
                 targetWorksheet.Cells[currentRow, 1].Value = "Product";
                 targetWorksheet.Cells[currentRow, 3, currentRow, 8].Style.WrapText = true;
 
-                for (int i = 0; i < lotsToProcess.Count; i++)
+                for(int i = 0; i < lotsToProcess.Count; i++)
                 {
                     targetWorksheet.Cells[currentRow, 3 + i].Value = GetProductName(GetProductCode(lotsToProcess[i]));
                 }
@@ -218,29 +252,29 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if (Template.IncludeRecipeAndItem)
+            if(WorkbookTemplate.IncludeRecipeAndItem)
             {
                 sizeOfSecondContentBlock++;
 
                 targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
                 targetWorksheet.Cells[currentRow, 1].Value = "Recipe/Item";
 
-                for (int i = 0; i < lotsToProcess.Count; i++)
+                for(int i = 0; i < lotsToProcess.Count; i++)
                 {
                     string productCode = GetProductCode(lotsToProcess[i]);
                     string writeToCell = GetRecipeCode(productCode) +
                         "/" + productCode;
-                    if (Template.CustomFilters.Count > 0)
+                    if(WorkbookTemplate.CustomFilters.Count > 0)
                     {
-                        foreach (Templates.CustomFilter filter in Template.CustomFilters)
+                        foreach (Templates.CustomFilter filter in WorkbookTemplate.CustomFilters)
                         {
-                            if (filter.IsValidFilter && filter.ContentItem == Templates.Template.ContentItems.RecipeAndItem)
+                            if(filter.IsValidFilter && filter.ContentItem == Templates.Template.ContentItems.RecipeAndItem)
                             {
-                                if (filter.FilterType == Templates.CustomFilter.FilterTypes.Whitelist)
+                                if(filter.FilterType == Templates.CustomFilter.FilterTypes.Whitelist)
                                 {
                                     foreach (string criteria in filter.Criteria)
                                     {
-                                        if (criteria != writeToCell)
+                                        if(criteria != writeToCell)
                                         {
                                             return;
                                         }
@@ -248,9 +282,9 @@ namespace CoA_Tool.Excel
                                 }
                                 else // filter.FilterType == FilterTypes.Blacklist
                                 {
-                                    foreach (string criteria in filter.Criteria)
+                                    foreach(string criteria in filter.Criteria)
                                     {
-                                        if (criteria == writeToCell)
+                                        if(criteria == writeToCell)
                                         {
                                             return;
                                         }
@@ -265,14 +299,14 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if (Template.IncludeLotCode)
+            if(WorkbookTemplate.IncludeLotCode)
             {
                 sizeOfSecondContentBlock++;
 
                 targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
                 targetWorksheet.Cells[currentRow, 3, currentRow, 8].Style.Numberformat.Format = "0";
                 targetWorksheet.Cells[currentRow, 1].Value = "Lot Code";
-
+                
                 for (int i = 0; i < lotsToProcess.Count; i++)
                 {
                     long convertedLotValue;
@@ -281,12 +315,12 @@ namespace CoA_Tool.Excel
                     {
                         targetWorksheet.Cells[currentRow, 3 + i].Value = convertedLotValue;
                     }
-                    else if (lotsToProcess[i].Length > 13)
+                    else if(lotsToProcess[i].Length > 13)
                     {
                         targetWorksheet.Cells[currentRow, 3 + i].Value = "Lot too long";
                         targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
                     }
-                    else if (lotsToProcess[i].Length < 13)
+                    else if(lotsToProcess[i].Length < 13)
                     {
                         targetWorksheet.Cells[currentRow, 3 + i].Value = "Lot too short";
                         targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
@@ -300,14 +334,14 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if (Template.IncludeBatch)
+            if(WorkbookTemplate.IncludeBatch)
             {
                 sizeOfSecondContentBlock++;
 
                 targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
                 targetWorksheet.Cells[currentRow, 1].Value = "Batch";
 
-                if (Template.SelectedAlgorithm == Templates.Template.Algorithm.FromDateOnwards)
+                if(WorkbookTemplate.SelectedAlgorithm == Templates.Template.Algorithm.FromDateOnwards)
                 {
                     for (int i = 0; i < lotsToProcess.Count; i++)
                     {
@@ -317,7 +351,7 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if (Template.IncludeBestByDate)
+            if(WorkbookTemplate.IncludeBestByDate)
             {
                 sizeOfSecondContentBlock++;
 
@@ -327,7 +361,7 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if (Template.IncludeManufacturingDate)
+            if(WorkbookTemplate.IncludeManufacturingDate)
             {
                 sizeOfSecondContentBlock++;
 
@@ -337,7 +371,7 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if (Template.IncludeManufacturingSite)
+            if(WorkbookTemplate.IncludeManufacturingSite)
             {
                 sizeOfSecondContentBlock++;
 
@@ -353,7 +387,7 @@ namespace CoA_Tool.Excel
 
             if (sumOfBlockRows > 0)
             {
-                if (sizeOfSecondContentBlock > 0)
+                if(sizeOfSecondContentBlock > 0)
                 {
                     // Writes header for second content block
                     int secondBlockHeaderRow;
@@ -372,7 +406,7 @@ namespace CoA_Tool.Excel
                     targetWorksheet.Cells[secondBlockHeaderRow, 3, secondBlockHeaderRow, 8].Merge = true;
                     targetWorksheet.Cells[secondBlockHeaderRow, 3].Style.Font.Bold = true;
                     targetWorksheet.Cells[secondBlockHeaderRow, 3, secondBlockHeaderRow, 8].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
-                    targetWorksheet.Cells[secondBlockHeaderRow, 3, secondBlockHeaderRow + sizeOfSecondContentBlock,
+                    targetWorksheet.Cells[secondBlockHeaderRow, 3, secondBlockHeaderRow + sizeOfSecondContentBlock, 
                         8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
                     CreateTableOfBorders(6, sizeOfSecondContentBlock, secondBlockHeaderRow + 1, 3, targetWorksheet);
@@ -390,8 +424,8 @@ namespace CoA_Tool.Excel
                 currentRow = 12; // Allows the third block's header to use row 11
 
             int sizeOfThirdContentBlock = 0;
-
-            if (Template.IncludeAcidity)
+            
+            if(WorkbookTemplate.IncludeAcidity)
             {
                 sizeOfThirdContentBlock++;
 
@@ -401,7 +435,7 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if (Template.IncludepH)
+            if(WorkbookTemplate.IncludepH)
             {
                 sizeOfThirdContentBlock++;
 
@@ -411,7 +445,7 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if (Template.IncludeViscosityCM)
+            if(WorkbookTemplate.IncludeViscosityCM)
             {
                 sizeOfThirdContentBlock++;
 
@@ -421,7 +455,7 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if (Template.IncludeViscosityCPS)
+            if(WorkbookTemplate.IncludeViscosityCPS)
             {
                 sizeOfThirdContentBlock++;
 
@@ -431,7 +465,7 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if (Template.IncludeWaterActivity)
+            if(WorkbookTemplate.IncludeWaterActivity)
             {
                 sizeOfThirdContentBlock++;
 
@@ -440,7 +474,7 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if (Template.IncludeBrixSlurry)
+            if(WorkbookTemplate.IncludeBrixSlurry)
             {
                 sizeOfThirdContentBlock++;
 
@@ -449,7 +483,7 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if (sizeOfThirdContentBlock > 0)
+            if(sizeOfThirdContentBlock > 0)
             {
                 sumOfBlockRows += sizeOfThirdContentBlock;
 
@@ -470,7 +504,7 @@ namespace CoA_Tool.Excel
                 targetWorksheet.Cells[thirdBlockHeaderRow, 1].Value = "Test";
                 targetWorksheet.Cells[thirdBlockHeaderRow, 2].Value = "Method";
                 targetWorksheet.Cells[thirdBlockHeaderRow, 1, thirdBlockHeaderRow, 3].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                targetWorksheet.Cells[thirdBlockHeaderRow, 3, thirdBlockHeaderRow + sizeOfThirdContentBlock,
+                targetWorksheet.Cells[thirdBlockHeaderRow, 3, thirdBlockHeaderRow + sizeOfThirdContentBlock, 
                     8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                 targetWorksheet.Cells[thirdBlockHeaderRow, 3].Value = "Analytical Results";
 
@@ -479,7 +513,7 @@ namespace CoA_Tool.Excel
                 targetWorksheet.Cells[thirdBlockHeaderRow, 1, thirdBlockHeaderRow, 8].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
 
                 targetWorksheet.Cells[thirdBlockHeaderRow + 1, 2, thirdBlockHeaderRow + sizeOfThirdContentBlock, 2].Style.Font.Size = 6;
-                targetWorksheet.Cells[thirdBlockHeaderRow + 1, 2, thirdBlockHeaderRow + sizeOfThirdContentBlock,
+                targetWorksheet.Cells[thirdBlockHeaderRow + 1, 2, thirdBlockHeaderRow + sizeOfThirdContentBlock, 
                     2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
             }
 
@@ -492,7 +526,7 @@ namespace CoA_Tool.Excel
 
             int sizeOfFourthContentBlock = 0;
 
-            if (Template.IncludeYeast)
+            if(WorkbookTemplate.IncludeYeast)
             {
                 sizeOfFourthContentBlock++;
 
@@ -502,7 +536,7 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if (Template.IncludeMold)
+            if(WorkbookTemplate.IncludeMold)
             {
                 sizeOfFourthContentBlock++;
 
@@ -512,7 +546,7 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if (Template.IncludeAerobic)
+            if(WorkbookTemplate.IncludeAerobic)
             {
                 sizeOfFourthContentBlock++;
 
@@ -522,7 +556,7 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if (Template.IncludeColiform)
+            if(WorkbookTemplate.IncludeColiform)
             {
                 sizeOfFourthContentBlock++;
 
@@ -532,7 +566,7 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if (Template.IncludeEColi)
+            if (WorkbookTemplate.IncludeEColi)
             {
                 sizeOfFourthContentBlock++;
 
@@ -542,7 +576,7 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if (Template.IncludeLactics)
+            if(WorkbookTemplate.IncludeLactics)
             {
                 sizeOfFourthContentBlock++;
 
@@ -552,7 +586,7 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if (Template.IncludeSalmonella)
+            if(WorkbookTemplate.IncludeSalmonella)
             {
                 sizeOfFourthContentBlock++;
 
@@ -561,7 +595,7 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if (Template.IncludeListeria)
+            if(WorkbookTemplate.IncludeListeria)
             {
                 sizeOfFourthContentBlock++;
 
@@ -570,7 +604,7 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if (sizeOfFourthContentBlock > 0)
+            if(sizeOfFourthContentBlock > 0)
             {
                 sumOfBlockRows += sizeOfFourthContentBlock;
 
@@ -609,7 +643,7 @@ namespace CoA_Tool.Excel
 
             int sizeOfFifthContentBlock = 0;
 
-            if (Template.IncludeColorAndAppearance)
+            if(WorkbookTemplate.IncludeColorAndAppearance)
             {
                 sizeOfFifthContentBlock++;
 
@@ -618,25 +652,25 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if (Template.IncludeForm)
+            if(WorkbookTemplate.IncludeForm)
             {
                 sizeOfFifthContentBlock++;
-
+                
                 targetWorksheet.Cells[currentRow, 1].Value = "Form";
 
                 currentRow++;
             }
 
-            if (Template.IncludeFlavorAndOdor)
+            if(WorkbookTemplate.IncludeFlavorAndOdor)
             {
                 sizeOfFifthContentBlock++;
 
                 targetWorksheet.Cells[currentRow, 1].Value = "Flavor/Odor";
-
+                
                 currentRow++;
             }
 
-            if (sizeOfFifthContentBlock > 0)
+            if(sizeOfFifthContentBlock > 0)
             {
                 sumOfBlockRows += sizeOfFifthContentBlock;
 
@@ -704,6 +738,202 @@ namespace CoA_Tool.Excel
                     worksheet.Cells[rowStart + i, startColumn + j].Style.Border.BorderAround(ExcelBorderStyle.Thin);
                 }
             }
+        }
+        
+        
+        
+        
+        private List<int> GetMicroIndices(string recipeCode, string lotCode, string productCode, DateTime madeDate)
+        {
+            List<int> indices = new List<int>();
+
+            string factoryCode = GetFactoryCode(lotCode);
+            string madeDateAsString = madeDate.ToShortDateString();
+            string madeDateAsTwoDigitYearString = madeDate.ToString("M/d/yy");
+
+            for (int i = 0; i < MicroResults.Count; i++)
+            {
+                if (MicroResults[i][0] == factoryCode && MicroResults[i][7] == recipeCode && MicroResults[i][10] == productCode &&
+                    (madeDateAsString == MicroResults[i][9] || madeDateAsTwoDigitYearString == MicroResults[i][9]))
+                {
+                    indices.Add(i);
+                }
+            }
+            return indices;
+        }
+        private List<int> GetMicroIndices(string productCode, DateTime madeDate, string supplier)
+        {
+            List<int> indices = new List<int>();
+
+            string madeDateAsString = madeDate.ToShortDateString();
+            string madeDateAsTwoDigitYearString = madeDate.ToString("M/d/yy");
+
+            for (int i = 0; i < MicroResults.Count; i++)
+            {
+                if (MicroResults[i][16] == supplier && MicroResults[i][10] == productCode &&
+                    (madeDateAsString == MicroResults[i][9] || madeDateAsTwoDigitYearString == MicroResults[i][9]))
+                {
+                    indices.Add(i);
+                }
+            }
+            return indices;
+        }
+
+        private int GetMicroValue(List<int> indices, MicroOffset offset)
+        {
+            List<int> microValues = new List<int>();
+
+            foreach (int index in indices)
+            {
+                for (int i = 0; i < MicroResults[index].Count; i++)
+                {
+                    if (MicroResults[index][i] == "HURRICANE" || MicroResults[index][i] == "Hurricane" || MicroResults[index][i] == "Lowell" || MicroResults[index][i] == "Sandpoint")
+                    {
+                        if (string.IsNullOrEmpty(MicroResults[index][i + (int)offset]) || MicroResults[index][i + (int)offset] == "*")
+                            continue;
+                        else
+
+                            microValues.Add(Convert.ToInt32(MicroResults[index][i + (int)offset].Trim()));
+                    }
+                }
+            }
+
+            int largestValue = -1;
+
+            foreach (int value in FilterMicroValues(microValues, offset))
+            {
+                if (value > largestValue)
+                {
+                    largestValue = value;
+                }
+            }
+
+            return largestValue;
+        }
+        /// <summary>
+        /// Filters out-of-spec values provided that at least one value is in-spec, otherwise the provided list is returned
+        /// </summary>
+        /// <param name="unsortedValues"></param>
+        /// <param name="offset"></param>
+        /// <returns></returns>
+        private List<int> FilterMicroValues(List<int> unsortedValues, MicroOffset offset)
+        {
+            List<int> sortedValues = new List<int>();
+
+                foreach(int value in unsortedValues)
+                {
+                if (offset == MicroOffset.Aerobic && value < 100000) // 100k
+                    sortedValues.Add(value);
+                else if (offset == MicroOffset.Coliform && value < 100)
+                    sortedValues.Add(value);
+                else if (offset == MicroOffset.Lactic && value < 1000)
+                    sortedValues.Add(value);
+                else if (offset == MicroOffset.Mold && value < 1000)
+                    sortedValues.Add(value);
+                else if (offset == MicroOffset.Yeast && value < 1000)
+                    sortedValues.Add(value);
+                else if (offset == MicroOffset.EColiform && value == 0)
+                    sortedValues.Add(value);
+                }
+
+                if (sortedValues.Count != 0)
+                {
+                    return sortedValues;
+                }
+                else
+                {
+                    return unsortedValues;
+                }
+            
+        }
+        private bool MicroValueInSpec(int value, MicroOffset offset)
+        {
+            if(offset == MicroOffset.Aerobic)
+            {
+                if(value < 100000)
+                    return true;
+                else
+                    return false;
+            }
+            else if(offset == MicroOffset.Coliform)
+            {
+                if(value < 100)
+                    return true;
+                else
+                    return false;
+            }
+            else if(offset == MicroOffset.Lactic)
+            {
+                if(value < 1000)
+                    return true;
+                else
+                    return false;
+            }
+            else if (offset == MicroOffset.Mold)
+            {
+                if(value < 1000)
+                    return true;
+                else
+                    return false;
+            }
+            else // when (offset == MicroOffset.Yeast)
+            {
+                if(value < 1000)
+                    return true;
+                else
+                    return false;
+            }
+        }
+        /// <summary>
+        /// Retrieves shelf life for a given recipe from the Recipes list
+        /// </summary>
+        /// <param name="recipeCode"></param>
+        /// <returns></returns>
+        
+        private bool DoesFilterInvalidateDocument()
+        {
+            if(WorkbookTemplate.CustomFilters.Count > 0)
+            {
+                if(WorkbookTemplate.SelectedAlgorithm == Templates.Template.Algorithm.Standard) // Get tableau lots if true
+                {
+                    List<string> lotCodes = new List<string>();
+
+                    for (int i = 1; i < TableauData.Count; i++)
+                    {
+                        lotCodes.Add(GetLotCode(i));
+                    }
+                }
+                foreach(Templates.CustomFilter filter in WorkbookTemplate.CustomFilters)
+                {
+                    if (filter.IsValidFilter)
+                    {
+                        switch(filter.ContentItem)
+                        {
+                            case Templates.Template.ContentItems.RecipeAndItem:
+                                if(filter.FilterType == Templates.CustomFilter.FilterTypes.Whitelist)
+                                {
+                                    if(WorkbookTemplate.SelectedAlgorithm == Templates.Template.Algorithm.Standard)
+                                    {
+
+                                    }
+                                    else // SelectedAlgorithm == Algorithm.FromDateOnwards
+                                    {
+
+                                    }
+                                }
+                                else // FilterType == Blacklist
+                                {
+
+                                }
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+
+            return false;
         }
     }
 }

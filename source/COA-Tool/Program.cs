@@ -23,7 +23,7 @@ namespace CoA_Tool
                 Excel.WorkbookData workbook = new Excel.WorkbookData(common.DelimitedTitrationResults, common.DelimitedMicroResults, finishedGoods.Contents);
                 workbook.TableauData = order;
 
-                Thread thread = new Thread(workbook.Generate);
+                Thread thread = new Thread(workbook.StandardGeneration);
                 thread.Start();
             }
         }
@@ -78,7 +78,7 @@ namespace CoA_Tool
                 Excel.WorkbookData workbook = new Excel.WorkbookData(common.DelimitedTitrationResults, common.DelimitedMicroResults, finishedGoods.Contents, common.Recipes);
                 workbook.InternalCOAData = productAndDateCombo.Split(new char[] { ',' });
 
-                Thread thread = new Thread(workbook.Generate);
+                Thread thread = new Thread(workbook.StandardGeneration);
                 thread.Start();
             }
         }*/
