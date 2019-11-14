@@ -25,7 +25,7 @@ namespace CoA_Tool.CSV
 
         // String
         /// <summary>
-        /// "Desktop\\CoAs\\TableauData Files", assigned in constructor
+        /// "Desktop\\CoAs\\Tableau Files", assigned in constructor
         /// </summary>
         public string DesktopSubDirectoryPath;
 
@@ -87,7 +87,7 @@ namespace CoA_Tool.CSV
             else if (targetDirectory == LotDirectory.Complete)
                 nextSubDirectory = "\\3) Complete\\";
             else if (targetDirectory == LotDirectory.PreviousBatch)
-                nextSubDirectory = "\\2) CUrrent Batch\\2) Previous Batch\\";
+                nextSubDirectory = "\\2) Current Batch\\2) Previous Batch\\";
             else
                 nextSubDirectory = "\\4) Deletion Queue\\";
 

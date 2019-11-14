@@ -8,12 +8,12 @@ using OfficeOpenXml.Style;
 using System.IO;
 using OfficeOpenXml.Drawing;
 using System.Linq;
-
+using CoA_Tool.Utility;
 
 namespace CoA_Tool.Excel
 {
     /// <summary>
-    /// Responsible for generating final output document
+    /// Responsible for generating the final output document
     /// </summary>
     class COADocument
     {
@@ -66,7 +66,10 @@ namespace CoA_Tool.Excel
                 {
                     pageCount++;
                 }
-                
+
+                bool containsInvalidLot = false;
+                string invalidLotValue = "";
+
                 for (int currentPage = 1; currentPage <= pageCount; currentPage++)
                 {
                     ExcelWorksheet worksheet = package.Workbook.Worksheets.Add("Page " + currentPage);
@@ -76,29 +79,55 @@ namespace CoA_Tool.Excel
 
                     for (int i = 6 * (currentPage - 1); i < 6 * currentPage; i++)
                     {
-                        lotsToProcess.Add(SalesOrder.Lots[i]); // i is zero-based
+                        if (i + 1 > SalesOrder.Lots.Count) // TODO: Review this
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            lotsToProcess.Add(SalesOrder.Lots[i]); // i is zero-based
+                        }
                     }
 
-                    List<List<int>> TitrationIndices = new List<List<int>>();
-
-                    foreach(string lot in lotsToProcess)
-                    {
-                        string recipeCode = FinishedGoodsData.RecipeCodeFor(CSV.SalesOrder.ProductCodeFromLot(lot));
-                        DateTime madeDate = FinishedGoodsData.GetMadeDate(lot);
-                        string factoryCode = SalesOrder.ManufacturingSiteFromLot(lot);
-                        TitrationIndices.Add(NWAData.FindTitrationIndices(recipeCode, madeDate, factoryCode));
-                    }
-                    // TODO: Fetch micro and titration indices and pass them to method for greater flexibility
-                    PopulateMainWorksheetContents(worksheet, currentPage);
+                    List<List<int>> titrationIndices = new List<List<int>>();
+                    List<List<int>> microIndices = new List<List<int>>();
                     
+
+                    foreach (string lotCode in lotsToProcess)
+                    {
+                        if(FinishedGoodsData.RecipeCodeExists(Lot.ProductCode(lotCode), out string recipeCode) == false)
+                        {
+                            containsInvalidLot = true;
+                            invalidLotValue = lotCode;
+                        }
+                        
+                        DateTime madeDate = FinishedGoodsData.GetMadeDate(lotCode);
+                        string factoryCode = Lot.ManufacturingSite(lotCode);
+
+                        titrationIndices.Add(NWAData.TitrationIndices(recipeCode, madeDate, factoryCode));
+                        microIndices.Add(NWAData.MicroIndices(recipeCode, lotCode, madeDate));
+                    }
+
+                    if(containsInvalidLot == false)
+                    {
+                        PopulateMainWorksheetContents(worksheet, titrationIndices, microIndices);
+                    }
                 }
                 
                 if (Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs") == false)
                 {
                     Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs");
                 }
-                        
-                package.SaveAs(new FileInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/" + SalesOrder.OrderNumber + ".xlsx"));
+
+                if(containsInvalidLot)
+                {
+                    package.SaveAs(new FileInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/" + SalesOrder.OrderNumber + " (Lot " + invalidLotValue + " invalid)" + ".xlsx"));
+                }
+                else
+                {
+                    package.SaveAs(new FileInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/" + SalesOrder.OrderNumber + ".xlsx"));
+                }
+                
             }
         }
         
@@ -145,9 +174,21 @@ namespace CoA_Tool.Excel
         /// <summary>
         /// Populates dynamic content for the worksheet
         /// </summary>
-        /// <param name="targetWorksheet"></param>
-        private void PopulateMainWorksheetContents(ExcelWorksheet targetWorksheet, int currentPage)
+        /// <param name="targetWorksheet">The worksheet to populate</param>
+        /// <param name="currentPage"></param>
+        /// <param name="titrationIndices"></param>
+        /// <param name="microIndices"></param>
+        private void PopulateMainWorksheetContents(ExcelWorksheet targetWorksheet, List<List<int>> titrationIndices, List<List<int>> microIndices)
         {
+            int worksheetNumber = Convert.ToInt32(targetWorksheet.Name.Substring(5)); // Extracts worksheet number from the worksheet name; formatted as "Page n"
+            
+            int itemsInWorksheet = titrationIndices.Count;
+
+            if(itemsInWorksheet == 0)
+            {
+                itemsInWorksheet = microIndices.Count;
+            }
+
             targetWorksheet.Cells["A8"].Value = "Certificate of Analysis";
             targetWorksheet.Cells["A8"].Style.Font.SetFromFont(new Font("Calibri", 26, FontStyle.Bold));
             targetWorksheet.Cells["A8"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
@@ -222,17 +263,15 @@ namespace CoA_Tool.Excel
 
             // For second content block
 
-            List<string> lotsToProcess = new List<string>();
-
-            for (int i = 6 * (currentPage - 1); i < 6 * currentPage; i++)
-            {
-                lotsToProcess.Add(SalesOrder.Lots[i]); // i is zero-based
-            }
-
             if (sizeOfFirstContentBlock > 0)
+            {
                 currentRow += 2; // An empty space between blocks and an empty space for the block's header if the block size > 0
+            }
+                
             else
+            {
                 currentRow = 12; // Allows the second block's header to use row 11
+            }
 
             int sizeOfSecondContentBlock = 0;
 
@@ -244,11 +283,37 @@ namespace CoA_Tool.Excel
                 targetWorksheet.Cells[currentRow, 1].Value = "Product";
                 targetWorksheet.Cells[currentRow, 3, currentRow, 8].Style.WrapText = true;
 
-                for(int i = 0; i < lotsToProcess.Count; i++)
+                string productCode;
+                string productName;
+                for(int i = 0; i < itemsInWorksheet; i++)
                 {
-                    targetWorksheet.Cells[currentRow, 3 + i].Value = GetProductName(GetProductCode(lotsToProcess[i]));
+                    if(microIndices.Count > 0)
+                    {
+                        if(microIndices[i].Count > 0)
+                        {
+                            productCode = NWAData.ProductCodeFromMicroIndex(microIndices[i][0]);
+                            FinishedGoodsData.ProductNameExists(productCode, out productName);
+                        }
+                        else
+                        {
+                            productName = "Micro search error";
+                            targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                        }
+                        
+                        targetWorksheet.Cells[currentRow, 3 + i].Value = productName;
+                    }
+                    else if(titrationIndices.Count > 0)
+                    {
+                        targetWorksheet.Cells[currentRow, 3 + i].Value = WorkbookTemplate.SelectedAlgorithm.ToString() + " not configured for this value";
+                        targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                        targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
+                    }
+                    else
+                    {
+                        targetWorksheet.Cells[currentRow, 3 + i].Value = "No useable data";
+                        targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                    }
                 }
-
                 currentRow++;
             }
 
@@ -259,43 +324,37 @@ namespace CoA_Tool.Excel
                 targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
                 targetWorksheet.Cells[currentRow, 1].Value = "Recipe/Item";
 
-                for(int i = 0; i < lotsToProcess.Count; i++)
+                string recipeCode;
+                string productCode;
+                for(int i = 0; i < itemsInWorksheet; i++)
                 {
-                    string productCode = GetProductCode(lotsToProcess[i]);
-                    string writeToCell = GetRecipeCode(productCode) +
-                        "/" + productCode;
-                    if(WorkbookTemplate.CustomFilters.Count > 0)
+                    if (microIndices.Count > 0)
                     {
-                        foreach (Templates.CustomFilter filter in WorkbookTemplate.CustomFilters)
+                        if(microIndices[i].Count > 0)
                         {
-                            if(filter.IsValidFilter && filter.ContentItem == Templates.Template.ContentItems.RecipeAndItem)
-                            {
-                                if(filter.FilterType == Templates.CustomFilter.FilterTypes.Whitelist)
-                                {
-                                    foreach (string criteria in filter.Criteria)
-                                    {
-                                        if(criteria != writeToCell)
-                                        {
-                                            return;
-                                        }
-                                    }
-                                }
-                                else // filter.FilterType == FilterTypes.Blacklist
-                                {
-                                    foreach(string criteria in filter.Criteria)
-                                    {
-                                        if(criteria == writeToCell)
-                                        {
-                                            return;
-                                        }
-                                    }
-                                }
-                            }
+                            recipeCode = NWAData.RecipeCodeFromMicroIndex(microIndices[i][0]);
+                            productCode = NWAData.ProductCodeFromMicroIndex(microIndices[i][0]);
+                            targetWorksheet.Cells[currentRow, 3 + i].Value = recipeCode + "/" + productCode;
                         }
+                        else
+                        {
+                            targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                            targetWorksheet.Cells[currentRow, 3 + i].Value = "Micro search error";
+                        }
+                       
+                        
                     }
-                    targetWorksheet.Cells[currentRow, 3 + i].Value = writeToCell;
+                    else if (titrationIndices.Count > 0)
+                    {
+                        recipeCode = NWAData.RecipeCodeFromTitrationIndex(microIndices[i][0]);
+                        targetWorksheet.Cells[currentRow, 3 + i].Value = recipeCode + "/";
+                    }
+                    else
+                    {
+                        targetWorksheet.Cells[currentRow, 3 + i].Value = "No useable data";
+                        targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                    }
                 }
-
                 currentRow++;
             }
 
@@ -306,49 +365,99 @@ namespace CoA_Tool.Excel
                 targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
                 targetWorksheet.Cells[currentRow, 3, currentRow, 8].Style.Numberformat.Format = "0";
                 targetWorksheet.Cells[currentRow, 1].Value = "Lot Code";
-                
-                for (int i = 0; i < lotsToProcess.Count; i++)
-                {
-                    long convertedLotValue;
 
-                    if (Int64.TryParse(lotsToProcess[i], out convertedLotValue) && lotsToProcess[i].Length == 13)
+                string lotCode;
+                long lotCodeAsLong;
+                for (int i = 0; i < itemsInWorksheet; i++)
+                {
+                    if(WorkbookTemplate.SelectedAlgorithm == Templates.Template.Algorithm.Standard)
                     {
-                        targetWorksheet.Cells[currentRow, 3 + i].Value = convertedLotValue;
-                    }
-                    else if(lotsToProcess[i].Length > 13)
-                    {
-                        targetWorksheet.Cells[currentRow, 3 + i].Value = "Lot too long";
-                        targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                    }
-                    else if(lotsToProcess[i].Length < 13)
-                    {
-                        targetWorksheet.Cells[currentRow, 3 + i].Value = "Lot too short";
-                        targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                    }
-                    else
-                    {
-                        targetWorksheet.Cells[currentRow, 3 + i].Value = "Invalid lot";
-                        targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                        lotCode = SalesOrder.Lots[i + (worksheetNumber - 1) * 6];
+
+                        if (Int64.TryParse(lotCode, out lotCodeAsLong) && lotCode.Length == 13)
+                        {
+                            targetWorksheet.Cells[currentRow, 3 + i].Value = lotCodeAsLong;
+                        }
+                        else if (lotCode.Length > 13)
+                        {
+                            targetWorksheet.Cells[currentRow, 3 + i].Value = "Lot too long";
+                            targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                        }
+                        else if (lotCode.Length < 13)
+                        {
+                            targetWorksheet.Cells[currentRow, 3 + i].Value = "Lot too short";
+                            targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                        }
+                        else
+                        {
+                            targetWorksheet.Cells[currentRow, 3 + i].Value = "Invalid lot";
+                            targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                        }
                     }
                 }
                 currentRow++;
             }
 
-            if(WorkbookTemplate.IncludeBatch)
+            if(WorkbookTemplate.IncludeBatchFromMicro)
             {
                 sizeOfSecondContentBlock++;
 
                 targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
                 targetWorksheet.Cells[currentRow, 1].Value = "Batch";
 
-                if(WorkbookTemplate.SelectedAlgorithm == Templates.Template.Algorithm.FromDateOnwards)
+                for(int i = 0; i < itemsInWorksheet; i++)
                 {
-                    for (int i = 0; i < lotsToProcess.Count; i++)
+                    if(microIndices.Count > 0)
                     {
-                        targetWorksheet.Cells[currentRow, 3 + i].Value = "";
+                        if(microIndices[i].Count > 0)
+                        {
+                            targetWorksheet.Cells[currentRow, 3 + i].Value = NWAData.BatchValuesFromMicroIndices(microIndices[i]);
+                        }
+                        else
+                        {
+                            targetWorksheet.Cells[currentRow, 3 + i].Value = "Micro search error";
+                            targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red); 
+                        }
+                    }
+                    else
+                    {
+                        targetWorksheet.Cells[currentRow, 3 + i].Value = "No useable data";
+                        targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
                     }
                 }
                 currentRow++;
+            }
+
+            if(WorkbookTemplate.IncludeBatchFromDressing)
+            {
+                // sizeOfSecondContentBlock modified at end of block
+
+                for (int i = 0; i < itemsInWorksheet; i++)
+                {
+                    if (titrationIndices.Count > 0)
+                    {
+                        if (titrationIndices[i].Count > 0)
+                        {
+                            targetWorksheet.Cells[currentRow, 3 + i].Value = NWAData.BatchValuesFromTitrationIndices(microIndices[i]);
+                        }
+                        else
+                        {
+                            targetWorksheet.Cells[currentRow, 3 + i].Value = "Micro search error";
+                            targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                        }
+                    }
+                    else
+                    {
+                        targetWorksheet.Cells[currentRow, 3 + i].Value = "No useable data";
+                        targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                    }
+                }
+
+                if (WorkbookTemplate.IncludeBatchFromDressing == false)
+                {
+                    sizeOfSecondContentBlock++; // If both are set to be included, batch from dressing will overwrite
+                    currentRow++;
+                }
             }
 
             if(WorkbookTemplate.IncludeBestByDate)
@@ -357,6 +466,24 @@ namespace CoA_Tool.Excel
 
                 targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
                 targetWorksheet.Cells[currentRow, 1].Value = "Best By Date";
+
+                for(int i = 0; i < itemsInWorksheet; i++)
+                {
+                    if(WorkbookTemplate.SelectedAlgorithm == Templates.Template.Algorithm.Standard)
+                    {
+                        // TODO: Lot date conversion method
+                        if(DateTime.TryParse(SalesOrder.Lots[i + (worksheetNumber - 1) * 6].Substring(7), out DateTime bestBy))
+                        {
+                            targetWorksheet.Cells[currentRow, 3 + i].Value = bestBy.ToShortDateString();
+                        }
+                        else
+                        {
+                            targetWorksheet.Cells[currentRow, 3 + i].Value = "Date conversion error";
+                            targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                            targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
+                        }
+                    }
+                }
 
                 currentRow++;
             }
@@ -738,202 +865,6 @@ namespace CoA_Tool.Excel
                     worksheet.Cells[rowStart + i, startColumn + j].Style.Border.BorderAround(ExcelBorderStyle.Thin);
                 }
             }
-        }
-        
-        
-        
-        
-        private List<int> GetMicroIndices(string recipeCode, string lotCode, string productCode, DateTime madeDate)
-        {
-            List<int> indices = new List<int>();
-
-            string factoryCode = GetFactoryCode(lotCode);
-            string madeDateAsString = madeDate.ToShortDateString();
-            string madeDateAsTwoDigitYearString = madeDate.ToString("M/d/yy");
-
-            for (int i = 0; i < MicroResults.Count; i++)
-            {
-                if (MicroResults[i][0] == factoryCode && MicroResults[i][7] == recipeCode && MicroResults[i][10] == productCode &&
-                    (madeDateAsString == MicroResults[i][9] || madeDateAsTwoDigitYearString == MicroResults[i][9]))
-                {
-                    indices.Add(i);
-                }
-            }
-            return indices;
-        }
-        private List<int> GetMicroIndices(string productCode, DateTime madeDate, string supplier)
-        {
-            List<int> indices = new List<int>();
-
-            string madeDateAsString = madeDate.ToShortDateString();
-            string madeDateAsTwoDigitYearString = madeDate.ToString("M/d/yy");
-
-            for (int i = 0; i < MicroResults.Count; i++)
-            {
-                if (MicroResults[i][16] == supplier && MicroResults[i][10] == productCode &&
-                    (madeDateAsString == MicroResults[i][9] || madeDateAsTwoDigitYearString == MicroResults[i][9]))
-                {
-                    indices.Add(i);
-                }
-            }
-            return indices;
-        }
-
-        private int GetMicroValue(List<int> indices, MicroOffset offset)
-        {
-            List<int> microValues = new List<int>();
-
-            foreach (int index in indices)
-            {
-                for (int i = 0; i < MicroResults[index].Count; i++)
-                {
-                    if (MicroResults[index][i] == "HURRICANE" || MicroResults[index][i] == "Hurricane" || MicroResults[index][i] == "Lowell" || MicroResults[index][i] == "Sandpoint")
-                    {
-                        if (string.IsNullOrEmpty(MicroResults[index][i + (int)offset]) || MicroResults[index][i + (int)offset] == "*")
-                            continue;
-                        else
-
-                            microValues.Add(Convert.ToInt32(MicroResults[index][i + (int)offset].Trim()));
-                    }
-                }
-            }
-
-            int largestValue = -1;
-
-            foreach (int value in FilterMicroValues(microValues, offset))
-            {
-                if (value > largestValue)
-                {
-                    largestValue = value;
-                }
-            }
-
-            return largestValue;
-        }
-        /// <summary>
-        /// Filters out-of-spec values provided that at least one value is in-spec, otherwise the provided list is returned
-        /// </summary>
-        /// <param name="unsortedValues"></param>
-        /// <param name="offset"></param>
-        /// <returns></returns>
-        private List<int> FilterMicroValues(List<int> unsortedValues, MicroOffset offset)
-        {
-            List<int> sortedValues = new List<int>();
-
-                foreach(int value in unsortedValues)
-                {
-                if (offset == MicroOffset.Aerobic && value < 100000) // 100k
-                    sortedValues.Add(value);
-                else if (offset == MicroOffset.Coliform && value < 100)
-                    sortedValues.Add(value);
-                else if (offset == MicroOffset.Lactic && value < 1000)
-                    sortedValues.Add(value);
-                else if (offset == MicroOffset.Mold && value < 1000)
-                    sortedValues.Add(value);
-                else if (offset == MicroOffset.Yeast && value < 1000)
-                    sortedValues.Add(value);
-                else if (offset == MicroOffset.EColiform && value == 0)
-                    sortedValues.Add(value);
-                }
-
-                if (sortedValues.Count != 0)
-                {
-                    return sortedValues;
-                }
-                else
-                {
-                    return unsortedValues;
-                }
-            
-        }
-        private bool MicroValueInSpec(int value, MicroOffset offset)
-        {
-            if(offset == MicroOffset.Aerobic)
-            {
-                if(value < 100000)
-                    return true;
-                else
-                    return false;
-            }
-            else if(offset == MicroOffset.Coliform)
-            {
-                if(value < 100)
-                    return true;
-                else
-                    return false;
-            }
-            else if(offset == MicroOffset.Lactic)
-            {
-                if(value < 1000)
-                    return true;
-                else
-                    return false;
-            }
-            else if (offset == MicroOffset.Mold)
-            {
-                if(value < 1000)
-                    return true;
-                else
-                    return false;
-            }
-            else // when (offset == MicroOffset.Yeast)
-            {
-                if(value < 1000)
-                    return true;
-                else
-                    return false;
-            }
-        }
-        /// <summary>
-        /// Retrieves shelf life for a given recipe from the Recipes list
-        /// </summary>
-        /// <param name="recipeCode"></param>
-        /// <returns></returns>
-        
-        private bool DoesFilterInvalidateDocument()
-        {
-            if(WorkbookTemplate.CustomFilters.Count > 0)
-            {
-                if(WorkbookTemplate.SelectedAlgorithm == Templates.Template.Algorithm.Standard) // Get tableau lots if true
-                {
-                    List<string> lotCodes = new List<string>();
-
-                    for (int i = 1; i < TableauData.Count; i++)
-                    {
-                        lotCodes.Add(GetLotCode(i));
-                    }
-                }
-                foreach(Templates.CustomFilter filter in WorkbookTemplate.CustomFilters)
-                {
-                    if (filter.IsValidFilter)
-                    {
-                        switch(filter.ContentItem)
-                        {
-                            case Templates.Template.ContentItems.RecipeAndItem:
-                                if(filter.FilterType == Templates.CustomFilter.FilterTypes.Whitelist)
-                                {
-                                    if(WorkbookTemplate.SelectedAlgorithm == Templates.Template.Algorithm.Standard)
-                                    {
-
-                                    }
-                                    else // SelectedAlgorithm == Algorithm.FromDateOnwards
-                                    {
-
-                                    }
-                                }
-                                else // FilterType == Blacklist
-                                {
-
-                                }
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-                }
-            }
-
-            return false;
         }
     }
 }

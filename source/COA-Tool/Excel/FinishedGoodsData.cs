@@ -7,6 +7,7 @@ using System.Drawing;
 using OfficeOpenXml.Style;
 using System.IO;
 using OfficeOpenXml.Drawing;
+using CoA_Tool.Utility;
 
 namespace CoA_Tool.Excel
 {
@@ -129,32 +130,36 @@ namespace CoA_Tool.Excel
         /// </summary>
         /// <param name="productCode">The five digit finished good product code</param>
         /// <returns></returns>
-        public string ProductNameFor(string productCode)
+        public bool ProductNameExists(string productCode, out string productName)
         {
             foreach (List<string> line in Contents)
             {
                 if (line[0] == productCode)
                 {
-                    return line[1];
+                    productName = line[1];
+                    return true;
                 }
             }
-            return string.Empty;
+            productName = string.Empty;
+            return false;
         }
         /// <summary>
         /// Retrieves the recipe code associated with the provided product code
         /// </summary>
         /// <param name="productCode">The five digit finished good product code</param>
         /// <returns></returns>
-        public string RecipeCodeFor(string productCode)
+        public bool RecipeCodeExists(string productCode, out string recipeCode)
         {
             foreach (List<string> line in Contents)
             {
                 if (line[0] == productCode)
                 {
-                    return line[3];
+                    recipeCode = line[3];
+                    return true;
                 }
             }
-            return "Could not locate";
+            recipeCode = string.Empty;
+            return false;
         }
         /// <summary>
         /// Determines the made date of a product based on its lot code
@@ -164,7 +169,7 @@ namespace CoA_Tool.Excel
         /// <returns></returns>
         public DateTime GetMadeDate(string lotCode)
         {
-            string productCode = CSV.SalesOrder.ProductCodeFromLot(lotCode);
+            string productCode = Lot.ProductCode(lotCode);
             int daysToExpiry = 0;
 
             foreach (List<string> line in Contents)

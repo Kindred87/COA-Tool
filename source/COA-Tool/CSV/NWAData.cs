@@ -8,6 +8,7 @@ using System.Drawing;
 using OfficeOpenXml.Style;
 using OfficeOpenXml.Drawing;
 using OfficeOpenXml;
+using CoA_Tool.Utility;
 
 namespace CoA_Tool.CSV
 {
@@ -194,7 +195,14 @@ namespace CoA_Tool.CSV
             else
                 return false;
         }
-        public List<int> FindTitrationIndices(string recipeCode, DateTime madeDate, string factoryCode)
+        /// <summary>
+        /// Retrieves indices of entries in DelimitedTitrationResults matching the given criteria 
+        /// </summary>
+        /// <param name="recipeCode"></param>
+        /// <param name="madeDate"></param>
+        /// <param name="factoryCode"></param>
+        /// <returns></returns>
+        public List<int> TitrationIndices(string recipeCode, DateTime madeDate, string factoryCode)
         {
             List<int> indices = new List<int>();
             string jobNumber = string.Empty;
@@ -239,7 +247,13 @@ namespace CoA_Tool.CSV
             }
             return indices;
         }
-        public float GetTitrationValue(List<int> indices, TitrationOffset offset)
+        /// <summary>
+        /// Retrieves a value from a given entry in DelimitedTitrationResults
+        /// </summary>
+        /// <param name="indices"></param>
+        /// <param name="offset"></param>
+        /// <returns></returns>
+        public float TitrationValue(List<int> indices, TitrationOffset offset)
         {
             List<float> results = new List<float>();
 
@@ -281,6 +295,261 @@ namespace CoA_Tool.CSV
                 }
             }
             return results.Count == 0 ? -1 : results[closestValueIndex];
+        }
+        /// <summary>
+        /// Retrieves indices of entries in DelimitedTitrationResults matching the given criteria 
+        /// </summary>
+        /// <param name="recipeCode">The five-digit recipe code to search under</param>
+        /// <param name="lotCode">The twelve-digit lot code to search under</param>
+        /// <param name="madeDate">The product's manufacturing date</param>
+        /// <returns></returns>
+        public List<int> MicroIndices(string recipeCode, string lotCode, DateTime madeDate)
+        {
+            List<int> indices = new List<int>();
+
+            string productCode = Lot.ProductCode(lotCode);
+            string factoryCode = Lot.FactoryCode(lotCode);
+            string madeDateAsString = madeDate.ToShortDateString();
+            string madeDateAsTwoDigitYearString = madeDate.ToString("M/d/yy");
+
+            for (int i = 0; i < DelimitedMicroResults.Count; i++)
+            {
+                if (DelimitedMicroResults[i][0] == factoryCode && DelimitedMicroResults[i][7] == recipeCode && DelimitedMicroResults[i][10] == productCode &&
+                    (madeDateAsString == DelimitedMicroResults[i][9] || madeDateAsTwoDigitYearString == DelimitedMicroResults[i][9]))
+                {
+                    indices.Add(i);
+                }
+            }
+            return indices;
+        }
+        /// <summary>
+        /// Retrieves indices of entries in DelimitedMicroResults matching the given criteria 
+        /// </summary>
+        /// <param name="productCode">The five-digit product code to search under</param>
+        /// <param name="madeDate">The product's manufacturing date</param>
+        /// <param name="supplier">Value to look for in the supplier column</param>
+        /// <returns></returns>
+        public List<int> MicroIndices(string productCode, DateTime madeDate, string supplier)
+        {
+            List<int> indices = new List<int>();
+
+            string madeDateAsString = madeDate.ToShortDateString();
+            string madeDateAsTwoDigitYearString = madeDate.ToString("M/d/yy");
+
+            for (int i = 0; i < DelimitedMicroResults.Count; i++)
+            {
+                if (DelimitedMicroResults[i][16] == supplier && DelimitedMicroResults[i][10] == productCode &&
+                    (madeDateAsString == DelimitedMicroResults[i][9] || madeDateAsTwoDigitYearString == DelimitedMicroResults[i][9]))
+                {
+                    indices.Add(i);
+                }
+            }
+            return indices;
+        }
+        public int GetMicroValue(List<int> indices, MicroOffset offset)
+        {
+            List<int> microValues = new List<int>();
+
+            foreach (int index in indices)
+            {
+                for (int i = 0; i < DelimitedMicroResults[index].Count; i++)
+                {
+                    if (DelimitedMicroResults[index][i] == "HURRICANE" || DelimitedMicroResults[index][i] == "Hurricane" || DelimitedMicroResults[index][i] == "Lowell" || DelimitedMicroResults[index][i] == "Sandpoint")
+                    {
+                        if (string.IsNullOrEmpty(DelimitedMicroResults[index][i + (int)offset]) || DelimitedMicroResults[index][i + (int)offset] == "*")
+                            continue;
+                        else
+
+                            microValues.Add(Convert.ToInt32(DelimitedMicroResults[index][i + (int)offset].Trim()));
+                    }
+                }
+            }
+
+            int largestValue = -1;
+
+            foreach (int value in FilterMicroValues(microValues, offset))
+            {
+                if (value > largestValue)
+                {
+                    largestValue = value;
+                }
+            }
+
+            return largestValue;
+        }
+        /// <summary>
+        /// Filters out-of-spec values provided that at least one value is in-spec, otherwise the provided list is returned
+        /// </summary>
+        /// <param name="unsortedValues"></param>
+        /// <param name="offset"></param>
+        /// <returns></returns>
+        private List<int> FilterMicroValues(List<int> unsortedValues, MicroOffset offset)
+        {
+            List<int> sortedValues = new List<int>();
+
+            foreach (int value in unsortedValues)
+            {
+                if (offset == MicroOffset.Aerobic && value < 100000) // 100k
+                    sortedValues.Add(value);
+                else if (offset == MicroOffset.Coliform && value < 100)
+                    sortedValues.Add(value);
+                else if (offset == MicroOffset.Lactic && value < 1000)
+                    sortedValues.Add(value);
+                else if (offset == MicroOffset.Mold && value < 1000)
+                    sortedValues.Add(value);
+                else if (offset == MicroOffset.Yeast && value < 1000)
+                    sortedValues.Add(value);
+                else if (offset == MicroOffset.EColiform && value == 0)
+                    sortedValues.Add(value);
+            }
+
+            if (sortedValues.Count != 0)
+            {
+                return sortedValues;
+            }
+            else
+            {
+                return unsortedValues;
+            }
+
+        }
+        public bool MicroValueInSpec(int value, MicroOffset offset)
+        {
+            if (offset == MicroOffset.Aerobic)
+            {
+                if (value < 100000)
+                    return true;
+                else
+                    return false;
+            }
+            else if (offset == MicroOffset.Coliform)
+            {
+                if (value < 100)
+                    return true;
+                else
+                    return false;
+            }
+            else if (offset == MicroOffset.Lactic)
+            {
+                if (value < 1000)
+                    return true;
+                else
+                    return false;
+            }
+            else if (offset == MicroOffset.Mold)
+            {
+                if (value < 1000)
+                    return true;
+                else
+                    return false;
+            }
+            else // when (offset == MicroOffset.Yeast)
+            {
+                if (value < 1000)
+                    return true;
+                else
+                    return false;
+            }
+        }
+        public string ProductCodeFromMicroIndex(int index)
+        {
+            return DelimitedMicroResults[index][10];
+        }
+        public string RecipeCodeFromMicroIndex(int index)
+        {
+            return DelimitedMicroResults[index][7];
+        }
+        public string RecipeCodeFromTitrationIndex(int index)
+        {
+            return DelimitedTitrationResults[index][4];
+        }
+        /// <summary>
+        /// Retrieves batch values from a collection of indices in micro results in a comma-containing string
+        /// </summary>
+        /// <param name="indices">The target indices in DelimitedTitrationResults</param>
+        /// <returns></returns>
+        public string BatchValuesFromTitrationIndices(List<int> indices)
+        {
+            List<string> batchValues = new List<string>();
+            string indexValue = "";
+            int offset = 0;
+            bool continueLoop = true;
+
+            foreach(int index in indices)
+            {
+                while (continueLoop)
+                {
+                    indexValue = DelimitedTitrationResults[index][13 + offset];
+
+                    if(indexValue == "ReTest_1" || indexValue == "Original" || indexValue == "Re_Test_1" || indexValue == "Re_Test_2" || indexValue == "Re_Test_3")
+                    {
+                        continueLoop = false;
+                    }
+                    else
+                    {
+                        batchValues.Add(indexValue);
+                        offset++;
+                    }
+                }
+            }
+
+            string batchesCombinedInString = "";
+
+            for(int i = 0; i < batchValues.Count; i++)
+            {
+                batchesCombinedInString += batchValues[i];
+
+                if(i + 1 < batchValues.Count)
+                {
+                    batchesCombinedInString += ", ";
+                }
+            }
+
+            return batchesCombinedInString;
+        }
+        /// <summary>
+        /// Retrieves batch values from a collection of indices in micro results in a comma-containing string
+        /// </summary>
+        /// <param name="indices">The target indices in DelimitedMicroResults</param>
+        /// <returns></returns>
+        public string BatchValuesFromMicroIndices(List<int> indices)
+        {
+            List<string> batchValues = new List<string>();
+            string indexValue = "";
+            int offset = 0;
+            bool continueLoop = true;
+
+            foreach (int index in indices)
+            {
+                while (continueLoop)
+                {
+                    indexValue = DelimitedMicroResults[index][11 + offset];
+
+                    if (DateTime.TryParse(indexValue, out DateTime dateTime) || indexValue == "*")
+                    {
+                        continueLoop = false;
+                    }
+                    else
+                    {
+                        batchValues.Add(indexValue);
+                        offset++;
+                    }
+                }
+            }
+
+            string batchesCombinedInString = "";
+
+            for (int i = 0; i < batchValues.Count; i++)
+            {
+                batchesCombinedInString += batchValues[i];
+
+                if (i + 1 < batchValues.Count)
+                {
+                    batchesCombinedInString += ", ";
+                }
+            }
+
+            return batchesCombinedInString;
         }
     }
 }

@@ -24,7 +24,7 @@ namespace CoA_Tool.Templates
         /// </summary>
         public enum ContentItems
         {
-            Unassigned, CustomerName, SalesOrder, PurchaseOrder, GenerationDate, ProductName, RecipeAndItem, LotCode, Batch,
+            Unassigned, CustomerName, SalesOrder, PurchaseOrder, GenerationDate, ProductName, RecipeAndItem, LotCode, BatchFromMicro, BatchFromDressing,
             BestByDate, ManufacturingSite, ManufacturingDate, Acidity, pH, ViscosityCM, ViscosityCPS, WaterActivity, BrixSlurry, Yeast, Mold,
             Aerobic, Coliform, EColi, Lactics, Salmonella, Listeria, ColorAndAppearance, Form, FlavorAndOdor
         }
@@ -44,7 +44,8 @@ namespace CoA_Tool.Templates
         public bool IncludeProductName;
         public bool IncludeRecipeAndItem;
         public bool IncludeLotCode;
-        public bool IncludeBatch;
+        public bool IncludeBatchFromMicro;
+        public bool IncludeBatchFromDressing;
         public bool IncludeBestByDate;
         public bool IncludeManufacturingSite;
         public bool IncludeManufacturingDate;
@@ -83,7 +84,7 @@ namespace CoA_Tool.Templates
 
         public Template ()
         {
-            SetInclusionBoolsAsFalse();
+            SetInclusionBoolsToFalse();
 
             if (Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\CoAs\\Templates") == false)
                 Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\CoAs\\Templates");
@@ -203,7 +204,9 @@ namespace CoA_Tool.Templates
                                 default:
                                     promptForInvalidItem = delimitedLine[1] + " is not a valid algorithm type.";
                                     if (new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem).UserChoice == "Exit application")
+                                    {
                                         Environment.Exit(0);
+                                    }
                                     break;
                             }
                             break;
@@ -221,6 +224,7 @@ namespace CoA_Tool.Templates
                                             if(search.DataGroup != CustomSearch.DataGroupToSearch.Micro ||
                                                 search.DataGroup != CustomSearch.DataGroupToSearch.Unassigned)
                                             {
+                                                //TODO: Replace with acknowledgement menu
                                                 Console.Util.WriteMessageInCenter("Program cannot proceed with mixed \"search in\" targets in algorithm information.  " +
                                                     "  Press any key to exit application.", ConsoleColor.Red);
                                                 System.Console.ReadKey();
@@ -251,7 +255,9 @@ namespace CoA_Tool.Templates
                                     default:
                                         promptForInvalidItem = delimitedLine[1] + " is not a valid item to search in.";
                                         if (new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem).UserChoice == "Exit application")
+                                        {
                                             Environment.Exit(0);
+                                        }
                                         break;
                                 }
                             }
@@ -303,7 +309,10 @@ namespace CoA_Tool.Templates
                                 {
                                     promptForInvalidItem = delimitedLine[1] + " is not a valid number for algorithm search column";
                                     if (new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem).UserChoice == "Exit application")
+                                    {
                                         Environment.Exit(0);
+                                    }
+                                        
                                 }
                             }
                             break;
@@ -313,7 +322,10 @@ namespace CoA_Tool.Templates
 
                         default:
                             promptForInvalidItem = "\"" + delimitedLine[0] + "\"" +" is not a valid algorithm item.";
-                            new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem);
+                            if(new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem).UserChoice == "Exit application")
+                            {
+                                Environment.Exit(0);
+                            }
                             break;
                     }
                 
@@ -389,8 +401,12 @@ namespace CoA_Tool.Templates
                                                     customFilter.ContentItem = ContentItems.LotCode;
                                                     assignedContentItem = true;
                                                     break;
-                                                case "batch":
-                                                    customFilter.ContentItem = ContentItems.Batch;
+                                                case "batch from micro":
+                                                    customFilter.ContentItem = ContentItems.BatchFromMicro;
+                                                    assignedContentItem = true;
+                                                    break;
+                                                case "batch from dressing":
+                                                    customFilter.ContentItem = ContentItems.BatchFromDressing;
                                                     assignedContentItem = true;
                                                     break;
                                                 case "best by date":
@@ -478,7 +494,10 @@ namespace CoA_Tool.Templates
                                                     break;
                                                 default:
                                                     promptForInvalidItem = delimitedLine[1] + " is not a valid content item";
-                                                    new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem);
+                                                    if(new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem).UserChoice == "Exit application")
+                                                    {
+                                                        Environment.Exit(0);
+                                                    }
                                                     break;
                                             }
                                     }
@@ -505,7 +524,10 @@ namespace CoA_Tool.Templates
                             break;
                         default:
                             promptForInvalidItem = delimitedLine[0] + " is not a valid filter item.";
-                            new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem);
+                            if(new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem).UserChoice == "Exit application")
+                            {
+                                Environment.Exit(0);
+                            }
                             break;
                     }
                 }
@@ -541,9 +563,13 @@ namespace CoA_Tool.Templates
                             if (delimitedLine[1].ToLower() == "yes")
                                 IncludeLotCode = true;
                             break;
-                        case "batch":
+                        case "batch from micro":
                             if (delimitedLine[1].ToLower() == "yes")
-                                IncludeBatch = true;
+                                IncludeBatchFromMicro = true;
+                            break;
+                        case "batch from dressing":
+                            if (delimitedLine[1].ToLower() == "yes")
+                                IncludeBatchFromDressing = true;
                             break;
                         case "best by date":
                             if (delimitedLine[1].ToLower() == "yes")
@@ -629,7 +655,10 @@ namespace CoA_Tool.Templates
                             break;
                         default:
                             promptForInvalidItem = delimitedLine[0] + " is not a valid content item.";
-                            new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem);
+                            if(new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem).UserChoice == "Exit application")
+                            {
+                                Environment.Exit(0);
+                            }
                             break;
                     }
                 
@@ -641,7 +670,7 @@ namespace CoA_Tool.Templates
         /// <summary>
         /// Sets all content inclusion bools to their intended default, false
         /// </summary>
-        private void SetInclusionBoolsAsFalse()
+        private void SetInclusionBoolsToFalse()
         {
             IncludeCustomerName = false;
             IncludeSalesOrder = false;
@@ -650,7 +679,8 @@ namespace CoA_Tool.Templates
             IncludeProductName = false;
             IncludeRecipeAndItem = false;
             IncludeLotCode = false;
-            IncludeBatch = false;
+            IncludeBatchFromMicro = false;
+            IncludeBatchFromDressing = false;
             IncludeBestByDate = false;
             IncludeManufacturingDate = false;
             IncludeManufacturingSite = false;
