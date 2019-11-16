@@ -119,52 +119,39 @@ namespace CoA_Tool.Excel
                     Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs");
                 }
 
-                bool fileSaved = false;
-                List<string> options = new List<string>();
-                options.Add("File has been closed");
+                string fileName;
 
                 if (containsInvalidLot)
                 {
-                    do // TODO: Replace with asynchronous solution when async generation is developed to increase resiliency
-                    {
-                        try
-                        {
-                            package.SaveAs(new FileInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/" +
-                                SalesOrder.OrderNumber + " (Lot " + invalidLotValue + " invalid)" + ".xlsx"));
-
-                            if (File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/" +
-                                SalesOrder.OrderNumber + " (Lot " + invalidLotValue + " invalid)" + ".xlsx"))
-                            {
-                                fileSaved = true;
-                            }
-                        }
-                        catch (IOException)
-                        {
-                            new Console.SelectionMenu(options, " Select:", "\"" + SalesOrder.OrderNumber +
-                                " (Lot " + invalidLotValue + " invalid)\" is being accessed.  Please close the file before continuing.");
-                        }
-                    } while (fileSaved == false);
+                    fileName = SalesOrder.OrderNumber + " (Lot " + invalidLotValue + " invalid)" + ".xlsx";
                 }
                 else
                 {
-                    do // TODO: Replace with asynchronous solution when async generation is developed to increase resiliency
-                    {
-                        try
-                        {
-                            package.SaveAs(new FileInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/" + SalesOrder.OrderNumber + ".xlsx"));
-
-                            if (File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/" + SalesOrder.OrderNumber + ".xlsx"))
-                            {
-                                fileSaved = true;
-                            }
-                        }
-                        catch (IOException)
-                        {
-                            new Console.SelectionMenu(options, " Select:", "\"" + 
-                                SalesOrder.OrderNumber + "\" is being accessed.  Please close the file before continuing.");
-                        }
-                    } while (fileSaved == false);
+                    fileName = SalesOrder.OrderNumber + ".xlsx";
                 }
+
+                bool fileSaved = false;
+
+                List<string> options = new List<string>();
+                options.Add("File has been closed");
+
+                do // TODO: Replace with asynchronous solution when async generation is developed to increase resiliency
+                {
+                    try
+                    {
+                        package.SaveAs(new FileInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/" + fileName));
+
+                        if (File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/" + fileName))
+                        {
+                            fileSaved = true;
+                        }
+                    }
+                    catch (IOException)
+                    {
+                        new Console.SelectionMenu(options, " Select:",
+                            "\"" + fileName + "\" is being accessed.  Please close the file before continuing.");
+                    }
+                } while (fileSaved == false);
             }
         }
         
