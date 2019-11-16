@@ -520,7 +520,6 @@ namespace CoA_Tool.Excel
                 {
                     if(WorkbookTemplate.SelectedAlgorithm == Templates.Template.Algorithm.Standard)
                     {
-                        int test = (worksheetNumber - 1) * 6 + i;
                         if (Lot.TryParseBestBy(SalesOrder.Lots[(worksheetNumber - 1) * 6 + i], out DateTime bestByDate) == true)
                         {
                             targetWorksheet.Cells[currentRow, 3 + i].Value = bestByDate.ToShortDateString();
@@ -544,6 +543,11 @@ namespace CoA_Tool.Excel
                 targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
                 targetWorksheet.Cells[currentRow, 1].Value = "Manufacturing Date";
 
+                for (int i = 0; i < itemsInWorksheet; i++)
+                {
+                    targetWorksheet.Cells[currentRow, 3 + i].Value = FinishedGoodsData.GetMadeDate(SalesOrder.Lots[(worksheetNumber - 1) * 6 + i]).ToShortDateString();
+                }
+
                 currentRow++;
             }
 
@@ -553,6 +557,11 @@ namespace CoA_Tool.Excel
 
                 targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
                 targetWorksheet.Cells[currentRow, 1].Value = "Manufacturing Site";
+
+                for(int i = 0; i < itemsInWorksheet; i++)
+                {
+                    targetWorksheet.Cells[currentRow, 3 + i].Value = Lot.ManufacturingSite(SalesOrder.Lots[(worksheetNumber - 1) * 6 + i]);
+                }
 
                 currentRow++;
             }

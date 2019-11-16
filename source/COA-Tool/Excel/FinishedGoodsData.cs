@@ -20,7 +20,8 @@ namespace CoA_Tool.Excel
         /// <summary>
         /// File contents arranged as a pseudo-grid, where [y][x], see Load() for further info
         /// </summary>
-        public List<List<string>> Contents;
+        public List<List<string>> Contents; // TODO: Refactor to dictionaries
+        
         public FinishedGoodsData()
         {
         }
@@ -132,7 +133,7 @@ namespace CoA_Tool.Excel
         /// <returns></returns>
         public bool ProductNameExists(string productCode, out string productName)
         {
-            foreach (List<string> line in Contents)
+            foreach (List<string> line in Contents) 
             {
                 if (line[0] == productCode)
                 {
@@ -150,15 +151,17 @@ namespace CoA_Tool.Excel
         /// <returns></returns>
         public bool RecipeCodeExists(string productCode, out string recipeCode)
         {
-            foreach (List<string> line in Contents)
+            recipeCode = "";
+
+            foreach (List<string> line in Contents) 
             {
                 if (line[0] == productCode)
                 {
                     recipeCode = line[3];
                     return true;
-                }
+               }
             }
-            recipeCode = string.Empty;
+            
             return false;
         }
         /// <summary>
@@ -172,7 +175,7 @@ namespace CoA_Tool.Excel
             string productCode = Lot.ProductCode(lotCode);
             int daysToExpiry = 0;
 
-            foreach (List<string> line in Contents)
+            foreach (List<string> line in Contents) 
             {
                 if (line[0] == productCode)
                 {
