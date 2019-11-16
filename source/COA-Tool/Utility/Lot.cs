@@ -73,7 +73,7 @@ namespace CoA_Tool.Utility
                 return string.Empty;
         }
         /// <summary>
-        /// Converts bestby-related characters in a given lotcode to a DateTime object.  The return value
+        /// Converts best-by-related characters in a given lot code to a DateTime object.  The return value
         ///  indicates whether the conversion succeeded.
         /// </summary>
         /// <param name="lotCode">The 12-digit lot code containing the best by to be retrieved</param>
@@ -86,7 +86,7 @@ namespace CoA_Tool.Utility
 
             // 16254 02 021520 (Lot code representation)
 
-            bool conversionSucceeded = true; // Assigned to true if any Int32.TryParse returns false
+            bool conversionSucceeded = true; // Assigned to false if any Int32.TryParse returns false
 
             int parsedValue; // Used to modify values *before* variable assignment
             
