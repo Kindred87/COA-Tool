@@ -72,5 +72,81 @@ namespace CoA_Tool.Utility
             else
                 return string.Empty;
         }
+        /// <summary>
+        /// Converts bestby-related characters in a given lotcode to a DateTime object.  The return value
+        ///  indicates whether the conversion succeeded.
+        /// </summary>
+        /// <param name="lotCode">The 12-digit lot code containing the best by to be retrieved</param>
+        /// <param name="bestBy">DateTime representing the expiry date of product</param>
+        /// <returns></returns>
+        public static bool TryParseBestBy(string lotCode, out DateTime bestByDate)
+        {
+            // 00000 00 000111  (Two digit values arranged vertically)
+            // 01234 56 789012
+
+            // 16254 02 021520 (Lot code representation)
+
+            bool conversionSucceeded = true; // Assigned to true if any Int32.TryParse returns false
+
+            int parsedValue; // Used to modify values *before* variable assignment
+            
+            int bestByMonth = 0; 
+            if(Int32.TryParse(lotCode[7].ToString(), out parsedValue) == true) // First digit of bestByMonth
+            {
+                bestByMonth = parsedValue * 10;
+            }
+            else
+            {
+                conversionSucceeded = false;
+            }
+
+            if(Int32.TryParse(lotCode[8].ToString(), out parsedValue) == true) // Second digit of bestByMonth
+            {
+                bestByMonth += parsedValue;
+            }
+            else
+            {
+                conversionSucceeded = false;
+            }
+
+
+            int bestByDay = 0;
+            if(Int32.TryParse(lotCode[9].ToString(), out parsedValue) == true) // First digit of bestByDay
+            {
+                bestByDay = parsedValue * 10;
+            }
+            else
+            {
+                conversionSucceeded = false;
+            }
+
+            if(Int32.TryParse(lotCode[10].ToString(), out parsedValue) == true) // Second digit of bestByDay
+            {
+                bestByDay += parsedValue;
+            }
+
+            int bestByYear = 0;
+            if(Int32.TryParse(lotCode[11].ToString(), out parsedValue) == true) // Third digit of bestByYear
+            {
+                bestByYear = 2000 + parsedValue * 10;
+            }
+            else
+            {
+                conversionSucceeded = false;
+            }
+
+            if(Int32.TryParse(lotCode[12].ToString(), out parsedValue) == true) // Fourth digit of bestByYear
+            {
+                bestByYear += parsedValue;
+            }
+            else
+            {
+                conversionSucceeded = false;
+            }
+
+            bestByDate = new DateTime(bestByYear, bestByMonth, bestByDay);
+
+            return conversionSucceeded;
+        }
     }
 }

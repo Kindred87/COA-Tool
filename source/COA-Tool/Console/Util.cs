@@ -7,7 +7,7 @@ namespace CoA_Tool.Console
     /// <summary>
     /// Contains miscellaneous methods for console operations
     /// </summary>
-    class Util
+    class Util // TODO: Move to CoA_Tool.Utility
     {
         // Constructor
         public Util()
@@ -51,16 +51,17 @@ namespace CoA_Tool.Console
         /// <param name="message"></param>
         public static void WriteMessageInCenter(string message, System.ConsoleColor color)
         {
-            int cursorRow = (int)((double)System.Console.WindowHeight * 0.5);
+            int cursorRow = (int)(System.Console.WindowHeight * 0.5);
             RemoveMessageInCenter();
 
-            int cursorColumn = (int)((double)(System.Console.WindowWidth - message.Length) * 0.5);
+            int cursorColumn = (int)((System.Console.WindowWidth - message.Length) * 0.5);
 
             System.Console.SetCursorPosition(cursorColumn, cursorRow);
             System.Console.ForegroundColor = color;
             System.Console.WriteLine(message);
             System.Console.ForegroundColor = ConsoleColor.Gray;
         }
+        
         /// <summary>
         /// Overwrites any string in the "center" of the console window with whitespace
         /// </summary>

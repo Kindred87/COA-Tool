@@ -119,15 +119,52 @@ namespace CoA_Tool.Excel
                     Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs");
                 }
 
-                if(containsInvalidLot)
+                bool fileSaved = false;
+                List<string> options = new List<string>();
+                options.Add("File has been closed");
+
+                if (containsInvalidLot)
                 {
-                    package.SaveAs(new FileInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/" + SalesOrder.OrderNumber + " (Lot " + invalidLotValue + " invalid)" + ".xlsx"));
+                    do // TODO: Replace with asynchronous solution when async generation is developed to increase resiliency
+                    {
+                        try
+                        {
+                            package.SaveAs(new FileInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/" +
+                                SalesOrder.OrderNumber + " (Lot " + invalidLotValue + " invalid)" + ".xlsx"));
+
+                            if (File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/" +
+                                SalesOrder.OrderNumber + " (Lot " + invalidLotValue + " invalid)" + ".xlsx"))
+                            {
+                                fileSaved = true;
+                            }
+                        }
+                        catch (IOException)
+                        {
+                            new Console.SelectionMenu(options, " Select:", "\"" + SalesOrder.OrderNumber +
+                                " (Lot " + invalidLotValue + " invalid)\" is being accessed.  Please close the file before continuing.");
+                        }
+                    } while (fileSaved == false);
                 }
                 else
                 {
-                    package.SaveAs(new FileInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/" + SalesOrder.OrderNumber + ".xlsx"));
+                    do // TODO: Replace with asynchronous solution when async generation is developed to increase resiliency
+                    {
+                        try
+                        {
+                            package.SaveAs(new FileInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/" + SalesOrder.OrderNumber + ".xlsx"));
+
+                            if (File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/" + SalesOrder.OrderNumber + ".xlsx"))
+                            {
+                                fileSaved = true;
+                            }
+                        }
+                        catch (IOException)
+                        {
+                            new Console.SelectionMenu(options, " Select:", "\"" + 
+                                SalesOrder.OrderNumber + "\" is being accessed.  Please close the file before continuing.");
+                        }
+                    } while (fileSaved == false);
                 }
-                
             }
         }
         
@@ -197,6 +234,8 @@ namespace CoA_Tool.Excel
             // Counters are used since document contents/placement is dynamic
             int currentRow = 11;
             int sizeOfFirstContentBlock = 0;
+
+            //TODO: Refactor applicable code in each content block to standalone methods to reduce bloat
 
             // For first content block
             if (WorkbookTemplate.IncludeCustomerName)
@@ -310,7 +349,7 @@ namespace CoA_Tool.Excel
                     }
                     else
                     {
-                        targetWorksheet.Cells[currentRow, 3 + i].Value = "No useable data";
+                        targetWorksheet.Cells[currentRow, 3 + i].Value = "No usable data";
                         targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
                     }
                 }
@@ -351,7 +390,7 @@ namespace CoA_Tool.Excel
                     }
                     else
                     {
-                        targetWorksheet.Cells[currentRow, 3 + i].Value = "No useable data";
+                        targetWorksheet.Cells[currentRow, 3 + i].Value = "No usable data";
                         targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
                     }
                 }
@@ -411,7 +450,30 @@ namespace CoA_Tool.Excel
                     {
                         if(microIndices[i].Count > 0)
                         {
-                            targetWorksheet.Cells[currentRow, 3 + i].Value = NWAData.BatchValuesFromMicroIndices(microIndices[i]);
+                            string retrievedBatchValue = NWAData.BatchValuesFromMicroIndices(microIndices[i]); // Some facilities put production lines in batch column
+
+                            bool containsQualifyingLetter = false; // Some facilities put production lines in batch column
+
+                            foreach (char batchChar in retrievedBatchValue) // Batches contain only numbers and the letter v (vat)
+                            {
+                                if(char.IsLetter(batchChar) && batchChar.ToString().ToLower() != "v")
+                                {
+                                    containsQualifyingLetter = true;
+                                }
+                            }
+
+                            if(containsQualifyingLetter == false)   // Output raw string if okay
+                            {
+                                targetWorksheet.Cells[currentRow, 3 + i].Value = retrievedBatchValue;
+                            }
+                            else                                    // Output modified, red-colored string if maybe not okay
+                            {
+                                targetWorksheet.Cells[currentRow, 3 + i].Value = "Batch (" + retrievedBatchValue +
+                                    ") potentially invalid.";
+                                targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.OrangeRed);
+                                targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
+                            }
+                            
                         }
                         else
                         {
@@ -421,7 +483,7 @@ namespace CoA_Tool.Excel
                     }
                     else
                     {
-                        targetWorksheet.Cells[currentRow, 3 + i].Value = "No useable data";
+                        targetWorksheet.Cells[currentRow, 3 + i].Value = "No usable data";
                         targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
                     }
                 }
@@ -448,7 +510,7 @@ namespace CoA_Tool.Excel
                     }
                     else
                     {
-                        targetWorksheet.Cells[currentRow, 3 + i].Value = "No useable data";
+                        targetWorksheet.Cells[currentRow, 3 + i].Value = "No usable data";
                         targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
                     }
                 }
@@ -471,10 +533,10 @@ namespace CoA_Tool.Excel
                 {
                     if(WorkbookTemplate.SelectedAlgorithm == Templates.Template.Algorithm.Standard)
                     {
-                        // TODO: Lot date conversion method
-                        if(DateTime.TryParse(SalesOrder.Lots[i + (worksheetNumber - 1) * 6].Substring(7), out DateTime bestBy))
+                        int test = (worksheetNumber - 1) * 6 + i;
+                        if (Lot.TryParseBestBy(SalesOrder.Lots[(worksheetNumber - 1) * 6 + i], out DateTime bestByDate) == true)
                         {
-                            targetWorksheet.Cells[currentRow, 3 + i].Value = bestBy.ToShortDateString();
+                            targetWorksheet.Cells[currentRow, 3 + i].Value = bestByDate.ToShortDateString();
                         }
                         else
                         {
