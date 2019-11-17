@@ -168,7 +168,7 @@ namespace CoA_Tool.Excel
             targetWorksheet.Cells["A1:H55"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
             targetWorksheet.Cells["A1:H55"].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
 
-            targetWorksheet.Column(1).Width = 10.87;
+            targetWorksheet.Column(1).Width = 10.85;
             targetWorksheet.Column(2).Width = 11.4;
             targetWorksheet.Column(3).Width = 15.72;
             targetWorksheet.Column(4).Width = 15.72;
