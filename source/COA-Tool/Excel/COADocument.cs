@@ -70,7 +70,7 @@ namespace CoA_Tool.Excel
                 bool containsInvalidLot = false;
                 string invalidLotValue = "";
 
-                for (int currentPage = 1; currentPage <= pageCount; currentPage++)
+                for (int currentPage = 1; currentPage <= pageCount; currentPage++) 
                 {
                     ExcelWorksheet worksheet = package.Workbook.Worksheets.Add("Page " + currentPage);
                     PopulateGeneralWorksheetData(worksheet);
@@ -88,10 +88,10 @@ namespace CoA_Tool.Excel
                             lotsToProcess.Add(SalesOrder.Lots[i]); // i is zero-based
                         }
                     }
-
-                    List<List<int>> titrationIndices = new List<List<int>>();
-                    List<List<int>> microIndices = new List<List<int>>();
                     
+                    List<List<int>> titrationIndices = new List<List<int>>();  // Find indices needed for each worksheet
+                    List<List<int>> microIndices = new List<List<int>>(); // // Find indices needed for each worksheet
+
 
                     foreach (string lotCode in lotsToProcess)
                     {
@@ -102,7 +102,7 @@ namespace CoA_Tool.Excel
                         }
                         
                         DateTime madeDate = FinishedGoodsData.GetMadeDate(lotCode);
-                        string factoryCode = Lot.ManufacturingSite(lotCode);
+                        string factoryCode = Lot.FactoryCode(lotCode);
 
                         titrationIndices.Add(NWAData.TitrationIndices(recipeCode, madeDate, factoryCode));
                         microIndices.Add(NWAData.MicroIndices(recipeCode, lotCode, madeDate));
@@ -168,7 +168,7 @@ namespace CoA_Tool.Excel
             targetWorksheet.Cells["A1:H55"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
             targetWorksheet.Cells["A1:H55"].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
 
-            targetWorksheet.Column(1).Width = 10.85;
+            targetWorksheet.Column(1).Width = 10.87;
             targetWorksheet.Column(2).Width = 11.4;
             targetWorksheet.Column(3).Width = 15.72;
             targetWorksheet.Column(4).Width = 15.72;
@@ -244,8 +244,14 @@ namespace CoA_Tool.Excel
                 targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
                 targetWorksheet.Cells[currentRow, 1].Value = "Customer S/O #";
                 targetWorksheet.Cells[currentRow, 3, currentRow, 8].Merge = true;
-                targetWorksheet.Cells[currentRow, 3].Value = SalesOrder.OrderNumber;
-                targetWorksheet.Cells[currentRow, 3].Style.Numberformat.Format = "0";
+                if(Int64.TryParse(SalesOrder.OrderNumber, out long salesOrderAsLong) == true)
+                {
+                    targetWorksheet.Cells[currentRow, 3].Value = salesOrderAsLong;
+                }
+                else
+                {
+                    targetWorksheet.Cells[currentRow, 3].Value = SalesOrder.OrderNumber;
+                }
 
                 currentRow++;
             }
@@ -389,7 +395,7 @@ namespace CoA_Tool.Excel
                 sizeOfSecondContentBlock++;
 
                 targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
-                targetWorksheet.Cells[currentRow, 3, currentRow, 8].Style.Numberformat.Format = "0";
+                targetWorksheet.Cells[currentRow, 3, currentRow, 8].Style.Numberformat.Format = "0"; // Prevents Excel from converting to scientific notation
                 targetWorksheet.Cells[currentRow, 1].Value = "Lot Code";
 
                 string lotCode;
@@ -449,14 +455,18 @@ namespace CoA_Tool.Excel
                                 }
                             }
 
-                            if(containsQualifyingLetter == false)   // Output raw string if okay
+                            if(containsQualifyingLetter == false && retrievedBatchValue != "")   // Output raw string if okay
                             {
                                 targetWorksheet.Cells[currentRow, 3 + i].Value = retrievedBatchValue;
                             }
-                            else                                    // Output modified, red-colored string if maybe not okay
+                            else if(retrievedBatchValue == "")
+                            {
+                                targetWorksheet.Cells[currentRow, 3 + i].Value = "N/A";
+                            }
+                            else                                    // Output modified, colored string if maybe not okay
                             {
                                 targetWorksheet.Cells[currentRow, 3 + i].Value = "Batch (" + retrievedBatchValue +
-                                    ") potentially invalid.";
+                                    ") potentially invalid";
                                 targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.OrangeRed);
                                 targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
                             }
@@ -487,7 +497,16 @@ namespace CoA_Tool.Excel
                     {
                         if (titrationIndices[i].Count > 0)
                         {
-                            targetWorksheet.Cells[currentRow, 3 + i].Value = NWAData.BatchValuesFromTitrationIndices(microIndices[i]);
+                            string batchValue = NWAData.BatchValuesFromTitrationIndices(microIndices[i]);
+                            
+                            if(batchValue != "")
+                            {
+                                targetWorksheet.Cells[currentRow, 3 + i].Value = batchValue;
+                            }
+                            else
+                            {
+                                targetWorksheet.Cells[currentRow, 3 + i].Value = "N/A";
+                            }
                         }
                         else
                         {
@@ -570,7 +589,7 @@ namespace CoA_Tool.Excel
 
             int sumOfBlockRows = sizeOfFirstContentBlock + sizeOfSecondContentBlock;
 
-            if (sumOfBlockRows > 0)
+            if (sumOfBlockRows > 0) // TODO: Review block
             {
                 if(sizeOfSecondContentBlock > 0)
                 {
@@ -591,13 +610,12 @@ namespace CoA_Tool.Excel
                     targetWorksheet.Cells[secondBlockHeaderRow, 3, secondBlockHeaderRow, 8].Merge = true;
                     targetWorksheet.Cells[secondBlockHeaderRow, 3].Style.Font.Bold = true;
                     targetWorksheet.Cells[secondBlockHeaderRow, 3, secondBlockHeaderRow, 8].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
-                    targetWorksheet.Cells[secondBlockHeaderRow, 3, secondBlockHeaderRow + sizeOfSecondContentBlock, 
-                        8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    targetWorksheet.Cells[secondBlockHeaderRow, 3, secondBlockHeaderRow + sizeOfSecondContentBlock, 8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
                     CreateTableOfBorders(6, sizeOfSecondContentBlock, secondBlockHeaderRow + 1, 3, targetWorksheet);
                 }
 
-                targetWorksheet.Cells[11, 1, 10 + sumOfBlockRows, 2].Style.Font.Italic = true;
+                targetWorksheet.Cells[11, 2, 10 + sumOfBlockRows, 2].Style.Font.Italic = true;
                 targetWorksheet.Cells[11, 1, 10 + sumOfBlockRows, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
             }
 
@@ -617,6 +635,41 @@ namespace CoA_Tool.Excel
                 targetWorksheet.Cells[currentRow, 1].Value = "% Acid (TA)";
                 targetWorksheet.Cells[currentRow, 2].Value = AcidMethod;
 
+                for(int i = 0; i < itemsInWorksheet; i++)
+                {
+                    if(titrationIndices.Count > 0)
+                    {
+                        if(titrationIndices[i].Count > 0)
+                        {
+                            float acidity;
+
+                            if (NWAData.TitrationValueExists(titrationIndices[i], CSV.NWAData.TitrationOffset.Acidity, out acidity))
+                            {
+                                targetWorksheet.Cells[currentRow, 3 + i].Value = Math.Round(acidity, 2);
+                            }
+                            else
+                            {
+                                targetWorksheet.Cells[currentRow, 3 + i].Value = "Missing value";
+                                targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                                targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
+                            }
+                            
+                        }
+                        else
+                        {
+                            targetWorksheet.Cells[currentRow, 3 + i].Value = "Search error";
+                            targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                            targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
+                        }
+                    }
+                    else
+                    {
+                        targetWorksheet.Cells[currentRow, 3 + i].Value = "No usable data";
+                        targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                        targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
+                    }
+                }
+
                 currentRow++;
             }
 
@@ -626,6 +679,41 @@ namespace CoA_Tool.Excel
 
                 targetWorksheet.Cells[currentRow, 1].Value = "pH";
                 targetWorksheet.Cells[currentRow, 2].Value = pHMethod;
+
+                for (int i = 0; i < itemsInWorksheet; i++)
+                {
+                    if (titrationIndices.Count > 0)
+                    {
+                        
+                        if (titrationIndices[i].Count > 0)
+                        {
+                            float pHValue;
+
+                            if(NWAData.TitrationValueExists(titrationIndices[i], CSV.NWAData.TitrationOffset.pH, out pHValue))
+                            {
+                                targetWorksheet.Cells[currentRow, 3 + i].Value = Math.Round(pHValue, 2);
+                            }
+                            else
+                            {
+                                targetWorksheet.Cells[currentRow, 3 + i].Value = "Missing value";
+                                targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                                targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
+                            }
+                        }
+                        else
+                        {
+                            targetWorksheet.Cells[currentRow, 3 + i].Value = "Search error";
+                            targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                            targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
+                        }
+                    }
+                    else
+                    {
+                        targetWorksheet.Cells[currentRow, 3 + i].Value = "No usable data";
+                        targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                        targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
+                    }
+                }
 
                 currentRow++;
             }
@@ -637,6 +725,40 @@ namespace CoA_Tool.Excel
                 targetWorksheet.Cells[currentRow, 1].Value = "Viscosity cm";
                 targetWorksheet.Cells[currentRow, 2].Value = ViscosityCMMethod;
 
+                for(int i = 0; i < itemsInWorksheet; i++)
+                {
+                    if(titrationIndices.Count > 0)
+                    {
+                        if(titrationIndices[i].Count > 0)
+                        {
+                            float viscosityCM;
+
+                            if(NWAData.TitrationValueExists(titrationIndices[i], CSV.NWAData.TitrationOffset.ViscosityCM, out viscosityCM))
+                            {
+                                targetWorksheet.Cells[currentRow, 3 + i].Value = Math.Round(viscosityCM, 2);
+                            }
+                            else
+                            {
+                                targetWorksheet.Cells[currentRow, 3 + i].Value = "Missing value";
+                                targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                                targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
+                            }
+                        }
+                        else
+                        {
+                            targetWorksheet.Cells[currentRow, 3 + i].Value = "Search error";
+                            targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                            targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
+                        }
+                    }
+                    else
+                    {
+                        targetWorksheet.Cells[currentRow, 3 + i].Value = "No usable data";
+                        targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                        targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
+                    }
+                }
+
                 currentRow++;
             }
 
@@ -646,6 +768,41 @@ namespace CoA_Tool.Excel
 
                 targetWorksheet.Cells[currentRow, 1].Value = "Viscosity cps";
                 targetWorksheet.Cells[currentRow, 2].Value = ViscosityCPSMethod;
+
+                for(int i = 0; i < itemsInWorksheet; i++)
+                {
+                    if(titrationIndices.Count > 0)
+                    {
+                        if(titrationIndices[i].Count > 0)
+                        {
+                            float viscosityCPS;
+
+                            if(NWAData.TitrationValueExists(titrationIndices[i], CSV.NWAData.TitrationOffset.ViscosityCPS, out viscosityCPS))
+                            {
+                                targetWorksheet.Cells[currentRow, 3 + i].Value = viscosityCPS;
+                                targetWorksheet.Cells[currentRow, 3 + i].Style.Numberformat.Format = "#,0";
+                            }
+                            else
+                            {
+                                targetWorksheet.Cells[currentRow, 3 + i].Value = "Missing value";
+                                targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                                targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
+                            }
+                        }
+                        else
+                        {
+                            targetWorksheet.Cells[currentRow, 3 + i].Value = "Search error";
+                            targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                            targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
+                        }
+                    }
+                    else
+                    {
+                        targetWorksheet.Cells[currentRow, 3 + i].Value = "No usable data";
+                        targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                        targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
+                    }
+                }
 
                 currentRow++;
             }
@@ -668,7 +825,7 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if(sizeOfThirdContentBlock > 0)
+            if(sizeOfThirdContentBlock > 0) // TODO: Review block
             {
                 sumOfBlockRows += sizeOfThirdContentBlock;
 
@@ -683,23 +840,30 @@ namespace CoA_Tool.Excel
                     thirdBlockHeaderRow = 11 + sumOfBlockRows - sizeOfThirdContentBlock + 1; // 11 is starting row, 1 is empty space between blocks
                     sumOfBlockRows += 2;
                 }
+                
 
                 CreateTableOfBorders(6, sizeOfThirdContentBlock, thirdBlockHeaderRow + 1, 3, targetWorksheet);
 
                 targetWorksheet.Cells[thirdBlockHeaderRow, 1].Value = "Test";
                 targetWorksheet.Cells[thirdBlockHeaderRow, 2].Value = "Method";
+                
                 targetWorksheet.Cells[thirdBlockHeaderRow, 1, thirdBlockHeaderRow, 3].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                targetWorksheet.Cells[thirdBlockHeaderRow, 3, thirdBlockHeaderRow + sizeOfThirdContentBlock, 
-                    8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                
+                targetWorksheet.Cells[thirdBlockHeaderRow, 3, thirdBlockHeaderRow + sizeOfThirdContentBlock, 8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                
                 targetWorksheet.Cells[thirdBlockHeaderRow, 3].Value = "Analytical Results";
 
                 targetWorksheet.Cells[thirdBlockHeaderRow, 3, thirdBlockHeaderRow, 8].Merge = true;
+
                 targetWorksheet.Cells[thirdBlockHeaderRow, 1, thirdBlockHeaderRow, 3].Style.Font.Bold = true;
+                
                 targetWorksheet.Cells[thirdBlockHeaderRow, 1, thirdBlockHeaderRow, 8].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
 
                 targetWorksheet.Cells[thirdBlockHeaderRow + 1, 2, thirdBlockHeaderRow + sizeOfThirdContentBlock, 2].Style.Font.Size = 6;
-                targetWorksheet.Cells[thirdBlockHeaderRow + 1, 2, thirdBlockHeaderRow + sizeOfThirdContentBlock, 
-                    2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+                
+                targetWorksheet.Cells[thirdBlockHeaderRow + 1, 2, thirdBlockHeaderRow + sizeOfThirdContentBlock, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+                
+                targetWorksheet.Cells[thirdBlockHeaderRow + 1, 1, thirdBlockHeaderRow + sizeOfThirdContentBlock, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Left;
             }
 
             // For fourth content block
@@ -789,7 +953,7 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if(sizeOfFourthContentBlock > 0)
+            if(sizeOfFourthContentBlock > 0) // TODO: Review block
             {
                 sumOfBlockRows += sizeOfFourthContentBlock;
 
@@ -806,15 +970,23 @@ namespace CoA_Tool.Excel
                 }
 
                 targetWorksheet.Cells[fourthBlockHeaderRow, 1].Value = "Test (cfu/gram)";
+
                 targetWorksheet.Cells[fourthBlockHeaderRow, 2].Value = "Method";
+
                 targetWorksheet.Cells[fourthBlockHeaderRow, 3].Value = "Microbiological Results";
+
                 targetWorksheet.Cells[fourthBlockHeaderRow, 1, fourthBlockHeaderRow, 3].Style.Font.Bold = true;
+
                 targetWorksheet.Cells[fourthBlockHeaderRow, 1, fourthBlockHeaderRow, 3].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                targetWorksheet.Cells[fourthBlockHeaderRow, 3, fourthBlockHeaderRow + sizeOfFourthContentBlock,
-                    8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                targetWorksheet.Cells[fourthBlockHeaderRow, 3, fourthBlockHeaderRow + sizeOfFourthContentBlock,8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
                 targetWorksheet.Cells[fourthBlockHeaderRow, 3, fourthBlockHeaderRow, 8].Merge = true;
+
                 targetWorksheet.Cells[fourthBlockHeaderRow, 1, fourthBlockHeaderRow, 8].Style.Border.Bottom.Style = ExcelBorderStyle.Medium;
+
                 targetWorksheet.Cells[fourthBlockHeaderRow + 1, 2, fourthBlockHeaderRow + sizeOfFourthContentBlock, 2].Style.Font.Size = 6;
+
                 targetWorksheet.Cells[fourthBlockHeaderRow + 1, 2, fourthBlockHeaderRow + sizeOfFourthContentBlock, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
 
                 CreateTableOfBorders(6, sizeOfFourthContentBlock, fourthBlockHeaderRow + 1, 3, targetWorksheet);
@@ -855,7 +1027,7 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if(sizeOfFifthContentBlock > 0)
+            if(sizeOfFifthContentBlock > 0) // TODO: Review block
             {
                 sumOfBlockRows += sizeOfFifthContentBlock;
 

@@ -21,7 +21,10 @@ namespace CoA_Tool.CSV
         //  Lists
         public List<List<string>> DelimitedMicroResults = new List<List<string>>();
         public List<List<string>> DelimitedTitrationResults = new List<List<string>>();
-        public enum TitrationOffset { Acidity = 5, Viscosity = 2, Salt = 4, pH = 6 }
+        /// <summary>
+        /// Represents the number of columns to the right of the original/re-test value a titration value can be found
+        /// </summary>
+        public enum TitrationOffset { Acidity = 5, ViscosityCPS = 2, ViscosityCM = 3, Salt = 4, pH = 6, WaterActivity = 13}
         public enum MicroOffset { Yeast = 9, Mold = 11, Aerobic = 15, Coliform = 7, Lactic = 13, EColiform = 5 }
 
         // Constructor
@@ -248,12 +251,14 @@ namespace CoA_Tool.CSV
             return indices;
         }
         /// <summary>
-        /// Retrieves a value from a given entry in DelimitedTitrationResults
+        /// Searches for titration values at the provided indices.  The return value
+        ///  indicates whether a valid value was located.
         /// </summary>
         /// <param name="indices"></param>
         /// <param name="offset"></param>
+        /// <param name="retrievedValue"></param>
         /// <returns></returns>
-        public float TitrationValue(List<int> indices, TitrationOffset offset)
+        public bool TitrationValueExists(List<int> indices, TitrationOffset offset, out float retrievedValue) 
         {
             List<float> results = new List<float>();
 
@@ -263,10 +268,12 @@ namespace CoA_Tool.CSV
                 {
                     string value = DelimitedTitrationResults[index][i];
 
-                    if (value == "Original" || value == "ReTest_1" || value == "ReTest_2" || value == "ReTest_3" || value == "ReTest_4" || value == "ReTest_5")
+                    if (value == "Original" || value == "ReTest_1" || value == "Re_Test_1" || value == "Re_Test_2" || value == "Re_Test_3")
                     {
                         if (DelimitedTitrationResults[index][i + (int)offset] != "*")
+                        {
                             results.Add(Convert.ToSingle(DelimitedTitrationResults[index][i + (int)offset]));
+                        }
                     }
                 }
             }
@@ -294,7 +301,17 @@ namespace CoA_Tool.CSV
                     closestValueIndex = i;
                 }
             }
-            return results.Count == 0 ? -1 : results[closestValueIndex];
+            
+            if(results.Count > 0)
+            {
+                retrievedValue = results[closestValueIndex];
+                return true;
+            }
+            else
+            {
+                retrievedValue = 0;
+                return false;
+            }
         }
         /// <summary>
         /// Retrieves indices of entries in DelimitedTitrationResults matching the given criteria 
