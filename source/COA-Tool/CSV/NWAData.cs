@@ -13,7 +13,7 @@ using CoA_Tool.Utility;
 namespace CoA_Tool.CSV
 {
     /// <summary>
-    /// Handles location and loading of CSV dumps from NWA
+    /// Represents CSV dumps from NWA
     /// </summary>
     class NWAData
     {
@@ -24,7 +24,7 @@ namespace CoA_Tool.CSV
         /// <summary>
         /// Represents the number of columns to the right of the original/re-test value a titration value can be found
         /// </summary>
-        public enum TitrationOffset { Acidity = 5, ViscosityCPS = 2, ViscosityCM = 3, Salt = 4, pH = 6, WaterActivity = 13}
+        public enum TitrationOffset { Acidity = 5, ViscosityCPS = 2, ViscosityCM = 3, Salt = 4, pH = 6}
         public enum MicroOffset { Yeast = 9, Mold = 11, Aerobic = 15, Coliform = 7, Lactic = 13, EColiform = 5 }
 
         // Constructor
@@ -256,9 +256,9 @@ namespace CoA_Tool.CSV
         /// </summary>
         /// <param name="indices"></param>
         /// <param name="offset"></param>
-        /// <param name="retrievedValue"></param>
+        /// <param name="titrationValue"></param>
         /// <returns></returns>
-        public bool TitrationValueExists(List<int> indices, TitrationOffset offset, out float retrievedValue) 
+        public bool TitrationValueExists(List<int> indices, TitrationOffset offset, out float titrationValue) 
         {
             List<float> results = new List<float>();
 
@@ -304,12 +304,12 @@ namespace CoA_Tool.CSV
             
             if(results.Count > 0)
             {
-                retrievedValue = results[closestValueIndex];
+                titrationValue = results[closestValueIndex];
                 return true;
             }
             else
             {
-                retrievedValue = 0;
+                titrationValue = 0;
                 return false;
             }
         }
@@ -567,6 +567,125 @@ namespace CoA_Tool.CSV
             }
 
             return batchesCombinedInString;
+        }
+        /// <summary>
+        /// Searches for water activity values at the provided indices.  The return value
+        ///  indicates whether a value was located.  Secondary out boolean indicates whether the value was valid.
+        /// </summary>
+        /// <param name="indices"></param>
+        /// <param name="waterActivity"></param>
+        /// <param name="valueAlsoValid"></param>
+        /// <returns></returns>
+        public bool WaterActivityExists(List<int> indices, out float waterActivity, out bool valueAlsoValid)
+        {
+            List<float> validWaterActivityValues = new List<float>();
+
+            foreach (int index in indices)
+            {
+                for (int i = 0; i < DelimitedTitrationResults[index].Count; i++)
+                {
+                    string value = DelimitedTitrationResults[index][i];
+
+                    if (value == "Original" || value == "ReTest_1" || value == "Re_Test_1" || value == "Re_Test_2" || value == "Re_Test_3")
+                    {
+                        string lineToParse = "";
+
+                        // Target value is a float formatted as 0.### or .###.  Value can potentially be 1.0 (100% water activity).  0.0 is, in all practicality, impossible.
+                        // Default value is "*", which is synonymous with N/A
+                        if (DelimitedTitrationResults[index][i + 12].Contains('.')) 
+                        {
+                            lineToParse += DelimitedTitrationResults[index][i + 12];
+                        }
+                        
+                        // Two different sub-indices are targeted due to possible inclusion of commas in the string splitting it into two separate
+                        // columns within the CSV file
+                        if (DelimitedTitrationResults[index][i + 13].Contains('.')) 
+                        {
+                            lineToParse += DelimitedTitrationResults[index][i + 13];
+                        }
+
+                        if (lineToParse.Length > 0) // True if a decimal was found.  
+                        {
+                            float validValueForWaterActivity = 0; // Water activity is typically a positive value less than 1
+
+                            // delimitedLine can potentially contain more than two indices, though it's unlikely.
+                            // Following code intended to take the above scenario into account.
+                            List<string> delimitedLine = lineToParse.Split(new char[] { '.' }).ToList();
+
+                            for (int lineIndex = 0; lineIndex < delimitedLine.Count; lineIndex++)
+                            {
+                                bool addToList = false;
+
+                                if (delimitedLine[lineIndex].Count() < 3)
+                                {
+                                    continue;
+                                }
+
+                                // Target float has three digits following the decimal
+                                if (Char.IsDigit(delimitedLine[lineIndex][0]) && Char.IsDigit(delimitedLine[lineIndex][1]) && Char.IsDigit(delimitedLine[lineIndex][2]))
+                                {
+                                    addToList = true;
+
+                                    if (lineIndex != 0 && delimitedLine[lineIndex - 1].Last() == '1')
+                                    {
+                                        validValueForWaterActivity = 1;
+                                    }
+
+                                    for (int digitCount = 1; digitCount <= 3; digitCount++) // Assigns non-integer value, if possible.  
+                                    {
+                                        if (Single.TryParse(delimitedLine[1][digitCount - 1].ToString(), out float parsedValue) == true)
+                                        {
+                                            validValueForWaterActivity += parsedValue / (float)Math.Pow(10, digitCount); // Add-assigns each non-integer value by dividing by increasing multiples of 10
+                                        }
+                                    }
+                                }
+                                if (addToList)
+                                {
+                                    validWaterActivityValues.Add(validValueForWaterActivity);
+                                }
+                            }
+                            
+                        }
+                    }
+                }
+            }
+            
+            float sum = 0;
+
+            foreach (float value in validWaterActivityValues)
+            {
+                sum += value;
+            }
+
+            float average = sum / validWaterActivityValues.Count;
+
+            int nearestToAverageIndex = 0;
+            float smallestDifference = 10000000000;
+            float currentDifference;
+
+            for (int i = 0; i < validWaterActivityValues.Count; i++)
+            {
+                currentDifference = validWaterActivityValues[i] - average >= 0 ? validWaterActivityValues[i] - average : average - validWaterActivityValues[i];
+
+                if (currentDifference < smallestDifference)
+                {
+                    smallestDifference = currentDifference;
+                    nearestToAverageIndex = i;
+                }
+            }
+
+            if (validWaterActivityValues.Count > 0)
+            {
+                waterActivity = validWaterActivityValues[nearestToAverageIndex];
+                valueAlsoValid = true;
+                return true;
+            }
+            else
+            {
+                waterActivity = 0;
+                valueAlsoValid = false;
+                return false;
+            }
         }
     }
 }

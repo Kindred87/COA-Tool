@@ -137,6 +137,8 @@ namespace CoA_Tool.Excel
 
                 do // TODO: Replace with asynchronous solution when async generation is developed to increase resiliency
                 {
+                    // *Typically* only one document, if any, is opened by the user.  
+                    // Meaning that this should be able to hold things over until a more elegant solution is implemented.
                     try
                     {
                         package.SaveAs(new FileInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/" + fileName));
@@ -315,34 +317,18 @@ namespace CoA_Tool.Excel
                 targetWorksheet.Cells[currentRow, 1].Value = "Product";
                 targetWorksheet.Cells[currentRow, 3, currentRow, 8].Style.WrapText = true;
 
-                string productCode;
-                string productName;
+                
                 for(int i = 0; i < itemsInWorksheet; i++)
                 {
-                    if(microIndices.Count > 0)
+                    string productCode = Lot.ProductCode(SalesOrder.Lots[(worksheetNumber - 1) * 6 + i]);
+
+                    if(FinishedGoodsData.ProductNameExists(productCode, out string productName))
                     {
-                        if(microIndices[i].Count > 0)
-                        {
-                            productCode = NWAData.ProductCodeFromMicroIndex(microIndices[i][0]);
-                            FinishedGoodsData.ProductNameExists(productCode, out productName);
-                        }
-                        else
-                        {
-                            productName = "Micro search error";
-                            targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                        }
-                        
                         targetWorksheet.Cells[currentRow, 3 + i].Value = productName;
-                    }
-                    else if(titrationIndices.Count > 0)
-                    {
-                        targetWorksheet.Cells[currentRow, 3 + i].Value = WorkbookTemplate.SelectedAlgorithm.ToString() + " not configured for this value";
-                        targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                        targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
                     }
                     else
                     {
-                        targetWorksheet.Cells[currentRow, 3 + i].Value = "No usable data";
+                        targetWorksheet.Cells[currentRow, 3 + i].Value = "Finished Goods Search Error";
                         targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
                     }
                 }
@@ -355,37 +341,21 @@ namespace CoA_Tool.Excel
 
                 targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
                 targetWorksheet.Cells[currentRow, 1].Value = "Recipe/Item";
-
-                string recipeCode;
-                string productCode;
+                
                 for(int i = 0; i < itemsInWorksheet; i++)
                 {
-                    if (microIndices.Count > 0)
+                    string productCode = Lot.ProductCode(SalesOrder.Lots[(worksheetNumber - 1) * 6 + i]);
+
+                    if(FinishedGoodsData.RecipeCodeExists(productCode, out string recipeCode))
                     {
-                        if(microIndices[i].Count > 0)
-                        {
-                            recipeCode = NWAData.RecipeCodeFromMicroIndex(microIndices[i][0]);
-                            productCode = NWAData.ProductCodeFromMicroIndex(microIndices[i][0]);
-                            targetWorksheet.Cells[currentRow, 3 + i].Value = recipeCode + "/" + productCode;
-                        }
-                        else
-                        {
-                            targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                            targetWorksheet.Cells[currentRow, 3 + i].Value = "Micro search error";
-                        }
-                       
-                        
-                    }
-                    else if (titrationIndices.Count > 0)
-                    {
-                        recipeCode = NWAData.RecipeCodeFromTitrationIndex(microIndices[i][0]);
-                        targetWorksheet.Cells[currentRow, 3 + i].Value = recipeCode + "/";
+                        targetWorksheet.Cells[currentRow, 3 + i].Value = recipeCode + "/" + productCode;
                     }
                     else
                     {
-                        targetWorksheet.Cells[currentRow, 3 + i].Value = "No usable data";
+                        targetWorksheet.Cells[currentRow, 3 + i].Value = "Finished Goods Search Error";
                         targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
                     }
+
                 }
                 currentRow++;
             }
@@ -562,15 +532,36 @@ namespace CoA_Tool.Excel
                 targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
                 targetWorksheet.Cells[currentRow, 1].Value = "Manufacturing Date";
 
-                for (int i = 0; i < itemsInWorksheet; i++)
+                if (WorkbookTemplate.SelectedAlgorithm == Templates.Template.Algorithm.Standard)
                 {
-                    targetWorksheet.Cells[currentRow, 3 + i].Value = FinishedGoodsData.GetMadeDate(SalesOrder.Lots[(worksheetNumber - 1) * 6 + i]).ToShortDateString();
+                    for (int i = 0; i < itemsInWorksheet; i++)
+                    {
+                        targetWorksheet.Cells[currentRow, 3 + i].Value = FinishedGoodsData.GetMadeDate(SalesOrder.Lots[(worksheetNumber - 1) * 6 + i]).ToShortDateString();
+                    }
                 }
-
                 currentRow++;
             }
 
-            if(WorkbookTemplate.IncludeManufacturingSite)
+            // Insert comments containing each product's made date to assist user investigation if the information should otherwise not be present
+            // Comments are supposed to be placed along the first row of the second content block
+            if (WorkbookTemplate.IncludeManufacturingDate == false) 
+            {
+                if (WorkbookTemplate.SelectedAlgorithm == Templates.Template.Algorithm.Standard)
+                {
+                    for (int i = 0; i < itemsInWorksheet; i++)
+                    {
+                        string commentValue = "Made: ";
+                        commentValue += FinishedGoodsData.GetMadeDate(SalesOrder.Lots[(worksheetNumber - 1) * 6 + i]).ToShortDateString();
+
+                        targetWorksheet.Cells[11 + sizeOfFirstContentBlock + 2, 3 + i].AddComment(commentValue, "CoA Tool");
+                        targetWorksheet.Cells[11 + sizeOfFirstContentBlock + 2, 3 + i].Comment.BackgroundColor = Color.LightBlue;
+                        targetWorksheet.Cells[11 + sizeOfFirstContentBlock + 2, 3 + i].Comment.LineColor = Color.LightSkyBlue;
+                        targetWorksheet.Cells[11 + sizeOfFirstContentBlock + 2, 3 + i].Comment.AutoFit = true;
+                    }
+                }
+            }
+
+            if (WorkbookTemplate.IncludeManufacturingSite)
             {
                 sizeOfSecondContentBlock++;
 
@@ -813,6 +804,44 @@ namespace CoA_Tool.Excel
 
                 targetWorksheet.Cells[currentRow, 1].Value = "Water activity (aW)";
 
+                for(int i = 0; i < itemsInWorksheet; i++)
+                {
+                    if (titrationIndices.Count > 0)
+                    {
+                        if (titrationIndices[i].Count > 0)
+                        {
+                            bool waterActivityValuePresent = NWAData.WaterActivityExists(titrationIndices[i], out float waterActivity, out bool valueIsAlsoValid);
+                            
+                            if (waterActivityValuePresent && valueIsAlsoValid)
+                            {
+                                targetWorksheet.Cells[currentRow, 3 + i].Value = Math.Round(waterActivity, 3);
+                            }
+                            else if(waterActivityValuePresent && valueIsAlsoValid == false)
+                            {
+                                targetWorksheet.Cells[currentRow, 3 + i].Value = "Invalid value";
+                                targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                                targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
+                            }
+                            else
+                            {
+                                targetWorksheet.Cells[currentRow, 3 + i].Value = "Missing value";
+                                targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                                targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
+                            }
+                        }
+                        else
+                        {
+
+                        }
+                    }   
+                    else
+                    {
+                        targetWorksheet.Cells[currentRow, 3 + i].Value = "No usable data";
+                        targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                        targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
+                    }
+                }
+                
                 currentRow++;
             }
 

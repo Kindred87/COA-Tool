@@ -42,14 +42,15 @@ namespace CoA_Tool.Excel
             {
                 Console.Util.WriteMessageInCenter("Loading finished goods data...");
 
-                for (int i = 2; i < package.Workbook.Worksheets[1].Dimension.Rows; i++)
+                for (int i = 2; i < package.Workbook.Worksheets[0].Dimension.Rows; i++)
                 {
                     Contents.Add(new List<string>());
 
-                    Contents[i - 2].Add(package.Workbook.Worksheets[1].Cells[i, 1].Value.ToString()); // Part codes
-                    Contents[i - 2].Add(package.Workbook.Worksheets[1].Cells[i, 2].Value.ToString()); // Part description
-                    Contents[i - 2].Add(package.Workbook.Worksheets[1].Cells[i, 7].Value.ToString()); // Days to expiry
-                    Contents[i - 2].Add(package.Workbook.Worksheets[1].Cells[i, 8].Value.ToString()); // Recipe
+                    Contents[i - 2].Add(package.Workbook.Worksheets[0].Cells[i, 1].Value.ToString()); // Part codes
+                    Contents[i - 2].Add(package.Workbook.Worksheets[0].Cells[i, 2].Value.ToString()); // Part description
+                    Contents[i - 2].Add(package.Workbook.Worksheets[0].Cells[i, 7].Value.ToString()); // Days to expiry
+                    Contents[i - 2].Add(package.Workbook.Worksheets[0].Cells[i, 8].Value.ToString()); // Recipe
+                    
                 }
 
                 Console.Util.RemoveMessageInCenter();
@@ -151,17 +152,16 @@ namespace CoA_Tool.Excel
         /// <returns></returns>
         public bool RecipeCodeExists(string productCode, out string recipeCode)
         {
-            recipeCode = "";
-
             foreach (List<string> line in Contents) 
             {
                 if (line[0] == productCode)
                 {
                     recipeCode = line[3];
                     return true;
-               }
+                }
             }
-            
+
+            recipeCode = "";
             return false;
         }
         /// <summary>
