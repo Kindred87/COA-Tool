@@ -278,7 +278,6 @@ namespace CoA_Tool.CSV
                 }
             }
 
-            // TODO: Move to own method
             float sum = 0;
 
             foreach (float value in results)
@@ -302,7 +301,6 @@ namespace CoA_Tool.CSV
                     closestValueIndex = i;
                 }
             }
-            // End of TODO
             
             if(results.Count > 0)
             {
@@ -576,15 +574,12 @@ namespace CoA_Tool.CSV
         /// </summary>
         /// <param name="indices"></param>
         /// <param name="waterActivity"></param>
-        /// <param name="valueAlsoValid"></param>
+        /// <param name="valueIsValid"></param>
         /// <returns></returns>
-        public bool WaterActivityExists(List<int> indices, out float waterActivity, out bool valueAlsoValid)
+        public bool WaterActivityExists(List<int> indices, out float waterActivity, out bool valueIsValid)
         {
-<<<<<<< HEAD
-            valueIsValid = false; // Potentially assigned to true following non-integer assignment
+            valueIsValid = false;
 
-=======
->>>>>>> parent of bc7672d... 1) Resolved false-positive bug in Water Activity retrieval algorithm.
             List<float> validWaterActivityValues = new List<float>();
 
             foreach (int index in indices)
@@ -632,6 +627,7 @@ namespace CoA_Tool.CSV
                                 if (Char.IsDigit(delimitedLine[lineIndex][0]) && Char.IsDigit(delimitedLine[lineIndex][1]) && Char.IsDigit(delimitedLine[lineIndex][2]))
                                 {
                                     addToList = true;
+                                    bool noValueParsingFailed = true;
 
                                     if (lineIndex != 0 && delimitedLine[lineIndex - 1].Last() == '1')
                                     {
@@ -644,8 +640,18 @@ namespace CoA_Tool.CSV
                                         {
                                             validValueForWaterActivity += parsedValue / (float)Math.Pow(10, digitCount); // Add-assigns each non-integer value by dividing by increasing multiples of 10
                                         }
+                                        else
+                                        {
+                                            noValueParsingFailed = false;
+                                        }
+                                    }
+
+                                    if(noValueParsingFailed)
+                                    {
+                                        valueIsValid = true;
                                     }
                                 }
+
                                 if (addToList)
                                 {
                                     validWaterActivityValues.Add(validValueForWaterActivity);
@@ -657,7 +663,6 @@ namespace CoA_Tool.CSV
                 }
             }
             
-            // TODO: Move to own method
             float sum = 0;
 
             foreach (float value in validWaterActivityValues)
@@ -681,18 +686,15 @@ namespace CoA_Tool.CSV
                     nearestToAverageIndex = i;
                 }
             }
-            // End of TODO
 
             if (validWaterActivityValues.Count > 0)
             {
                 waterActivity = validWaterActivityValues[nearestToAverageIndex];
-                valueAlsoValid = true;
                 return true;
             }
             else
             {
                 waterActivity = 0;
-                valueAlsoValid = false;
                 return false;
             }
         }
