@@ -2,15 +2,15 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace CoA_Tool.Console
+namespace CoA_Tool.Utility
 {
     /// <summary>
     /// Contains miscellaneous methods for console operations
     /// </summary>
-    class Util // TODO: Move to CoA_Tool.Utility
+    class ConsoleOps // TODO: Move to CoA_Tool.Utility
     {
         // Constructor
-        public Util()
+        public ConsoleOps()
         {
             
         }
@@ -19,9 +19,9 @@ namespace CoA_Tool.Console
         /// <summary>
         /// Resizes the console window
         /// </summary>
-        public static void SetSize()
+        public static void SetInitialSize()
         {
-            System.Console.WindowWidth = (int)((double)System.Console.LargestWindowWidth * 0.75);
+            System.Console.WindowWidth = (int)((double)System.Console.LargestWindowWidth * 0.8);
             System.Console.WindowHeight = (int)((double)System.Console.LargestWindowHeight * 0.5);
         }
         /// <summary>
@@ -37,10 +37,10 @@ namespace CoA_Tool.Console
         /// <param name="message"></param>
         public static void WriteMessageInCenter(string message)
         {
-            int cursorRow = (int)((double)System.Console.WindowHeight * 0.5);
+            int cursorRow = (int)(System.Console.WindowHeight * 0.5);
             RemoveMessageInCenter();
 
-            int cursorColumn = (int)((double)(System.Console.WindowWidth - message.Length) * 0.5);
+            int cursorColumn = (int)((System.Console.WindowWidth - message.Length) * 0.5);
 
             System.Console.SetCursorPosition(cursorColumn, cursorRow);
             System.Console.WriteLine(message);
@@ -67,7 +67,7 @@ namespace CoA_Tool.Console
         /// </summary>
         public static void RemoveMessageInCenter()
         {
-            int cursorRow = (int)((double)System.Console.WindowHeight * 0.5);
+            int cursorRow = (int)(System.Console.WindowHeight * 0.5);
             System.Console.SetCursorPosition(0, cursorRow);
             System.Console.Write(new string(' ', System.Console.WindowWidth));
         }
@@ -82,8 +82,8 @@ namespace CoA_Tool.Console
 
             string userInput;
             DateTime inputAsDateTime;
-            int cursorRow = (int)((double)System.Console.WindowHeight * 0.5 + 1);
-            int cursorColumn = (int)((double)System.Console.WindowWidth * 0.5);
+            int cursorRow = (int)(System.Console.WindowHeight * 0.5 + 1);
+            int cursorColumn = (int)(System.Console.WindowWidth * 0.5);
             System.Console.CursorVisible = true;
 
             do

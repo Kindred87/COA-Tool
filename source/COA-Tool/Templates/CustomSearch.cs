@@ -69,7 +69,7 @@ namespace CoA_Tool.Templates
                         List<string> options = new List<string>();
                         options.Add("Continue regardless.");
                         options.Add("Exit application");
-                        if (new Console.SelectionMenu(options, "", invalidColumnPrompt).UserChoice == "Exit application")
+                        if (new ConsoleInteraction.SelectionMenu(options, "", invalidColumnPrompt).UserChoice == "Exit application")
                             Environment.Exit(0);
                     }
                     else if (_searchColumnOffset > 11)

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using CoA_Tool;
+using CoA_Tool.Utility;
 
 
 namespace CoA_Tool.Templates
@@ -68,7 +69,7 @@ namespace CoA_Tool.Templates
         public bool IncludeFlavorAndOdor;
 
         // Objects
-        public Console.SelectionMenu Menu;
+        public ConsoleInteraction.SelectionMenu Menu;
 
         // Strings
         /// <summary>
@@ -92,7 +93,7 @@ namespace CoA_Tool.Templates
             CustomSearches = new List<CustomSearch>();
             CustomFilters = new List<CustomFilter>();
 
-            Menu = new Console.SelectionMenu(GetOptions(), "Templates:", "Please select a template");
+            Menu = new ConsoleInteraction.SelectionMenu(GetOptions(), "Templates:", "Please select a template");
 
             AssignOptionsFromFile(Menu.UserChoice);
         }
@@ -109,7 +110,7 @@ namespace CoA_Tool.Templates
             {
                 do
                 {
-                    Console.Util.WriteMessageInCenter("Could not find any templates in " + templateDirectory +
+                    ConsoleOps.WriteMessageInCenter("Could not find any templates in " + templateDirectory +
                         "  Press any key once templates have been added", ConsoleColor.Red);
 
                     System.Console.ReadKey();
@@ -117,7 +118,7 @@ namespace CoA_Tool.Templates
 
                 } while (Directory.GetFiles(templateDirectory, "*.txt").Length == 0);
 
-                Console.Util.RemoveMessageInCenter();
+                ConsoleOps.RemoveMessageInCenter();
             }
 
             return KeepOnlyFileNames(Directory.GetFiles(templateDirectory, "*.txt")).ToList();
@@ -149,7 +150,7 @@ namespace CoA_Tool.Templates
 
             List<string> delimitedLine; // Each line consists of an option title/name, an equals sign, and the option choice
 
-            Console.Util.WriteMessageInCenter("Loading " + Menu.UserChoice + " Template");
+            ConsoleOps.WriteMessageInCenter("Loading " + Menu.UserChoice + " Template");
 
             foreach(string line in File.ReadLines(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\CoAs\\Templates\\" + templateName + ".txt"))
             {
@@ -203,7 +204,7 @@ namespace CoA_Tool.Templates
 
                                 default:
                                     promptForInvalidItem = delimitedLine[1] + " is not a valid algorithm type.";
-                                    if (new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem).UserChoice == "Exit application")
+                                    if (new ConsoleInteraction.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem).UserChoice == "Exit application")
                                     {
                                         Environment.Exit(0);
                                     }
@@ -224,8 +225,8 @@ namespace CoA_Tool.Templates
                                             if(search.DataGroup != CustomSearch.DataGroupToSearch.Micro ||
                                                 search.DataGroup != CustomSearch.DataGroupToSearch.Unassigned)
                                             {
-                                                //TODO: Replace with acknowledgement menu
-                                                Console.Util.WriteMessageInCenter("Program cannot proceed with mixed \"search in\" targets in algorithm information.  " +
+                                                //TODO: Replace with acknowledgment menu
+                                                ConsoleOps.WriteMessageInCenter("Program cannot proceed with mixed \"search in\" targets in algorithm information.  " +
                                                     "  Press any key to exit application.", ConsoleColor.Red);
                                                 System.Console.ReadKey();
                                                 Environment.Exit(0);
@@ -254,7 +255,7 @@ namespace CoA_Tool.Templates
 
                                     default:
                                         promptForInvalidItem = delimitedLine[1] + " is not a valid item to search in.";
-                                        if (new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem).UserChoice == "Exit application")
+                                        if (new ConsoleInteraction.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem).UserChoice == "Exit application")
                                         {
                                             Environment.Exit(0);
                                         }
@@ -308,7 +309,7 @@ namespace CoA_Tool.Templates
                                 else if(delimitedLine[1] != "")
                                 {
                                     promptForInvalidItem = delimitedLine[1] + " is not a valid number for algorithm search column";
-                                    if (new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem).UserChoice == "Exit application")
+                                    if (new ConsoleInteraction.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem).UserChoice == "Exit application")
                                     {
                                         Environment.Exit(0);
                                     }
@@ -322,7 +323,7 @@ namespace CoA_Tool.Templates
 
                         default:
                             promptForInvalidItem = "\"" + delimitedLine[0] + "\"" +" is not a valid algorithm item.";
-                            if(new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem).UserChoice == "Exit application")
+                            if(new ConsoleInteraction.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem).UserChoice == "Exit application")
                             {
                                 Environment.Exit(0);
                             }
@@ -494,7 +495,7 @@ namespace CoA_Tool.Templates
                                                     break;
                                                 default:
                                                     promptForInvalidItem = delimitedLine[1] + " is not a valid content item";
-                                                    if(new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem).UserChoice == "Exit application")
+                                                    if(new ConsoleInteraction.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem).UserChoice == "Exit application")
                                                     {
                                                         Environment.Exit(0);
                                                     }
@@ -524,7 +525,7 @@ namespace CoA_Tool.Templates
                             break;
                         default:
                             promptForInvalidItem = delimitedLine[0] + " is not a valid filter item.";
-                            if(new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem).UserChoice == "Exit application")
+                            if(new ConsoleInteraction.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem).UserChoice == "Exit application")
                             {
                                 Environment.Exit(0);
                             }
@@ -655,7 +656,7 @@ namespace CoA_Tool.Templates
                             break;
                         default:
                             promptForInvalidItem = delimitedLine[0] + " is not a valid content item.";
-                            if(new Console.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem).UserChoice == "Exit application")
+                            if(new ConsoleInteraction.SelectionMenu(optionsForInvalidItem, "", promptForInvalidItem).UserChoice == "Exit application")
                             {
                                 Environment.Exit(0);
                             }
@@ -665,7 +666,7 @@ namespace CoA_Tool.Templates
                 
             }
 
-            Console.Util.RemoveMessageInCenter(); // Removes message written just before foreach loop was initiated
+            ConsoleOps.RemoveMessageInCenter(); // Removes message written just before foreach loop was initiated
         }
         /// <summary>
         /// Sets all content inclusion bools to their intended default, false

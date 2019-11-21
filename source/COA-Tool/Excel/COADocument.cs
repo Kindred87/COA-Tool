@@ -150,7 +150,7 @@ namespace CoA_Tool.Excel
                     }
                     catch (IOException)
                     {
-                        new Console.SelectionMenu(options, " Select:",
+                        new ConsoleInteraction.SelectionMenu(options, " Select:",
                             "\"" + fileName + "\" is being accessed.  Please close the file before continuing.");
                     }
                 } while (fileSaved == false);
@@ -831,7 +831,9 @@ namespace CoA_Tool.Excel
                         }
                         else
                         {
-
+                            targetWorksheet.Cells[currentRow, 3 + i].Value = "Search error";
+                            targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
+                            targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
                         }
                     }   
                     else

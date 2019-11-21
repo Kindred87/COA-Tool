@@ -50,14 +50,14 @@ namespace CoA_Tool.CSV
 
                 if(microPath == string.Empty)
                 {
-                    Console.Util.WriteMessageInCenter("Could not locate micro data on the desktop." +  
+                    ConsoleOps.WriteMessageInCenter("Could not locate micro data on the desktop." +  
                         "  Press a key once the file is ready to be loaded.", ConsoleColor.Red);
                     System.Console.ReadKey();
                     System.Console.Write("\b \b ");
                 }
                 if(titrationPath == string.Empty)
                 {
-                    Console.Util.WriteMessageInCenter("Could not locate titration data on the desktop." + 
+                    ConsoleOps.WriteMessageInCenter("Could not locate titration data on the desktop." + 
                         "  Press a key once the file is ready to be loaded.", ConsoleColor.Red);
                     System.Console.ReadKey();
                     System.Console.Write("\b \b ");
@@ -67,18 +67,18 @@ namespace CoA_Tool.CSV
             if (ReloadFileBecauseTooOld(microPath, titrationPath))
                 LoadCSVFiles();
 
-            Console.Util.WriteMessageInCenter("Loading micro data...");
+            ConsoleOps.WriteMessageInCenter("Loading micro data...");
             foreach (string line in File.ReadLines(microPath))
             {
                 DelimitedMicroResults.Add(line.Split(new char[] { ',' }).ToList());
             }
-            Console.Util.WriteMessageInCenter("Loading titration data...");
+            ConsoleOps.WriteMessageInCenter("Loading titration data...");
             foreach (string line in File.ReadLines(titrationPath))
             {
                 DelimitedTitrationResults.Add(line.Split(new char[] { ',' }).ToList());
             }
 
-            Console.Util.RemoveMessageInCenter();
+            ConsoleOps.RemoveMessageInCenter();
         }
 
         // Private methods
@@ -109,21 +109,21 @@ namespace CoA_Tool.CSV
 
                 choicePrompt += " hours.  Would you first like to update the file and reload it? Press Y or N";
 
-                Console.Util.WriteMessageInCenter(choicePrompt);
+                ConsoleOps.WriteMessageInCenter(choicePrompt);
 
                 if (System.Console.ReadKey().Key == ConsoleKey.Y)
                 {
                     System.Console.Write("\b \b ");
-                    Console.Util.WriteMessageInCenter("Press any key once the file is ready for reloading.");
+                    ConsoleOps.WriteMessageInCenter("Press any key once the file is ready for reloading.");
                     System.Console.ReadKey();
                     System.Console.Write("\b \b ");
-                    Console.Util.RemoveMessageInCenter();
+                    ConsoleOps.RemoveMessageInCenter();
                     return true;
                 }
                 else
                 {
                     System.Console.Write("\b \b "); // Deletes key char entered in if condition
-                    Console.Util.RemoveMessageInCenter();
+                    ConsoleOps.RemoveMessageInCenter();
                     return false;
                 }
             }
@@ -157,7 +157,7 @@ namespace CoA_Tool.CSV
                     }
                     catch (IOException)
                     {
-                        Console.Util.WriteMessageInCenter(fileName + " is currently open.  Press any key once the file has been closed.", ConsoleColor.Red);
+                        ConsoleOps.WriteMessageInCenter(fileName + " is currently open.  Press any key once the file has been closed.", ConsoleColor.Red);
                         System.Console.ReadKey();
                         System.Console.Write("\b \b ");
                     }
@@ -251,7 +251,7 @@ namespace CoA_Tool.CSV
             return indices;
         }
         /// <summary>
-        /// Searches for titration values at the provided indices.  The return value
+        /// Searches for typical titration values at the provided indices.  The return value
         ///  indicates whether a valid value was located.
         /// </summary>
         /// <param name="indices"></param>
@@ -260,7 +260,7 @@ namespace CoA_Tool.CSV
         /// <returns></returns>
         public bool TitrationValueExists(List<int> indices, TitrationOffset offset, out float titrationValue) 
         {
-            List<float> results = new List<float>();
+            List<float> valuePool = new List<float>();
 
             foreach (int index in indices)
             {
@@ -272,39 +272,15 @@ namespace CoA_Tool.CSV
                     {
                         if (DelimitedTitrationResults[index][i + (int)offset] != "*")
                         {
-                            results.Add(Convert.ToSingle(DelimitedTitrationResults[index][i + (int)offset]));
+                            valuePool.Add(Convert.ToSingle(DelimitedTitrationResults[index][i + (int)offset]));
                         }
                     }
                 }
             }
 
-            float sum = 0;
-
-            foreach (float value in results)
+            if(valuePool.Count > 0)
             {
-                sum += value;
-            }
-
-            float average = sum / results.Count;
-
-            int closestValueIndex = 0;
-            float smallestDifference = 10000000000;
-            float currentDifference;
-
-            for (int i = 0; i < results.Count; i++)
-            {
-                currentDifference = results[i] - average >= 0 ? results[i] - average : average - results[i];
-
-                if (currentDifference < smallestDifference)
-                {
-                    smallestDifference = currentDifference;
-                    closestValueIndex = i;
-                }
-            }
-            
-            if(results.Count > 0)
-            {
-                titrationValue = results[closestValueIndex];
+                titrationValue = ValueNearestToMean(valuePool);
                 return true;
             }
             else
@@ -578,7 +554,7 @@ namespace CoA_Tool.CSV
         /// <returns></returns>
         public bool WaterActivityExists(List<int> indices, out float waterActivity, out bool valueIsValid)
         {
-            valueIsValid = false;
+            valueIsValid = false; // Potentially assigned to true following non-integer assignment
 
             List<float> validWaterActivityValues = new List<float>();
 
@@ -590,29 +566,29 @@ namespace CoA_Tool.CSV
 
                     if (value == "Original" || value == "ReTest_1" || value == "Re_Test_1" || value == "Re_Test_2" || value == "Re_Test_3")
                     {
-                        string lineToParse = "";
+                        string lineToDelimit = "";
 
                         // Target value is a float formatted as 0.### or .###.  Value can potentially be 1.0 (100% water activity).  0.0 is, in all practicality, impossible.
                         // Default value is "*", which is synonymous with N/A
                         if (DelimitedTitrationResults[index][i + 12].Contains('.')) 
                         {
-                            lineToParse += DelimitedTitrationResults[index][i + 12];
+                            lineToDelimit += DelimitedTitrationResults[index][i + 12];
                         }
                         
                         // Two different sub-indices are targeted due to possible inclusion of commas in the string splitting it into two separate
                         // columns within the CSV file
                         if (DelimitedTitrationResults[index][i + 13].Contains('.')) 
                         {
-                            lineToParse += DelimitedTitrationResults[index][i + 13];
+                            lineToDelimit += DelimitedTitrationResults[index][i + 13];
                         }
 
-                        if (lineToParse.Length > 0) // True if a decimal was found.  
+                        if (lineToDelimit.Length > 0) // True if a decimal was found.  
                         {
                             float validValueForWaterActivity = 0; // Water activity is typically a positive value less than 1
 
                             // delimitedLine can potentially contain more than two indices, though it's unlikely.
                             // Following code intended to take the above scenario into account.
-                            List<string> delimitedLine = lineToParse.Split(new char[] { '.' }).ToList();
+                            List<string> delimitedLine = lineToDelimit.Split(new char[] { '.' }).ToList();
 
                             for (int lineIndex = 0; lineIndex < delimitedLine.Count; lineIndex++)
                             {
@@ -663,22 +639,40 @@ namespace CoA_Tool.CSV
                 }
             }
             
+            if (validWaterActivityValues.Count > 0)
+            {
+                waterActivity = ValueNearestToMean(validWaterActivityValues);
+                return true;
+            }
+            else
+            {
+                waterActivity = 0;
+                return false;
+            }
+        }
+        /// <summary>
+        /// Determines which of the provided values is closest to the mean
+        /// </summary>
+        /// <param name="providedValues"></param>
+        /// <returns></returns>
+        private float ValueNearestToMean(List<float> providedValues)
+        {
             float sum = 0;
 
-            foreach (float value in validWaterActivityValues)
+            foreach (float value in providedValues)
             {
                 sum += value;
             }
 
-            float average = sum / validWaterActivityValues.Count;
+            float average = sum / providedValues.Count;
 
             int nearestToAverageIndex = 0;
             float smallestDifference = 10000000000;
             float currentDifference;
 
-            for (int i = 0; i < validWaterActivityValues.Count; i++)
+            for (int i = 0; i < providedValues.Count; i++)
             {
-                currentDifference = validWaterActivityValues[i] - average >= 0 ? validWaterActivityValues[i] - average : average - validWaterActivityValues[i];
+                currentDifference = providedValues[i] - average >= 0 ? providedValues[i] - average : average - providedValues[i];
 
                 if (currentDifference < smallestDifference)
                 {
@@ -687,16 +681,7 @@ namespace CoA_Tool.CSV
                 }
             }
 
-            if (validWaterActivityValues.Count > 0)
-            {
-                waterActivity = validWaterActivityValues[nearestToAverageIndex];
-                return true;
-            }
-            else
-            {
-                waterActivity = 0;
-                return false;
-            }
+            return providedValues[nearestToAverageIndex];
         }
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using CoA_Tool.Utility;
 
 namespace CoA_Tool.Excel
 {
@@ -27,7 +28,7 @@ namespace CoA_Tool.Excel
 
                 foreach (CSV.SalesOrder salesOrder in tableau.SalesOrders)
                 {
-                    Console.Util.WriteMessageInCenter("Generating " + ++numberOfDocumentsToGenerate + " CoA documents");
+                    ConsoleOps.WriteMessageInCenter("Generating " + ++numberOfDocumentsToGenerate + " CoA documents");
                     COADocument workbook = new COADocument(template, salesOrder, nwaData, tableau, finishedGoods);
 
                     Thread thread = new Thread(workbook.StandardGeneration);
@@ -38,7 +39,7 @@ namespace CoA_Tool.Excel
             else if (template.SelectedAlgorithm == Templates.Template.Algorithm.FromDateOnwards)
             {
                 nwaData.LoadCSVFiles();
-                DateTime desiredStartDate = Console.Util.GetDateFromUser("Please enter a start date for the search algorithm.");
+                DateTime desiredStartDate = ConsoleOps.GetDateFromUser("Please enter a start date for the search algorithm.");
             }
         }
     }

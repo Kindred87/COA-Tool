@@ -82,7 +82,7 @@ namespace CoA_Tool.CSV
                 menuOptions.Add("Skip file");
                 menuOptions.Add("Reload file");
 
-                if(new Console.SelectionMenu(menuOptions, "", fileName + " is being accessed by another program.  Skip this file or try loading it again?").UserChoice == "Reload file")
+                if(new ConsoleInteraction.SelectionMenu(menuOptions, "", fileName + " is being accessed by another program.  Skip this file or try loading it again?").UserChoice == "Reload file")
                 {
                     Load(filePath);
                 }
@@ -92,7 +92,7 @@ namespace CoA_Tool.CSV
                     menuOptions.Add("Yes");
                     menuOptions.Add("No");
 
-                    if (new Console.SelectionMenu(menuOptions, "", "Are you sure you want to skip loading " + fileName + "?").UserChoice == "No")
+                    if (new ConsoleInteraction.SelectionMenu(menuOptions, "", "Are you sure you want to skip loading " + fileName + "?").UserChoice == "No")
                     {
                         Load(filePath);
                     }

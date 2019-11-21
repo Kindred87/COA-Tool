@@ -40,7 +40,7 @@ namespace CoA_Tool.Excel
 
             using (ExcelPackage package = new ExcelPackage(excelFile))
             {
-                Console.Util.WriteMessageInCenter("Loading finished goods data...");
+                ConsoleOps.WriteMessageInCenter("Loading finished goods data...");
 
                 for (int i = 2; i < package.Workbook.Worksheets[0].Dimension.Rows; i++)
                 {
@@ -53,7 +53,7 @@ namespace CoA_Tool.Excel
                     
                 }
 
-                Console.Util.RemoveMessageInCenter();
+                ConsoleOps.RemoveMessageInCenter();
             }
         }
         /// <summary>
@@ -66,18 +66,18 @@ namespace CoA_Tool.Excel
             string downloadsPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
             downloadsPath += "\\Downloads";
 
-            Console.Util.WriteMessageInCenter("Locating finished goods file...");
+            ConsoleOps.WriteMessageInCenter("Locating finished goods file...");
 
-            string path; // Did not inline instantiation due to clarity concerns
+            string path;
 
             if (SearchDirectory(desktopPath, out path) ||  SearchDirectory(downloadsPath, out path))
             {
-                Console.Util.RemoveMessageInCenter();
+                ConsoleOps.RemoveMessageInCenter();
                 return path;
             }
             else
             {
-                Console.Util.WriteMessageInCenter("Finished goods file could not be located.  Press a key to search again.", ConsoleColor.Red);
+                ConsoleOps.WriteMessageInCenter("Finished goods file could not be located.  Press a key to search again.", ConsoleColor.Red);
                 System.Console.ReadKey();
                 return GetFilePath(); // Until the file is found
             }

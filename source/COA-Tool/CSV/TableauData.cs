@@ -137,7 +137,7 @@ namespace CoA_Tool.CSV
                     options[1] += " file)";
             }
                 
-           Console.SelectionMenu menu = new Console.SelectionMenu(options, "    Batch:", "Select an option regarding TableauData lot information.");
+           ConsoleInteraction.SelectionMenu menu = new ConsoleInteraction.SelectionMenu(options, "    Batch:", "Select an option regarding TableauData lot information.");
 
            return menu.UserChoice;
         }
@@ -279,7 +279,7 @@ namespace CoA_Tool.CSV
                 menuOptions.Add("Skip file");
                 menuOptions.Add("Reload file");
 
-                if (new Console.SelectionMenu(menuOptions, "", fileName + " is being accessed by another program.  Skip this file or try loading it again?").UserChoice == "Reload file")
+                if (new ConsoleInteraction.SelectionMenu(menuOptions, "", fileName + " is being accessed by another program.  Skip this file or try loading it again?").UserChoice == "Reload file")
                 {
                     return IsFileValid(filePath);
                 }
@@ -289,7 +289,7 @@ namespace CoA_Tool.CSV
                     menuOptions.Add("Yes");
                     menuOptions.Add("No");
 
-                    if(new Console.SelectionMenu(menuOptions, "", "Are you sure you want to skip loading " + fileName + "?").UserChoice == "No")
+                    if(new ConsoleInteraction.SelectionMenu(menuOptions, "", "Are you sure you want to skip loading " + fileName + "?").UserChoice == "No")
                     {
                         return IsFileValid(filePath);
                     }
