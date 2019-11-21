@@ -30,7 +30,7 @@ namespace CoA_Tool.ConsoleInteraction
         {
             get
             {
-                return System.Console.WindowWidth / GridColumnWidth ;
+                return System.Console.WindowWidth / GridColumnWidth;
             }
         }
         /// <summary>
@@ -45,6 +45,9 @@ namespace CoA_Tool.ConsoleInteraction
         /// Stores the console window's width for resizing detection.
         /// </summary>
         private int WindowHeightOnLastUpdate;
+        /// <summary>
+        /// Row within the console window on which the menu header is printed.  Value is based on the window's height.
+        /// </summary>
         private int TopRowOfGrid
         {
             get
@@ -82,15 +85,13 @@ namespace CoA_Tool.ConsoleInteraction
         {
             ChoiceHeader = optionsHeader;
             CenterMessage = centerMessage;
-            MenuOptions = options;
+            SelectionCoordinates = new int[] { 0, 0 };
+
+            SaveWindowDimensions();
 
             MenuGrid = OptionsToMenuGrid(options);
 
             GridColumnWidth = SetColumnWidth(MenuGrid);
-
-            SelectionCoordinates = new int[] { 0, 0 };
-
-            SaveWindowDimensions();
 
             UpdateMenu();
 
@@ -98,10 +99,6 @@ namespace CoA_Tool.ConsoleInteraction
 
             RemoveMenuContent();
         }
-
-        // Public methods
-
-        // Private methods
         /// <summary>
         /// Outputs all template options to the console
         /// </summary>
@@ -177,56 +174,54 @@ namespace CoA_Tool.ConsoleInteraction
             {
                 case ConsoleKey.Enter:
                     itemChoiceSubmitted = true;
-                    itemChoice = MenuOptions[SelectionCoordinates[0] * 10 + SelectionCoordinates[1]];
                     break;
                 case ConsoleKey.Tab:
                     itemChoiceSubmitted = true;
-                    itemChoice = MenuOptions[SelectionCoordinates[0] * 10 + SelectionCoordinates[1]];
                     break;
                 case ConsoleKey.RightArrow:
                     MoveRight();
                     itemChoiceSubmitted = false;
-                    itemChoice = string.Empty;
                     break;
                 case ConsoleKey.D:
                     MoveRight();
                     itemChoiceSubmitted = false;
-                    itemChoice = string.Empty;
                     break;
                 case ConsoleKey.LeftArrow:
                     MoveLeft();
                     itemChoiceSubmitted = false;
-                    itemChoice = string.Empty;
                     break;
                 case ConsoleKey.A:
                     MoveLeft();
                     itemChoiceSubmitted = false;
-                    itemChoice = string.Empty;
                     break;
                 case ConsoleKey.UpArrow:
                     MoveUp();
                     itemChoiceSubmitted = false;
-                    itemChoice = string.Empty;
                     break;
                 case ConsoleKey.W:
                     MoveUp();
                     itemChoiceSubmitted = false;
-                    itemChoice = string.Empty;
                     break;
                 case ConsoleKey.DownArrow:
                     MoveDown();
                     itemChoiceSubmitted = false;
-                    itemChoice = string.Empty;
                     break;
                 case ConsoleKey.S:
                     MoveDown();
                     itemChoiceSubmitted = false;
-                    itemChoice = string.Empty;
                     break;
                 default:
                     itemChoiceSubmitted = false;
-                    itemChoice = string.Empty;
                     break;
+            }
+
+            if(itemChoiceSubmitted)
+            {
+                itemChoice = MenuGrid[SelectionCoordinates[0]][SelectionCoordinates[1]];
+            }
+            else
+            {
+                itemChoice = string.Empty;
             }
         }
         /// <summary>
@@ -348,7 +343,7 @@ namespace CoA_Tool.ConsoleInteraction
         }
         /// <summary>
         /// Determines column width based on the length of the longest menu item and the 
-        /// SpaceBetweenColumns variable.
+        /// SpaceBetweenColumns field.
         /// </summary>
         private int SetColumnWidth (List<List<string>> menuGrid)
         {
@@ -437,6 +432,9 @@ namespace CoA_Tool.ConsoleInteraction
             Console.SetCursorPosition(0, 0);
             Console.CursorVisible = false;
         }
+        /// <summary>
+        /// Writes MenuGrid's contents, in matching arrangement, to the console.  
+        /// </summary>
         private void MenuGridToConsole()
         {
             int columnCount;
@@ -457,6 +455,9 @@ namespace CoA_Tool.ConsoleInteraction
                 }
             }
         }
+        /// <summary>
+        /// Determines if the console window was resized and updates the menu if so.
+        /// </summary>
         private void UpdateMenuIfWindowResized()
         {
             if(WindowSizeChanged())
