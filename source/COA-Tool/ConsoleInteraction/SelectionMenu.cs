@@ -6,25 +6,25 @@ using CoA_Tool.Utility;
 namespace CoA_Tool.ConsoleInteraction
 {
     /// <summary>
-    /// Represents a user-navigable, single-choice menu
+    /// Represents a user-navigable, single-choice menu.
     /// </summary>
     class SelectionMenu
     {
         // Lists
         /// <summary>
-        /// Contains menu items arranged as a grid in terms of [x][y]
+        /// Contains menu items arranged as a grid in terms of [x][y].
         /// </summary>
         private List<List<string>> MenuGrid;
 
         // Arrays
         /// <summary>
-        /// The zero-based location of the highlighted item within the menu grid in terms of [x][y] 
+        /// The zero-based location of the highlighted item within the menu grid in terms of [x][y]. 
         /// </summary>
         private int[] SelectionCoordinates;
 
         // Integers
         /// <summary>
-        /// Used to determine the maximum number of menu columns given the console window's width
+        /// Used to determine the maximum number of menu columns given the console window's width.
         /// </summary>
         private int ColumnLimitForWindow
         {
@@ -34,7 +34,7 @@ namespace CoA_Tool.ConsoleInteraction
             }
         }
         /// <summary>
-        /// The amount of horizontal whitespace alloted for each menu item
+        /// The amount of horizontal whitespace alloted for each menu item.
         /// </summary>
         private int GridColumnWidth;
         /// <summary>
@@ -60,22 +60,22 @@ namespace CoA_Tool.ConsoleInteraction
         /// </summary>
         private int ItemsPerColumn = 10;
         /// <summary>
-        /// The amount of whitespace to be added to the GridColumnWidth field
+        /// The amount of whitespace to be added to the GridColumnWidth field.
         /// </summary>
         private int SpaceBetweenColumns = 2;
 
         // Strings
         /// <summary>
-        /// The full string of the menu option selected by the user
+        /// The full string of the menu option selected by the user.
         /// </summary>
         public string UserChoice;
 
         /// <summary>
-        /// This value sits at the upper-left corner of the menu grid
+        /// This value sits at the upper-left corner of the menu grid.
         /// </summary>
         private string ChoiceHeader;
         /// <summary>
-        /// The message to be displayed in the center of the console window
+        /// The message to be displayed in the center of the console window.
         /// </summary>
         private string CenterMessage;
 
@@ -100,9 +100,8 @@ namespace CoA_Tool.ConsoleInteraction
             RemoveMenuContent();
         }
         /// <summary>
-        /// Outputs all template options to the console
+        /// Outputs all menu options to the console arranged in a grid.
         /// </summary>
-        /// <param name="menuTitle">This string is printed at the top of the menu, indicating what each option represents</param>
         private void UpdateMenu()
         {
             RemoveMenuContent();
@@ -120,9 +119,9 @@ namespace CoA_Tool.ConsoleInteraction
             MenuGridToConsole();
         }
         /// <summary>
-        /// Handles menu navigation and selection
+        /// Allows the user to navigate the menu and select a choice.
         /// </summary>
-        /// <returns>String value of option</returns>
+        /// <returns>String value of option chosen by the user</returns>
         private string MenuItemDesiredByUser()
         {
             string chosenMenuItem;
@@ -141,7 +140,7 @@ namespace CoA_Tool.ConsoleInteraction
             return chosenMenuItem;
         }
         /// <summary>
-        /// Rewrites the current selection in green
+        /// Rewrites the current selection in green.
         /// </summary>
         private void HighlightCurrentSelection()
         {
@@ -153,7 +152,7 @@ namespace CoA_Tool.ConsoleInteraction
             Console.ForegroundColor = ConsoleColor.Gray;
         }
         /// <summary>
-        /// Rewrites the current selection in gray
+        /// Rewrites the current selection in gray.
         /// </summary>
         private void RemoveHighlightFromCurrentSelection()
         {
@@ -283,7 +282,7 @@ namespace CoA_Tool.ConsoleInteraction
             }
         }
         /// <summary>
-        /// Modifies CurrentSelection[0] to highlight the menu option above the current selection.
+        /// Modifies CurrentSelection[1] to highlight the menu option above the current selection.
         /// Includes wrapping logic.
         /// </summary>
         private void MoveUp()
@@ -301,7 +300,7 @@ namespace CoA_Tool.ConsoleInteraction
             }
         }
         /// <summary>
-        /// Modifies CurrentSelection[0] to highlight the menu option below the current selection.
+        /// Modifies CurrentSelection[1] to highlight the menu option below the current selection.
         /// Includes wrapping logic.
         /// </summary>
         private void MoveDown()
@@ -319,7 +318,7 @@ namespace CoA_Tool.ConsoleInteraction
             }
         }
         /// <summary>
-        /// Indicates whether the console window dimensions has changed since previously checked
+        /// Indicates whether the console window dimensions have changed.
         /// </summary>
         /// <returns></returns>
         private bool WindowSizeChanged()
@@ -334,7 +333,7 @@ namespace CoA_Tool.ConsoleInteraction
             }
         }
         /// <summary>
-        /// Sets window dimension fields to inform window resizing detection
+        /// Stores the console window's dimensions in relevant fields.
         /// </summary>
         private void SaveWindowDimensions()
         {
@@ -342,8 +341,7 @@ namespace CoA_Tool.ConsoleInteraction
             WindowHeightOnLastUpdate = Console.WindowHeight;
         }
         /// <summary>
-        /// Determines column width based on the length of the longest menu item and the 
-        /// SpaceBetweenColumns field.
+        /// Determines column width of the menu grid.
         /// </summary>
         private int SetColumnWidth (List<List<string>> menuGrid)
         {
@@ -417,7 +415,7 @@ namespace CoA_Tool.ConsoleInteraction
             }
         }
         /// <summary>
-        /// Removes the menu's content from the console window
+        /// Removes the menu's content from the console window.
         /// </summary>
         private void RemoveMenuContent()
         {
