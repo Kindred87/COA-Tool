@@ -339,36 +339,74 @@ namespace CoA_Tool.CSV
             }
             return indices;
         }
-        public int GetMicroValue(List<int> indices, MicroOffset offset)
+        /// <summary>
+        /// <para>Indicates whether the desired value exists in at least one of the given indices in DelimitedMicroResults.</para>
+        /// Out values indicate whether: all values were flagged as non-applicable, one of the values was a non-integer, 
+        /// and the largest value of those found.
+        /// </summary>
+        /// <param name="searchIndices"></param>
+        /// <param name="offset"></param>
+        /// <param name="valueNotApplicable"></param>
+        /// <param name="valueWasInvalid"></param>
+        /// <param name="microValue"></param>
+        /// <returns></returns>
+        public bool MicroValueExists(List<int> searchIndices, MicroOffset offset, out bool valueNotApplicable, out bool valueWasInvalid, out int microValue)
         {
-            List<int> microValues = new List<int>();
+            valueNotApplicable = false; // Flagged as true when value is "*", though is flagged back to false should a numerical value be found.
+            valueWasInvalid = false; // Flagged as true should a value other than "*" fail to convert to an integer.
 
-            foreach (int index in indices)
+            List<int> validValuePool = new List<int>();
+
+            foreach (int searchIndex in searchIndices)
             {
-                for (int i = 0; i < DelimitedMicroResults[index].Count; i++)
+                for (int columnIterator = 0; columnIterator < DelimitedMicroResults[searchIndex].Count; columnIterator++)
                 {
-                    if (DelimitedMicroResults[index][i] == "HURRICANE" || DelimitedMicroResults[index][i] == "Hurricane" || DelimitedMicroResults[index][i] == "Lowell" || DelimitedMicroResults[index][i] == "Sandpoint")
+                    if (DelimitedMicroResults[searchIndex][columnIterator] == "HURRICANE" || DelimitedMicroResults[searchIndex][columnIterator] == "Hurricane" || DelimitedMicroResults[searchIndex][columnIterator] == "Lowell" || 
+                        DelimitedMicroResults[searchIndex][columnIterator] == "Sandpoint")
                     {
-                        if (string.IsNullOrEmpty(DelimitedMicroResults[index][i + (int)offset]) || DelimitedMicroResults[index][i + (int)offset] == "*")
+                        if (string.IsNullOrEmpty(DelimitedMicroResults[searchIndex][columnIterator + (int)offset]) || DelimitedMicroResults[searchIndex][columnIterator + (int)offset] == "*")
+                        {
+                            valueNotApplicable = true;
                             continue;
+                        }
                         else
-
-                            microValues.Add(Convert.ToInt32(DelimitedMicroResults[index][i + (int)offset].Trim()));
+                        {
+                            if(Int32.TryParse(DelimitedMicroResults[searchIndex][columnIterator + (int)offset].Trim(), out int parsedValue) == true)
+                            {
+                                validValuePool.Add(parsedValue);
+                            }
+                            else
+                            {
+                                valueWasInvalid = true;
+                            }
+                        }
                     }
                 }
             }
 
-            int largestValue = -1;
-
-            foreach (int value in FilterMicroValues(microValues, offset))
+            if(validValuePool.Count > 0)
             {
-                if (value > largestValue)
-                {
-                    largestValue = value;
-                }
-            }
+                valueNotApplicable = false;
 
-            return largestValue;
+                int largestValue = -1;
+
+                foreach (int value in FilterMicroValues(validValuePool, offset))
+                {
+                    if (value > largestValue)
+                    {
+                        largestValue = value;
+                    }
+                }
+
+                microValue = largestValue;
+                return true;
+            }
+            else
+            {
+                microValue = 0;
+                return false;
+            }
+            
         }
         /// <summary>
         /// Filters out-of-spec values provided that at least one value is in-spec, otherwise the provided list is returned

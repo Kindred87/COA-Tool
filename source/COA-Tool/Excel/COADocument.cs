@@ -913,6 +913,50 @@ namespace CoA_Tool.Excel
                 targetWorksheet.Cells[currentRow, 1].Value = "Yeast";
                 targetWorksheet.Cells[currentRow, 2].Value = YeastMethod;
 
+                for(int columnIterator = 0; columnIterator < itemsInWorksheet; columnIterator++)
+                {
+                    if(microIndices[columnIterator].Count > 0)
+                    {
+                        int yeastCount;
+                        bool isNotApplicable;
+                        bool oneValueInvalid;
+                        bool microValueLocated = NWAData.MicroValueExists(microIndices[columnIterator], CSV.NWAData.MicroOffset.Yeast, out isNotApplicable, out oneValueInvalid, out yeastCount);
+                        
+                        if (microValueLocated)
+                        {
+                            if(oneValueInvalid)
+                            {
+                                targetWorksheet.Cells[currentRow, 3 + columnIterator].AddComment("One or more values were invalid.", "CoA Tool");
+                                targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.Font.Color.SetColor(Color.OrangeRed);
+                            }
+
+                            if(isNotApplicable)
+                            {
+                                targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = "N/A";
+                            }
+                            else if (yeastCount == 0)
+                            {
+                                targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = "<10";
+                            }
+                            else
+                            {
+                                targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = yeastCount;
+                            }
+                        }
+                        else
+                        {
+                            targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = "Search error";
+                            targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.Font.Color.SetColor(Color.Red);
+                            targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.WrapText = true;
+                        }
+                    }
+                    else
+                    {
+                        targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = "No usable data";
+                        targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.Font.Color.SetColor(Color.Red);
+                        targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.WrapText = true;
+                    }
+                }
                 currentRow++;
             }
 
@@ -1011,6 +1055,8 @@ namespace CoA_Tool.Excel
                 targetWorksheet.Cells[fourthBlockHeaderRow, 1, fourthBlockHeaderRow, 3].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
                 targetWorksheet.Cells[fourthBlockHeaderRow, 3, fourthBlockHeaderRow + sizeOfFourthContentBlock,8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                targetWorksheet.Cells[fourthBlockHeaderRow, 3, fourthBlockHeaderRow + sizeOfFourthContentBlock, 8].Style.Numberformat.Format = "#,##0";
 
                 targetWorksheet.Cells[fourthBlockHeaderRow, 3, fourthBlockHeaderRow, 8].Merge = true;
 

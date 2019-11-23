@@ -387,11 +387,10 @@ namespace CoA_Tool.ConsoleInteraction
 
                 // Prepare next column for distribution
                 optionsAsGrid.Add(new List<string>());
-                int columnIndex = optionsAsGrid.Count - 1;
 
                 for (int rowIterator = 0; rowIterator < rowsWithinColumn; rowIterator++)
                 {
-                    optionsAsGrid[columnIndex].Add(optionsAsLinear[columnIterator * 10 + rowIterator]);
+                    optionsAsGrid[columnIterator].Add(optionsAsLinear[columnIterator * 10 + rowIterator]);
                 }
             }
 
@@ -421,8 +420,9 @@ namespace CoA_Tool.ConsoleInteraction
         {
             ConsoleOps.RemoveMessageInCenter();
 
-            for(int i = TopRowOfGrid; i < ItemsPerColumn; i++)
+            for(int rowIterator = TopRowOfGrid; rowIterator <= TopRowOfGrid + ItemsPerColumn; rowIterator++)
             {
+                Console.SetCursorPosition(0, rowIterator);
                 Console.Write(new string(' ', Console.WindowWidth));
             }
             
