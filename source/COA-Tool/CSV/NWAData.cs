@@ -25,7 +25,7 @@ namespace CoA_Tool.CSV
         /// Represents the number of columns to the right of the original/re-test value a titration value can be found
         /// </summary>
         public enum TitrationOffset { Acidity = 5, ViscosityCPS = 2, ViscosityCM = 3, Salt = 4, pH = 6}
-        public enum MicroOffset { Yeast = 9, Mold = 11, Aerobic = 15, Coliform = 7, Lactic = 13, EColiform = 5 }
+        public enum MicroOffset { Yeast = 9, Mold = 11, Aerobic = 15, Coliform = 7, Lactic = 13, EColi = 5 }
 
         // Constructor
         public NWAData()
@@ -344,11 +344,11 @@ namespace CoA_Tool.CSV
         /// Out values indicate whether: all values were flagged as non-applicable, one of the values was a non-integer, 
         /// and the largest value of those found.
         /// </summary>
-        /// <param name="searchIndices"></param>
-        /// <param name="offset"></param>
-        /// <param name="valueNotApplicable"></param>
-        /// <param name="valueWasInvalid"></param>
-        /// <param name="microValue"></param>
+        /// <param name="searchIndices">The indices to parse in DelimitedMicroResults.</param>
+        /// <param name="offset">Identifies the column offset to use when parsing.</param>
+        /// <param name="valueNotApplicable">Indicates whether all values were the non-applicable character '*'.</param>
+        /// <param name="valueWasInvalid">Indicates whether one or more values were neither the '*' character nor an integer</param>
+        /// <param name="microValue">The largest valid value found in DelimitedMicroResults at the provided indices.</param>
         /// <returns></returns>
         public bool MicroValueExists(List<int> searchIndices, MicroOffset offset, out bool valueNotApplicable, out bool valueWasInvalid, out int microValue)
         {
@@ -430,7 +430,7 @@ namespace CoA_Tool.CSV
                     sortedValues.Add(value);
                 else if (offset == MicroOffset.Yeast && value < 1000)
                     sortedValues.Add(value);
-                else if (offset == MicroOffset.EColiform && value == 0)
+                else if (offset == MicroOffset.EColi && value == 0)
                     sortedValues.Add(value);
             }
 

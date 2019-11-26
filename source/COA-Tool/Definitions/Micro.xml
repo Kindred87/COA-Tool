@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Micro>
+  
+  <Dilutions_By_Factory> <!-- Describes what an NWA value of 0 represents for each factory -->
+    
+    <factory name ="Sandpoint">
+      <yeast>"&lt;10"</yeast>
+      <mold>"&lt;10</mold>
+      <aerobic>"&lt;100"</aerobic>
+      <coliform>"&lt;10</coliform>
+      <eColi>"&lt;10</eColi>
+    </factory>
+
+    <factory name ="Lowell">
+      <yeast>"&lt;10"</yeast>
+      <mold>"&lt;10</mold>
+      <aerobic>"&lt;100"</aerobic>
+      <coliform>"&lt;10</coliform>
+      <eColi>"&lt;10</eColi>
+    </factory>
+
+    <factory name ="Hurricane">
+      <yeast>"&lt;10"</yeast>
+      <mold>"&lt;10</mold>
+      <aerobic>"&lt;10"</aerobic>
+      <coliform>"&lt;10</coliform>
+      <eColi>"&lt;10</eColi>
+    </factory>
+    
+  </Dilutions_By_Factory>
+  
+</Micro>
