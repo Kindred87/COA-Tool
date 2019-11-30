@@ -174,6 +174,7 @@ namespace CoA_Tool.Excel
 
             targetWorksheet.Cells["A1:H55"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
             targetWorksheet.Cells["A1:H55"].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+            targetWorksheet.Cells["A1:H55"].Style.WrapText = true;
 
             targetWorksheet.Column(1).Width = 10.85;
             targetWorksheet.Column(2).Width = 11.4;
@@ -228,8 +229,6 @@ namespace CoA_Tool.Excel
             // Counters are used since document contents/placement is dynamic
             int currentRow = 11;
             int sizeOfFirstContentBlock = 0;
-
-            //TODO: Refactor applicable code in each content block to standalone methods to reduce bloat
 
             // For first content block
             if (WorkbookTemplate.IncludeCustomerName)
@@ -320,7 +319,6 @@ namespace CoA_Tool.Excel
 
                 targetWorksheet.Cells[currentRow, 1, currentRow, 2].Merge = true;
                 targetWorksheet.Cells[currentRow, 1].Value = "Product";
-                targetWorksheet.Cells[currentRow, 3, currentRow, 8].Style.WrapText = true;
 
 
                 for (int i = 0; i < itemsInWorksheet; i++)
@@ -443,7 +441,6 @@ namespace CoA_Tool.Excel
                                 targetWorksheet.Cells[currentRow, 3 + i].Value = "Batch (" + retrievedBatchValue +
                                     ") potentially invalid";
                                 targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.OrangeRed);
-                                targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
                             }
 
                         }
@@ -522,7 +519,6 @@ namespace CoA_Tool.Excel
                         {
                             targetWorksheet.Cells[currentRow, 3 + i].Value = "Date conversion error";
                             targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                            targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
                         }
                     }
                 }
@@ -575,7 +571,7 @@ namespace CoA_Tool.Excel
 
                 for (int i = 0; i < itemsInWorksheet; i++)
                 {
-                    targetWorksheet.Cells[currentRow, 3 + i].Value = Lot.ManufacturingSite(SalesOrder.Lots[(worksheetNumber - 1) * 6 + i]);
+                    targetWorksheet.Cells[currentRow, 3 + i].Value = Lot.StateAndCityOfManufacture(SalesOrder.Lots[(worksheetNumber - 1) * 6 + i]);
                 }
 
                 currentRow++;
@@ -647,7 +643,6 @@ namespace CoA_Tool.Excel
                             {
                                 targetWorksheet.Cells[currentRow, 3 + i].Value = "Missing value";
                                 targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                                targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
                             }
 
                         }
@@ -655,14 +650,12 @@ namespace CoA_Tool.Excel
                         {
                             targetWorksheet.Cells[currentRow, 3 + i].Value = "Search error";
                             targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                            targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
                         }
                     }
                     else
                     {
                         targetWorksheet.Cells[currentRow, 3 + i].Value = "No usable data";
                         targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                        targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
                     }
                 }
 
@@ -693,21 +686,18 @@ namespace CoA_Tool.Excel
                             {
                                 targetWorksheet.Cells[currentRow, 3 + i].Value = "Missing value";
                                 targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                                targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
                             }
                         }
                         else
                         {
                             targetWorksheet.Cells[currentRow, 3 + i].Value = "Search error";
                             targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                            targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
                         }
                     }
                     else
                     {
                         targetWorksheet.Cells[currentRow, 3 + i].Value = "No usable data";
                         targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                        targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
                     }
                 }
 
@@ -737,21 +727,18 @@ namespace CoA_Tool.Excel
                             {
                                 targetWorksheet.Cells[currentRow, 3 + i].Value = "Missing value";
                                 targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                                targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
                             }
                         }
                         else
                         {
                             targetWorksheet.Cells[currentRow, 3 + i].Value = "Search error";
                             targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                            targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
                         }
                     }
                     else
                     {
                         targetWorksheet.Cells[currentRow, 3 + i].Value = "No usable data";
                         targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                        targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
                     }
                 }
 
@@ -782,21 +769,18 @@ namespace CoA_Tool.Excel
                             {
                                 targetWorksheet.Cells[currentRow, 3 + i].Value = "Missing value";
                                 targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                                targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
                             }
                         }
                         else
                         {
                             targetWorksheet.Cells[currentRow, 3 + i].Value = "Search error";
                             targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                            targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
                         }
                     }
                     else
                     {
                         targetWorksheet.Cells[currentRow, 3 + i].Value = "No usable data";
                         targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                        targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
                     }
                 }
 
@@ -825,27 +809,23 @@ namespace CoA_Tool.Excel
                             {
                                 targetWorksheet.Cells[currentRow, 3 + i].Value = "Invalid value";
                                 targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                                targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
                             }
                             else
                             {
                                 targetWorksheet.Cells[currentRow, 3 + i].Value = "Missing value";
                                 targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                                targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
                             }
                         }
                         else
                         {
                             targetWorksheet.Cells[currentRow, 3 + i].Value = "Search error";
                             targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                            targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
                         }
                     }
                     else
                     {
                         targetWorksheet.Cells[currentRow, 3 + i].Value = "No usable data";
                         targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                        targetWorksheet.Cells[currentRow, 3 + i].Style.WrapText = true;
                     }
                 }
 
@@ -905,9 +885,13 @@ namespace CoA_Tool.Excel
             // For fourth content block
 
             if (sumOfBlockRows > 0)
+            {
                 currentRow += 2; // An empty space between blocks and an empty space for the block's header if the total block size > 0
+            }
             else
+            {
                 currentRow = 12; // Allows the third block's header to use row 11
+            }
 
             int sizeOfFourthContentBlock = 0;
 
@@ -918,51 +902,11 @@ namespace CoA_Tool.Excel
                 targetWorksheet.Cells[currentRow, 1].Value = "Yeast";
                 targetWorksheet.Cells[currentRow, 2].Value = YeastMethod;
 
-                for (int columnIterator = 0; columnIterator < itemsInWorksheet; columnIterator++)
+                for(int columnIterator = 0; columnIterator < itemsInWorksheet; columnIterator++)
                 {
-                    if (microIndices[columnIterator].Count > 0)
-                    {
-                        int yeastCount;
-                        bool isNotApplicable;
-                        bool atLeastOneValueInvalid;
-                        bool microValueLocated = NWAData.MicroValueExists(microIndices[columnIterator], CSV.NWAData.MicroOffset.Yeast, 
-                            out isNotApplicable, out atLeastOneValueInvalid, out yeastCount);
-
-                        if (microValueLocated)
-                        {
-                            if (atLeastOneValueInvalid)
-                            {
-                                targetWorksheet.Cells[currentRow, 3 + columnIterator].AddComment("One or more values were invalid.", "CoA Tool");
-                                targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.Font.Color.SetColor(Color.OrangeRed);
-                            }
-
-                            if (yeastCount == 0)
-                            {
-                                targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = "<10";
-                            }
-                            else
-                            {
-                                targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = yeastCount;
-                            }
-                        }
-                        else if(isNotApplicable)
-                        {
-                            targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = "N/A";
-                        }
-                        else
-                        {
-                            targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = "Search error";
-                            targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.Font.Color.SetColor(Color.Red);
-                            targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.WrapText = true;
-                        }
-                    }
-                    else
-                    {
-                        targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = "No usable data";
-                        targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.Font.Color.SetColor(Color.Red);
-                        targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.WrapText = true;
-                    }
+                    PopulateMicroCell(CSV.NWAData.MicroOffset.Yeast, targetWorksheet, currentRow, columnIterator, microIndices[columnIterator]);
                 }
+
                 currentRow++;
             }
 
@@ -975,48 +919,7 @@ namespace CoA_Tool.Excel
 
                 for (int columnIterator = 0; columnIterator < itemsInWorksheet; columnIterator++)
                 {
-                    if (microIndices.Count > 0)
-                    {
-                        int moldCount;
-                        bool isNotApplicable;
-                        bool atLeastOneValueInvalid;
-                        bool microValueLocated = NWAData.MicroValueExists(microIndices[columnIterator], CSV.NWAData.MicroOffset.Mold, 
-                            out isNotApplicable, out atLeastOneValueInvalid, out moldCount);
-
-                        if (microValueLocated)
-                        {
-                            if (atLeastOneValueInvalid)
-                            {
-                                targetWorksheet.Cells[currentRow, 3 + columnIterator].AddComment("One or more values were invalid.", "CoA Tool");
-                                targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.Font.Color.SetColor(Color.OrangeRed);
-                            }
-
-                            if (moldCount == 0)
-                            {
-                                targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = "<10";
-                            }
-                            else
-                            {
-                                targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = moldCount;
-                            }
-                        }
-                        else if(isNotApplicable)
-                        {
-                            targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = "N/A";
-                        }
-                        else
-                        {
-                            targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = "Search error";
-                            targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.Font.Color.SetColor(Color.Red);
-                            targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.WrapText = true;
-                        }
-                    }
-                    else
-                    {
-                        targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = "No usable data";
-                        targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.Font.Color.SetColor(Color.Red);
-                        targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.WrapText = true;
-                    }
+                    PopulateMicroCell(CSV.NWAData.MicroOffset.Mold, targetWorksheet, currentRow, columnIterator, microIndices[columnIterator]);
                 }
 
                 currentRow++;
@@ -1031,57 +934,7 @@ namespace CoA_Tool.Excel
 
                 for (int columnIterator = 0; columnIterator < itemsInWorksheet; columnIterator++)
                 {
-                    if (microIndices.Count > 0)
-                    {
-                        int aerobicCount;
-                        bool isNotApplicable;
-                        bool atLeastOneValueInvalid;
-                        bool microValueLocated = NWAData.MicroValueExists(microIndices[columnIterator], CSV.NWAData.MicroOffset.Aerobic, 
-                            out isNotApplicable, out atLeastOneValueInvalid, out aerobicCount);
-
-                        if (microValueLocated)
-                        {
-                            if (atLeastOneValueInvalid)
-                            {
-                                targetWorksheet.Cells[currentRow, 3 + columnIterator].AddComment("One or more values were invalid.", "CoA Tool");
-                                targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.Font.Color.SetColor(Color.OrangeRed);
-                            }
-
-                            if (aerobicCount == 0)
-                            {
-                                string factoryCode = Lot.FactoryCode(SalesOrder.Lots[(worksheetNumber - 1) * 6 + (columnIterator)]);
-
-                                if (factoryCode == "H1")
-                                {
-                                    targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = "<10";
-                                }
-                                else
-                                {
-                                    targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = "<100";
-                                }
-                            }
-                            else
-                            {
-                                targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = aerobicCount;
-                            }
-                        }
-                        else if(isNotApplicable)
-                        {
-                            targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = "N/A";
-                        }
-                        else
-                        {
-                            targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = "Search error";
-                            targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.Font.Color.SetColor(Color.Red);
-                            targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.WrapText = true;
-                        }
-                    }
-                    else
-                    {
-                        targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = "No usable data";
-                        targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.Font.Color.SetColor(Color.Red);
-                        targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.WrapText = true;
-                    }
+                    PopulateMicroCell(CSV.NWAData.MicroOffset.Aerobic, targetWorksheet, currentRow, columnIterator, microIndices[columnIterator]);
                 }
 
                 currentRow++;
@@ -1094,49 +947,9 @@ namespace CoA_Tool.Excel
                 targetWorksheet.Cells[currentRow, 1].Value = "Total coliform";
                 targetWorksheet.Cells[currentRow, 2].Value = ColiformMethod;
 
-                for(int columnIterator = 0; columnIterator < itemsInWorksheet; columnIterator++)
+                for (int columnIterator = 0; columnIterator < itemsInWorksheet; columnIterator++)
                 {
-                    if(microIndices.Count > 0)
-                    {
-                        int coliformCount;
-                        bool isNotApplicable;
-                        bool atLeastOneValueInvalid;
-                        bool microValueLocated = (NWAData.MicroValueExists(microIndices[columnIterator], CSV.NWAData.MicroOffset.Coliform, 
-                            out isNotApplicable, out atLeastOneValueInvalid, out coliformCount));
-                        if(microValueLocated)
-                        {
-                            if (atLeastOneValueInvalid)
-                            {
-                                targetWorksheet.Cells[currentRow, 3 + columnIterator].AddComment("One or more values were invalid.", "CoA Tool");
-                                targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.Font.Color.SetColor(Color.OrangeRed);
-                            }
-
-                            else if (coliformCount == 0)
-                            {
-                                targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = "<10";
-                            }
-                            else
-                            {
-                                targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = coliformCount;
-                            }
-                        }
-                        else if(isNotApplicable)
-                        {
-                            targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = "N/A";
-                        }
-                        else
-                        {
-                            targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = "Search error";
-                            targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.Font.Color.SetColor(Color.Red);
-                            targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.WrapText = true;
-                        }
-                    }
-                    else
-                    {
-                        targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = "No usable data";
-                        targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.Font.Color.SetColor(Color.Red);
-                        targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.WrapText = true;
-                    }
+                    PopulateMicroCell(CSV.NWAData.MicroOffset.Coliform, targetWorksheet, currentRow, columnIterator, microIndices[columnIterator]);
                 }
 
                 currentRow++;
@@ -1149,50 +962,9 @@ namespace CoA_Tool.Excel
                 targetWorksheet.Cells[currentRow, 1].Value = "E. coliform";
                 targetWorksheet.Cells[currentRow, 2].Value = EColiMethod;
 
-                for(int columnIterator = 0; columnIterator < itemsInWorksheet; columnIterator++)
+                for (int columnIterator = 0; columnIterator < itemsInWorksheet; columnIterator++)
                 {
-                    if(microIndices.Count > 0)
-                    {
-                        int eColiCount;
-                        bool isNotApplicable;
-                        bool atLeastOneValueInvalid;
-                        bool microValueLocated = NWAData.MicroValueExists(microIndices[columnIterator], CSV.NWAData.MicroOffset.EColi,
-                            out isNotApplicable, out atLeastOneValueInvalid, out eColiCount);
-                        
-                        if(microValueLocated)
-                        {
-                            if(atLeastOneValueInvalid)
-                            {
-                                targetWorksheet.Cells[currentRow, 3 + columnIterator].AddComment("One or more values were invalid.", "CoA Tool");
-                                targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.Font.Color.SetColor(Color.OrangeRed);
-                            }
-
-                            if(eColiCount == 0)
-                            {
-                                targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = "<10";
-                            }
-                            else
-                            {
-                                targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = eColiCount;
-                            }
-                        }
-                        else if(isNotApplicable)
-                        {
-                            targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = "N/A";
-                        }
-                        else
-                        {
-                            targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = "Search error";
-                            targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.Font.Color.SetColor(Color.Red);
-                            targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.WrapText = true;
-                        }
-                    }
-                    else
-                    {
-                        targetWorksheet.Cells[currentRow, 3 + columnIterator].Value = "No usable data";
-                        targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.Font.Color.SetColor(Color.Red);
-                        targetWorksheet.Cells[currentRow, 3 + columnIterator].Style.WrapText = true;
-                    }
+                    PopulateMicroCell(CSV.NWAData.MicroOffset.EColi, targetWorksheet, currentRow, columnIterator, microIndices[columnIterator]);
                 }
 
                 currentRow++;
@@ -1204,6 +976,11 @@ namespace CoA_Tool.Excel
 
                 targetWorksheet.Cells[currentRow, 1].Value = "Lactics";
                 targetWorksheet.Cells[currentRow, 2].Value = LacticMethod;
+
+                for (int columnIterator = 0; columnIterator < itemsInWorksheet; columnIterator++)
+                {
+                    PopulateMicroCell(CSV.NWAData.MicroOffset.Lactic, targetWorksheet, currentRow, columnIterator, microIndices[columnIterator]);
+                }
 
                 currentRow++;
             }
@@ -1371,6 +1148,171 @@ namespace CoA_Tool.Excel
                 }
             }
         }
+        /// <summary>
+        /// Determines the string value of a cell for micro results in the worksheet.
+        /// </summary>
+        /// <param name="rawMicroValues"></param>
+        /// <param name="microType"></param>
+        /// <returns></returns>
+        private string ValueForMicroCell(List<string> rawMicroValues, CSV.NWAData.MicroOffset microType, string cityOfManufacture)
+        {
+            if(rawMicroValues.Count == 0)
+            {
+                return "Search error";
+            }
+
+            List<int> numericalMicroValues = OnlyIntegersFrom(rawMicroValues);
+
+            if(numericalMicroValues.Count > 0)
+            {
+                int greatestValue = 0;
+
+                foreach (int value in numericalMicroValues)
+                {
+                    if (value > greatestValue)
+                    {
+                        greatestValue = value;
+                    }
+                }
+
+                if(greatestValue == 0)
+                {
+                    return XMLOperations.Definitions.NodeValueViaXPath(XMLOperations.Definitions.DefinitionFiles.Micro, 
+                        "/Dilutions_By_Factory/factory[@name = '" + cityOfManufacture + "']/" + Convert.ToString(microType));
+                }
+                else
+
+                {
+                    return Convert.ToString(greatestValue);
+                }
+            }
+            else
+            {
+                return "N/A";
+            }
+        }
+        /// <summary>
+        /// Returns the converted values of integer-convertable strings.
+        /// </summary>
+        /// <param name="targetValues">The strings to attempt integer conversion with.</param>
+        /// <returns></returns>
+        private List<int> OnlyIntegersFrom(List<string> targetValues)
+        {
+            List<int> integerParseableValues = new List<int>();
+
+            foreach(string item in targetValues)
+            {
+                if(Int32.TryParse(item, out int result)) // Result is left unused
+                {
+                    integerParseableValues.Add(result);
+                }
+            }
+
+            return integerParseableValues;
+        }
+        /// <summary>
+        /// Returns a Color dependent on the target cell's value and comment.
+        /// </summary>
+        /// <param name="targetWorksheet">The worksheet object containing the target cell.</param>
+        /// <param name="targetCellRow">Represents the row in which the target cell is positioned.</param>
+        /// <param name="targetCellColumn">Represents the column in which the target cell is positioned.</param>
+        /// <returns></returns>
+        private Color FontColorForCell(ExcelWorksheet targetWorksheet, int targetCellRow, int targetCellColumn, string commentText)
+        {
+           string cellValue = targetWorksheet.Cells[targetCellRow, targetCellColumn].Value.ToString();
+
+            if (cellValue == "Search error")
+            {
+                return Color.Red;
+            }
+            else if (commentText.Contains("invalid"))
+            {
+                return Color.OrangeRed;
+            }
+            else
+            {
+                return Color.Black;
+            }
+        }
+        /// <summary>
+        /// Returns a Color dependent on the target cell's value.
+        /// </summary>
+        /// <param name="targetWorksheet">The worksheet object containing the target cell.</param>
+        /// <param name="targetCellRow">Represents the row in which the target cell is positioned.</param>
+        /// <param name="targetCellColumn">Represents the column in which the target cell is positioned.</param>
+        /// <returns></returns>
+        private Color FontColorForCell(ExcelWorksheet targetWorksheet, int targetCellRow, int targetCellColumn)
+        {
+            string cellValue = targetWorksheet.Cells[targetCellRow, targetCellColumn].Value.ToString();
+
+            if (cellValue == "Search error")
+            {
+                return Color.Red;
+            }
+            else
+            {
+                return Color.Black;
+            }
+        }
+        /// <summary>
+        /// Determines if a comment is required for a particular micro cell.
+        /// </summary>
+        /// <param name="rawMicroValues">The micro values relevant to the cell.</param>
+        /// <param name="commentText">The value of the comment to be written.</param>
+        /// <returns></returns>
+        private bool CommentNeededForMicroCell(List<string> rawMicroValues, out string commentText)
+        {
+            foreach(string rawValue in rawMicroValues)
+            {
+                if(rawValue != "*" && Int32.TryParse(rawValue, out _ ) == false)
+                {
+                    commentText = "One or more values were invalid";
+                    return true;
+                }
+            }
+            commentText = "";
+            return false;
+        }
+        /// <summary>
+        /// Assigns the target cell with relevant information and styling pertaining to micro results.
+        /// </summary>
+        /// <param name="microTypeOfCell">Indentifies the type of micro result the cell is associated with.</param>
+        /// <param name="targetWorksheet">The worksheet containing the target cell.</param>
+        /// <param name="cellRow">The row in which the target cell is positioned.</param>
+        /// <param name="cellColumn">The column in which the target cell is positioned.</param>
+        /// <param name="microIndicesForNWA">The micro result indices for values relevant to the cell.</param>
+        private void PopulateMicroCell(CSV.NWAData.MicroOffset microTypeOfCell, ExcelWorksheet targetWorksheet, int cellRow, int cellColumn, List<int> microIndicesForNWA)
+        {
+            // Get all relevant values
+            List<string> rawMicroValues = NWAData.MicroValues(microIndicesForNWA, microTypeOfCell);
+
+            // Determine manufacturing city for parsing Micro.XML
+            string cityOfManufacture = Lot.CityOfManufacture(SalesOrder.Lots[(Convert.ToInt32(targetWorksheet.Name.Substring(4)) - 1) * 6 + cellColumn]);
+            // Assign final value to cell
+            string valueForCell = ValueForMicroCell(rawMicroValues, microTypeOfCell, cityOfManufacture);
+            targetWorksheet.Cells[cellRow, 3 + cellColumn].Value = valueForCell;
+
+            // Reassign the cell value from a string to an integer if integer conversion succeeds
+            if (Int32.TryParse(valueForCell, out int parsedValue))
+            {
+                // Excel throws warning for numbers input as strings regardless of cell formatting.
+                targetWorksheet.Cells[cellRow, 3 + cellColumn].Value = parsedValue;
+            }
+
+            // Set cell font color and add a comment if necessary
+            Color fontColor;
+            if (CommentNeededForMicroCell(rawMicroValues, out string commentText))
+            {
+                targetWorksheet.Cells[cellRow, 3 + cellColumn].AddComment(commentText, "CoA Tool");
+                fontColor = FontColorForCell(targetWorksheet, cellRow, 3 + cellColumn, commentText);
+            }
+            else
+            {
+                fontColor = FontColorForCell(targetWorksheet, cellRow, 3 + cellColumn);
+            }
+            targetWorksheet.Cells[cellRow, 3 + cellColumn].Style.Font.Color.SetColor(fontColor);
+        }
+        
     }
 }
 

@@ -21,6 +21,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Definitions\Micro.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="LH logo.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

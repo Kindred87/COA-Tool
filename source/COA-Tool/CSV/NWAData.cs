@@ -340,73 +340,37 @@ namespace CoA_Tool.CSV
             return indices;
         }
         /// <summary>
-        /// <para>Indicates whether the desired value exists in at least one of the given indices in DelimitedMicroResults.</para>
-        /// Out values indicate whether: all values were flagged as non-applicable, one of the values was a non-integer, 
-        /// and the largest value of those found.
+        /// Retrieves the appropriate values from the delimited micro results.
         /// </summary>
-        /// <param name="searchIndices">The indices to parse in DelimitedMicroResults.</param>
-        /// <param name="offset">Identifies the column offset to use when parsing.</param>
-        /// <param name="valueNotApplicable">Indicates whether all values were the non-applicable character '*'.</param>
-        /// <param name="valueWasInvalid">Indicates whether one or more values were neither the '*' character nor an integer</param>
-        /// <param name="microValue">The largest valid value found in DelimitedMicroResults at the provided indices.</param>
+        /// <param name="searchIndices">The indices in the delimited micro results to parse.</param>
+        /// <param name="offset">Signifies the column to search within.</param>
         /// <returns></returns>
-        public bool MicroValueExists(List<int> searchIndices, MicroOffset offset, out bool valueNotApplicable, out bool valueWasInvalid, out int microValue)
+        public List<string> MicroValues(List<int> searchIndices, MicroOffset offset)
         {
-            valueNotApplicable = false; // Flagged as true when value is "*", though is flagged back to false should a numerical value be found.
-            valueWasInvalid = false; // Flagged as true should a value other than "*" fail to convert to an integer.
-
-            List<int> validValuePool = new List<int>();
+            List<string> rawMicroValues = new List<string>();
 
             foreach (int searchIndex in searchIndices)
             {
                 for (int columnIterator = 0; columnIterator < DelimitedMicroResults[searchIndex].Count; columnIterator++)
                 {
-                    if (DelimitedMicroResults[searchIndex][columnIterator] == "HURRICANE" || DelimitedMicroResults[searchIndex][columnIterator] == "Hurricane" || DelimitedMicroResults[searchIndex][columnIterator] == "Lowell" || 
+                    if (DelimitedMicroResults[searchIndex][columnIterator] == "HURRICANE" || DelimitedMicroResults[searchIndex][columnIterator] == "Hurricane" || DelimitedMicroResults[searchIndex][columnIterator] == "Lowell" ||
                         DelimitedMicroResults[searchIndex][columnIterator] == "Sandpoint")
                     {
-                        if (string.IsNullOrEmpty(DelimitedMicroResults[searchIndex][columnIterator + (int)offset]) || DelimitedMicroResults[searchIndex][columnIterator + (int)offset] == "*")
+                        string rawValue = DelimitedMicroResults[searchIndex][columnIterator + (int)offset];
+                        
+                        if (string.IsNullOrEmpty(rawValue))
                         {
-                            valueNotApplicable = true;
                             continue;
                         }
                         else
                         {
-                            if(Int32.TryParse(DelimitedMicroResults[searchIndex][columnIterator + (int)offset].Trim(), out int parsedValue) == true)
-                            {
-                                validValuePool.Add(parsedValue);
-                            }
-                            else
-                            {
-                                valueWasInvalid = true;
-                            }
+                            rawMicroValues.Add(rawValue);
                         }
                     }
                 }
             }
 
-            if(validValuePool.Count > 0)
-            {
-                valueNotApplicable = false;
-
-                int largestValue = -1;
-
-                foreach (int value in FilterMicroValues(validValuePool, offset))
-                {
-                    if (value > largestValue)
-                    {
-                        largestValue = value;
-                    }
-                }
-
-                microValue = largestValue;
-                return true;
-            }
-            else
-            {
-                microValue = 0;
-                return false;
-            }
-            
+            return rawMicroValues;
         }
         /// <summary>
         /// Filters out-of-spec values provided that at least one value is in-spec, otherwise the provided list is returned
@@ -414,74 +378,6 @@ namespace CoA_Tool.CSV
         /// <param name="unsortedValues"></param>
         /// <param name="offset"></param>
         /// <returns></returns>
-        private List<int> FilterMicroValues(List<int> unsortedValues, MicroOffset offset)
-        {
-            List<int> sortedValues = new List<int>();
-
-            foreach (int value in unsortedValues)
-            {
-                if (offset == MicroOffset.Aerobic && value < 100000) // 100k
-                    sortedValues.Add(value);
-                else if (offset == MicroOffset.Coliform && value < 100)
-                    sortedValues.Add(value);
-                else if (offset == MicroOffset.Lactic && value < 1000)
-                    sortedValues.Add(value);
-                else if (offset == MicroOffset.Mold && value < 1000)
-                    sortedValues.Add(value);
-                else if (offset == MicroOffset.Yeast && value < 1000)
-                    sortedValues.Add(value);
-                else if (offset == MicroOffset.EColi && value == 0)
-                    sortedValues.Add(value);
-            }
-
-            if (sortedValues.Count != 0)
-            {
-                return sortedValues;
-            }
-            else
-            {
-                return unsortedValues;
-            }
-
-        }
-        public bool MicroValueInSpec(int value, MicroOffset offset)
-        {
-            if (offset == MicroOffset.Aerobic)
-            {
-                if (value < 100000)
-                    return true;
-                else
-                    return false;
-            }
-            else if (offset == MicroOffset.Coliform)
-            {
-                if (value < 100)
-                    return true;
-                else
-                    return false;
-            }
-            else if (offset == MicroOffset.Lactic)
-            {
-                if (value < 1000)
-                    return true;
-                else
-                    return false;
-            }
-            else if (offset == MicroOffset.Mold)
-            {
-                if (value < 1000)
-                    return true;
-                else
-                    return false;
-            }
-            else // when (offset == MicroOffset.Yeast)
-            {
-                if (value < 1000)
-                    return true;
-                else
-                    return false;
-            }
-        }
         public string ProductCodeFromMicroIndex(int index)
         {
             return DelimitedMicroResults[index][10];

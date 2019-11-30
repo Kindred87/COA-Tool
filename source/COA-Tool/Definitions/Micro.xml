@@ -1,32 +1,34 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<Micro>
   
-  <Dilutions_By_Factory> <!-- Describes what an NWA value of 0 represents for each factory -->
+<Dilutions_By_Factory> <!-- Identifies what an NWA value of 0 represents for each factory -->
     
-    <factory name ="Sandpoint">
-      <yeast>"&lt;10"</yeast>
-      <mold>"&lt;10</mold>
-      <aerobic>"&lt;100"</aerobic>
-      <coliform>"&lt;10</coliform>
-      <eColi>"&lt;10</eColi>
-    </factory>
+  <factory name ="Sandpoint">
+    <Yeast>"&lt;10"</Yeast>
+    <Mold>"&lt;10</Mold>
+    <Aerobic>"&lt;100"</Aerobic>
+    <Coliform>"&lt;10</Coliform>
+    <Lactic>"&lt;10</Lactic>
+    <EColi>"&lt;10</EColi>
+  </factory>
 
-    <factory name ="Lowell">
-      <yeast>"&lt;10"</yeast>
-      <mold>"&lt;10</mold>
-      <aerobic>"&lt;100"</aerobic>
-      <coliform>"&lt;10</coliform>
-      <eColi>"&lt;10</eColi>
-    </factory>
+  <factory name ="Lowell">
+    <Yeast>&lt;10</Yeast>
+    <Mold>"&lt;10</Mold>
+    <Aerobic>"&lt;100"</Aerobic>
+    <Coliform>"&lt;10</Coliform>
+    <Lactic>"&lt;10</Lactic>
+    <EColi>"&lt;10</EColi>
+  </factory>
 
-    <factory name ="Hurricane">
-      <yeast>"&lt;10"</yeast>
-      <mold>"&lt;10</mold>
-      <aerobic>"&lt;10"</aerobic>
-      <coliform>"&lt;10</coliform>
-      <eColi>"&lt;10</eColi>
-    </factory>
+  <factory name ="Hurricane">
+    <Yeast>&lt;10</Yeast>
+    <Mold>"&lt;10</Mold>
+    <Aerobic>"&lt;10"</Aerobic>
+    <Coliform>"&lt;10</Coliform>
+    <Lactic>"&lt;10</Lactic>
+    <EColi>"&lt;10</EColi>
+  </factory>
     
-  </Dilutions_By_Factory>
+</Dilutions_By_Factory>
   
-</Micro>
+

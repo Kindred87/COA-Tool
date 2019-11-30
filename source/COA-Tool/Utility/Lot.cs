@@ -27,11 +27,11 @@ namespace CoA_Tool.Utility
             return productCode;
         }
         /// <summary>
-        /// Determines manufacturing site for a given lot
+        /// Determines full name of the manufacturing site for a given lot.
         /// </summary>
         /// <param name="lotCode">The target lot</param>
         /// <returns></returns>
-        public static string ManufacturingSite(string lotCode)
+        public static string StateAndCityOfManufacture(string lotCode)
         {
             string locationCode = lotCode[5].ToString();
             locationCode += lotCode[6];
@@ -47,6 +47,33 @@ namespace CoA_Tool.Utility
             else if (locationCode == "03")
             {
                 return "Hurricane, UT";
+            }
+            else
+            {
+                return locationCode;
+            }
+        }
+        /// <summary>
+        /// Returns the city of the manufacturing site for a given lot.
+        /// </summary>
+        /// <param name="lotCode">The target lot</param>
+        /// <returns></returns>
+        public static string CityOfManufacture(string lotCode)
+        {
+            string locationCode = lotCode[5].ToString();
+            locationCode += lotCode[6];
+
+            if (locationCode == "01")
+            {
+                return "Sandpoint";
+            }
+            else if (locationCode == "02")
+            {
+                return "Lowell";
+            }
+            else if (locationCode == "03")
+            {
+                return "Hurricane";
             }
             else
             {
