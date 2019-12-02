@@ -26,6 +26,8 @@ namespace CoA_Tool.Excel
                 tableau.Load();
                 finishedGoods.Load();
 
+                tableau.MoveBetweenDirectories(tableau.CSVFilesFrom(tableau.DesktopSubDirectoryPath + "\\3) Previous Batch\\"), CSV.TableauData.LotDirectory.DeletionQueue);
+
                 foreach (CSV.SalesOrder salesOrder in tableau.SalesOrders)
                 {
                     ConsoleOps.WriteMessageInCenter("Generating " + ++numberOfDocumentsToGenerate + " CoA documents");

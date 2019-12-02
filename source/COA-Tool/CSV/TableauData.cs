@@ -100,6 +100,34 @@ namespace CoA_Tool.CSV
             }
         }
         /// <summary>
+        /// Moves a given file to one of several pre-determined directories
+        /// </summary>
+        /// <param name="filePaths">Each entry represents a file's absolute path</param>
+        /// <param name="targetDirectory">The output directory</param>
+        public void MoveBetweenDirectories(string filePath, LotDirectory targetDirectory)
+        {
+            EnsureDesktopSubDirectoriesExist();
+
+            string nextSubDirectory;
+
+            if (targetDirectory == LotDirectory.NewBatch)
+                nextSubDirectory = "\\1) New Batch\\";
+            else if (targetDirectory == LotDirectory.InProgress)
+                nextSubDirectory = "\\2) Current Batch\\1) In Progress\\";
+            else if (targetDirectory == LotDirectory.Complete)
+                nextSubDirectory = "\\3) Complete\\";
+            else if (targetDirectory == LotDirectory.PreviousBatch)
+                nextSubDirectory = "\\3) Previous Batch\\";
+            else
+                nextSubDirectory = "\\4) Deletion Queue\\";
+
+            string newFileName;
+            
+            newFileName = File.ReadLines(filePath).ElementAt(1).Split(new char[] { ',' })[3];
+            File.Move(filePath, DesktopSubDirectoryPath + nextSubDirectory + newFileName + ".csv", true);
+            
+        }
+        /// <summary>
         /// Removes sales orders with missing information from SalesOrders
         /// </summary>
         public void RemoveInvalidSalesOrders()
@@ -224,7 +252,7 @@ namespace CoA_Tool.CSV
         /// </summary>
         /// <param name="directory">Directory to search within</param>
         /// <returns></returns>  
-        private List<string> CSVFilesFrom(string directory)
+        public List<string> CSVFilesFrom(string directory)
         {
             return OnlyValidPathsFrom(Directory.GetFiles(directory, "*.csv"));
         }

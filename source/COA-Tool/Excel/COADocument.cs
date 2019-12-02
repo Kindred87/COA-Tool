@@ -159,6 +159,8 @@ namespace CoA_Tool.Excel
                             "\"" + fileName + "\" is being accessed.  Please close the file before continuing.");
                     }
                 } while (fileSaved == false);
+
+                TableauData.MoveBetweenDirectories(TableauData.DesktopSubDirectoryPath + "\\1) New Batch\\" + SalesOrder.OrderNumber + ".csv", CSV.TableauData.LotDirectory.PreviousBatch);
             }
         }
         
