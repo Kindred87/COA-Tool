@@ -2,3 +2,4 @@
 /source/COA-Tool/bin/*
 /source/COA-Tool/obj/*
 /source/COA-Tool/.vscode/*
+*.stackdump

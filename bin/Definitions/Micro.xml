@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+  
+<Dilutions_By_Factory> <!-- Identifies what an NWA value of 0 represents for each factory -->
+    
+  <factory name ="Sandpoint">
+    <Yeast>"&lt;10"</Yeast>
+    <Mold>"&lt;10</Mold>
+    <Aerobic>"&lt;100"</Aerobic>
+    <Coliform>"&lt;10</Coliform>
+    <Lactic>"&lt;10</Lactic>
+    <EColi>"&lt;10</EColi>
+  </factory>
+
+  <factory name ="Lowell">
+    <Yeast>&lt;10</Yeast>
+    <Mold>"&lt;10</Mold>
+    <Aerobic>"&lt;100"</Aerobic>
+    <Coliform>"&lt;10</Coliform>
+    <Lactic>"&lt;10</Lactic>
+    <EColi>"&lt;10</EColi>
+  </factory>
+
+  <factory name ="Hurricane">
+    <Yeast>&lt;10</Yeast>
+    <Mold>"&lt;10</Mold>
+    <Aerobic>"&lt;10"</Aerobic>
+    <Coliform>"&lt;10</Coliform>
+    <Lactic>"&lt;10</Lactic>
+    <EColi>"&lt;10</EColi>
+  </factory>
+    
+</Dilutions_By_Factory>
+  
+
