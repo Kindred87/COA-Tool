@@ -28,12 +28,22 @@ namespace CoA_Tool.CSV
         /// "Desktop\\CoAs\\Tableau Files", assigned in constructor
         /// </summary>
         public string DesktopSubDirectoryPath;
+        public string NewBatchPath;
+        public string InProgressCurrentBatchPath;
+        public string CurrentCompleteBatchPath;
+        public string PreviousBatchPath;
+        public string DeletionQueuePath;
 
         // Constructor
         public TableauData()
         {
             SalesOrders = new List<SalesOrder>();
             DesktopSubDirectoryPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\CoAs\\Tableau Files";
+            NewBatchPath = DesktopSubDirectoryPath + "\\1) New Batch\\";
+            InProgressCurrentBatchPath = DesktopSubDirectoryPath + "\\2) Current Batch\\1) In Progress\\";
+            CurrentCompleteBatchPath = DesktopSubDirectoryPath + "\\2) Current Batch\\2) Complete\\";
+            PreviousBatchPath = DesktopSubDirectoryPath + "\\3) Previous Batch\\";
+            DeletionQueuePath = DesktopSubDirectoryPath + "\\4) Deletion Queue\\";
             EnsureDesktopSubDirectoriesExist();
         }
 
@@ -52,16 +62,16 @@ namespace CoA_Tool.CSV
 
             if (choice == "New")
             {
-                MoveBetweenDirectories(CSVFilesFrom(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\Downloads\\"), LotDirectory.NewBatch);
-                filePaths = (CSVFilesFrom(DesktopSubDirectoryPath + "\\1) New Batch"));
+                MoveBetweenDirectoriesMulti(CSVFilesFrom(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\Downloads\\"), LotDirectory.NewBatch);
+                filePaths = (CSVFilesFrom(NewBatchPath));
             }
             else if (choice.StartsWith("In")) // The full string contains dynamic values, "In Progress (n file/s)"
             {
-                filePaths = (CSVFilesFrom(DesktopSubDirectoryPath + "\\2) Current Batch\\1) In Progress"));
+                filePaths = (CSVFilesFrom(InProgressCurrentBatchPath));
             }
             else //  Load from \\3) Previous Batch
             {
-                filePaths = (CSVFilesFrom(DesktopSubDirectoryPath + "\\3) Previous Batch"));
+                filePaths = (CSVFilesFrom(PreviousBatchPath));
             }
 
             foreach (string file in filePaths)
@@ -74,29 +84,11 @@ namespace CoA_Tool.CSV
         /// </summary>
         /// <param name="filePaths">Each entry represents a file's absolute path</param>
         /// <param name="targetDirectory">The output directory</param>
-        public void MoveBetweenDirectories(List<string> filePaths, LotDirectory targetDirectory)
+        public void MoveBetweenDirectoriesMulti(List<string> filePaths, LotDirectory targetDirectory)
         {
-            EnsureDesktopSubDirectoriesExist();
-
-            string nextSubDirectory;
-
-            if (targetDirectory == LotDirectory.NewBatch)
-                nextSubDirectory = "\\1) New Batch\\";
-            else if(targetDirectory == LotDirectory.InProgress)
-                nextSubDirectory = "\\2) Current Batch\\1) In Progress\\";
-            else if (targetDirectory == LotDirectory.Complete)
-                nextSubDirectory = "\\3) Complete\\";
-            else if (targetDirectory == LotDirectory.PreviousBatch)
-                nextSubDirectory = "\\2) Current Batch\\2) Previous Batch\\";
-            else
-                nextSubDirectory = "\\4) Deletion Queue\\";
-
-            string newFileName;
-
             foreach(string filePath in filePaths)
             {
-                newFileName = File.ReadLines(filePath).ElementAt(1).Split(new char[] { ',' })[3];
-                File.Move(filePath, DesktopSubDirectoryPath + nextSubDirectory + newFileName + ".csv" , true);
+                MoveBetweenDirectoriesSingle(filePath, targetDirectory);
             }
         }
         /// <summary>
@@ -104,27 +96,37 @@ namespace CoA_Tool.CSV
         /// </summary>
         /// <param name="filePaths">Each entry represents a file's absolute path</param>
         /// <param name="targetDirectory">The output directory</param>
-        public void MoveBetweenDirectories(string filePath, LotDirectory targetDirectory)
+        public void MoveBetweenDirectoriesSingle(string filePath, LotDirectory targetDirectory)
         {
             EnsureDesktopSubDirectoriesExist();
 
-            string nextSubDirectory;
+            string directory;
 
             if (targetDirectory == LotDirectory.NewBatch)
-                nextSubDirectory = "\\1) New Batch\\";
+            {
+                directory = NewBatchPath;
+            }
             else if (targetDirectory == LotDirectory.InProgress)
-                nextSubDirectory = "\\2) Current Batch\\1) In Progress\\";
+            {
+                directory = InProgressCurrentBatchPath;
+            }
             else if (targetDirectory == LotDirectory.Complete)
-                nextSubDirectory = "\\3) Complete\\";
+            {
+                directory = CurrentCompleteBatchPath;
+            }
             else if (targetDirectory == LotDirectory.PreviousBatch)
-                nextSubDirectory = "\\3) Previous Batch\\";
+            {
+                directory = PreviousBatchPath;
+            }
             else
-                nextSubDirectory = "\\4) Deletion Queue\\";
+            {
+                directory = DeletionQueuePath;
+            }
 
             string newFileName;
             
             newFileName = File.ReadLines(filePath).ElementAt(1).Split(new char[] { ',' })[3];
-            File.Move(filePath, DesktopSubDirectoryPath + nextSubDirectory + newFileName + ".csv", true);
+            File.Move(filePath, directory + newFileName + ".csv", true);
             
         }
         /// <summary>
@@ -160,9 +162,13 @@ namespace CoA_Tool.CSV
                 options.Insert(1, "In Progess (" + amountInProgress);
                 
                 if (amountInProgress > 1)
+                {
                     options[1] += " files)";
+                }
                 else
+                {
                     options[1] += " file)";
+                }
             }
                 
            ConsoleInteraction.SelectionMenu menu = new ConsoleInteraction.SelectionMenu(options, "    Batch:", "Select an option regarding TableauData lot information.");
@@ -177,20 +183,20 @@ namespace CoA_Tool.CSV
             if (Directory.Exists(DesktopSubDirectoryPath) == false)
                 Directory.CreateDirectory(DesktopSubDirectoryPath);
 
-            if (Directory.Exists(DesktopSubDirectoryPath + "\\1) New Batch") == false)
-                Directory.CreateDirectory(DesktopSubDirectoryPath + "\\1) New Batch");
+            if (Directory.Exists(NewBatchPath) == false)
+                Directory.CreateDirectory(NewBatchPath);
 
-            if (Directory.Exists(DesktopSubDirectoryPath + "\\3) Previous Batch") == false)
-                Directory.CreateDirectory(DesktopSubDirectoryPath + "\\3) Previous Batch");
+            if (Directory.Exists(PreviousBatchPath) == false)
+                Directory.CreateDirectory(PreviousBatchPath);
 
-            if (Directory.Exists(DesktopSubDirectoryPath + "\\2) Current Batch\\1) In Progress") == false)
-                Directory.CreateDirectory(DesktopSubDirectoryPath + "\\2) Current Batch\\1) In Progress");
+            if (Directory.Exists(InProgressCurrentBatchPath) == false)
+                Directory.CreateDirectory(InProgressCurrentBatchPath);
 
-            if (Directory.Exists(DesktopSubDirectoryPath + "\\2) Current Batch\\2) Complete") == false)
-                Directory.CreateDirectory(DesktopSubDirectoryPath + "\\2) Current Batch\\2) Complete");
+            if (Directory.Exists(CurrentCompleteBatchPath) == false)
+                Directory.CreateDirectory(CurrentCompleteBatchPath);
 
-            if (Directory.Exists(DesktopSubDirectoryPath + "\\4) Deletion Queue") == false)
-                Directory.CreateDirectory(DesktopSubDirectoryPath + "\\4) Deletion Queue");
+            if (Directory.Exists(DeletionQueuePath) == false)
+                Directory.CreateDirectory(DeletionQueuePath);
         }
         /// <summary>
         /// Searches for and deletes any file with a duplicate sales order
@@ -198,24 +204,33 @@ namespace CoA_Tool.CSV
         /// <param name="directory">Directory to clean</param>
         private void CleanLotDirectory(LotDirectory directory)
         {
-
-            string fullPath = DesktopSubDirectoryPath;
+            string targetPath = DesktopSubDirectoryPath;
 
             if (directory == LotDirectory.NewBatch)
-                fullPath += "\\1) New Batch\\";
+            {
+                targetPath = NewBatchPath;
+            }
             else if (directory == LotDirectory.InProgress)
-                fullPath += "\\2) Current Batch\\1) In Progress\\";
+            {
+                targetPath = InProgressCurrentBatchPath;
+            }
             else if (directory == LotDirectory.Complete)
-                fullPath += "\\2) Current Batch\\2) Complete\\";
+            {
+                targetPath = CurrentCompleteBatchPath;
+            }
             else if (directory == LotDirectory.PreviousBatch)
-                fullPath += "\\3) Previous Batch\\";
+            {
+                targetPath = PreviousBatchPath;
+            }
             else
-                fullPath += "\\4) Deletion Queue\\";
+            {
+                targetPath = DeletionQueuePath;
+            }
 
             HashSet<string> salesOrderSet = new HashSet<string>();
             string salesOrder = string.Empty;
 
-            foreach(string file in CSVFilesFrom(fullPath))
+            foreach(string file in CSVFilesFrom(targetPath))
             {
                 string secondLine = File.ReadLines(file).ElementAt(1);
                 if (secondLine != string.Empty)

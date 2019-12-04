@@ -30,6 +30,12 @@ namespace CoA_Tool.Excel
         private string EColiMethod = "(AOAC 991.14)  ";
         private string LacticMethod = "(AOAC 990.12)  ";
 
+        // Integers
+        /// <summary>
+        /// Represents the left-most column for cell-groups containing search results.
+        /// </summary>
+        private int resultOffset = 3;
+
         // DateTimes
         public DateTime StartDate;
 
@@ -61,8 +67,8 @@ namespace CoA_Tool.Excel
             {
                 int pageCount = 0;
 
-                pageCount = (SalesOrder.Lots.Count- 1) / 6;
-                if ((SalesOrder.Lots.Count - 1) % 6 > 0)
+                pageCount = (SalesOrder.Lots.Count) / 6;
+                if ((SalesOrder.Lots.Count) % 6 > 0)
                 {
                     pageCount++;
                 }
@@ -145,6 +151,8 @@ namespace CoA_Tool.Excel
 
                         if (File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/" + fileName))
                         {
+                            TableauData.MoveBetweenDirectoriesSingle(TableauData.InProgressCurrentBatchPath + SalesOrder.OrderNumber + ".csv", 
+                                CSV.TableauData.LotDirectory.Complete);
                             fileSaved = true;
                         }
                     }
@@ -160,7 +168,6 @@ namespace CoA_Tool.Excel
                     }
                 } while (fileSaved == false);
 
-                TableauData.MoveBetweenDirectories(TableauData.DesktopSubDirectoryPath + "\\1) New Batch\\" + SalesOrder.OrderNumber + ".csv", CSV.TableauData.LotDirectory.PreviousBatch);
             }
         }
         
@@ -168,6 +175,7 @@ namespace CoA_Tool.Excel
         /// Sets static data and settings for the worksheet
         /// </summary>
         /// <param name="targetWorksheet"></param>
+        /// TODO: Refactor this
         private void PopulateGeneralWorksheetData(ExcelWorksheet targetWorksheet)
         {
             targetWorksheet.Cells.Style.Font.SetFromFont(new Font("Calibri", 11));
@@ -199,10 +207,10 @@ namespace CoA_Tool.Excel
 
             targetWorksheet.PrinterSettings.FitToPage = true;
 
-            targetWorksheet.HeaderFooter.EvenFooter.LeftAlignedText = "created: 04/22/2016";
-            targetWorksheet.HeaderFooter.EvenFooter.RightAlignedText = "10/31/2019 REV 03 F142-087";
-            targetWorksheet.HeaderFooter.OddFooter.LeftAlignedText = "created: 04/22/2016";
-            targetWorksheet.HeaderFooter.OddFooter.RightAlignedText = "10/31/2019 REV 03 F142-087";
+            targetWorksheet.HeaderFooter.EvenFooter.LeftAlignedText = "created: 11/05/2019";
+            targetWorksheet.HeaderFooter.EvenFooter.RightAlignedText = "11/05/2019 REV 00 QMS 042-056b";
+            targetWorksheet.HeaderFooter.OddFooter.LeftAlignedText = "created: 11/05/2019";
+            targetWorksheet.HeaderFooter.OddFooter.RightAlignedText = "11/05/2019 REV 00 QMS 042-056b";
 
         }
         /// <summary>
@@ -583,7 +591,7 @@ namespace CoA_Tool.Excel
 
             int sumOfBlockRows = sizeOfFirstContentBlock + sizeOfSecondContentBlock;
 
-            if (sumOfBlockRows > 0) // TODO: Review block
+            if (sumOfBlockRows > 0) 
             {
                 if (sizeOfSecondContentBlock > 0)
                 {
@@ -612,13 +620,21 @@ namespace CoA_Tool.Excel
                 targetWorksheet.Cells[11, 2, 10 + sumOfBlockRows, 2].Style.Font.Italic = true;
                 targetWorksheet.Cells[11, 1, 10 + sumOfBlockRows, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
             }
+            else
+            {
+                currentRow -= 2; // Negates addition from beginning of content block's code
+            }
 
             // For third content block
 
             if (sumOfBlockRows > 0)
+            {
                 currentRow += 2; // An empty space between blocks and an empty space for the block's header if the total block size > 0
+            }
             else
+            {
                 currentRow = 12; // Allows the third block's header to use row 11
+            }
 
             int sizeOfThirdContentBlock = 0;
 
@@ -629,36 +645,9 @@ namespace CoA_Tool.Excel
                 targetWorksheet.Cells[currentRow, 1].Value = "% Acid (TA)";
                 targetWorksheet.Cells[currentRow, 2].Value = AcidMethod;
 
-                for (int i = 0; i < itemsInWorksheet; i++)
+                for(int columnIterator = 0; columnIterator < itemsInWorksheet; columnIterator++)
                 {
-                    if (titrationIndices.Count > 0)
-                    {
-                        if (titrationIndices[i].Count > 0)
-                        {
-                            float acidity;
-
-                            if (NWAData.TitrationValueExists(titrationIndices[i], CSV.NWAData.TitrationOffset.Acidity, out acidity))
-                            {
-                                targetWorksheet.Cells[currentRow, 3 + i].Value = Math.Round(acidity, 2);
-                            }
-                            else
-                            {
-                                targetWorksheet.Cells[currentRow, 3 + i].Value = "Missing value";
-                                targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                            }
-
-                        }
-                        else
-                        {
-                            targetWorksheet.Cells[currentRow, 3 + i].Value = "Search error";
-                            targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                        }
-                    }
-                    else
-                    {
-                        targetWorksheet.Cells[currentRow, 3 + i].Value = "No usable data";
-                        targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                    }
+                    PopulateTitrationCell(CSV.NWAData.TitrationOffset.Acidity, targetWorksheet, currentRow, columnIterator, titrationIndices[columnIterator]);
                 }
 
                 currentRow++;
@@ -671,36 +660,23 @@ namespace CoA_Tool.Excel
                 targetWorksheet.Cells[currentRow, 1].Value = "pH";
                 targetWorksheet.Cells[currentRow, 2].Value = pHMethod;
 
-                for (int i = 0; i < itemsInWorksheet; i++)
+                for (int columnIterator = 0; columnIterator < itemsInWorksheet; columnIterator++)
                 {
-                    if (titrationIndices.Count > 0)
-                    {
+                    PopulateTitrationCell(CSV.NWAData.TitrationOffset.pH, targetWorksheet, currentRow, columnIterator, titrationIndices[columnIterator]);
+                }
 
-                        if (titrationIndices[i].Count > 0)
-                        {
-                            float pHValue;
+                currentRow++;
+            }
+            if(WorkbookTemplate.IncludeSalt)
+            {
+                sizeOfThirdContentBlock++;
 
-                            if (NWAData.TitrationValueExists(titrationIndices[i], CSV.NWAData.TitrationOffset.pH, out pHValue))
-                            {
-                                targetWorksheet.Cells[currentRow, 3 + i].Value = Math.Round(pHValue, 2);
-                            }
-                            else
-                            {
-                                targetWorksheet.Cells[currentRow, 3 + i].Value = "Missing value";
-                                targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                            }
-                        }
-                        else
-                        {
-                            targetWorksheet.Cells[currentRow, 3 + i].Value = "Search error";
-                            targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                        }
-                    }
-                    else
-                    {
-                        targetWorksheet.Cells[currentRow, 3 + i].Value = "No usable data";
-                        targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                    }
+                targetWorksheet.Cells[currentRow, 1].Value = "Salt (%)";
+                targetWorksheet.Cells[currentRow, 2].Value = SaltMethod;
+
+                for (int columnIterator = 0; columnIterator < itemsInWorksheet; columnIterator++)
+                {
+                    PopulateTitrationCell(CSV.NWAData.TitrationOffset.Salt, targetWorksheet, currentRow, columnIterator, titrationIndices[columnIterator]);
                 }
 
                 currentRow++;
@@ -713,35 +689,9 @@ namespace CoA_Tool.Excel
                 targetWorksheet.Cells[currentRow, 1].Value = "Viscosity cm";
                 targetWorksheet.Cells[currentRow, 2].Value = ViscosityCMMethod;
 
-                for (int i = 0; i < itemsInWorksheet; i++)
+                for (int columnIterator = 0; columnIterator < itemsInWorksheet; columnIterator++)
                 {
-                    if (titrationIndices.Count > 0)
-                    {
-                        if (titrationIndices[i].Count > 0)
-                        {
-                            float viscosityCM;
-
-                            if (NWAData.TitrationValueExists(titrationIndices[i], CSV.NWAData.TitrationOffset.ViscosityCM, out viscosityCM))
-                            {
-                                targetWorksheet.Cells[currentRow, 3 + i].Value = Math.Round(viscosityCM, 2);
-                            }
-                            else
-                            {
-                                targetWorksheet.Cells[currentRow, 3 + i].Value = "Missing value";
-                                targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                            }
-                        }
-                        else
-                        {
-                            targetWorksheet.Cells[currentRow, 3 + i].Value = "Search error";
-                            targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                        }
-                    }
-                    else
-                    {
-                        targetWorksheet.Cells[currentRow, 3 + i].Value = "No usable data";
-                        targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                    }
+                    PopulateTitrationCell(CSV.NWAData.TitrationOffset.ViscosityCM, targetWorksheet, currentRow, columnIterator, titrationIndices[columnIterator]);
                 }
 
                 currentRow++;
@@ -754,36 +704,9 @@ namespace CoA_Tool.Excel
                 targetWorksheet.Cells[currentRow, 1].Value = "Viscosity cps";
                 targetWorksheet.Cells[currentRow, 2].Value = ViscosityCPSMethod;
 
-                for (int i = 0; i < itemsInWorksheet; i++)
+                for (int columnIterator = 0; columnIterator < itemsInWorksheet; columnIterator++)
                 {
-                    if (titrationIndices.Count > 0)
-                    {
-                        if (titrationIndices[i].Count > 0)
-                        {
-                            float viscosityCPS;
-
-                            if (NWAData.TitrationValueExists(titrationIndices[i], CSV.NWAData.TitrationOffset.ViscosityCPS, out viscosityCPS))
-                            {
-                                targetWorksheet.Cells[currentRow, 3 + i].Value = viscosityCPS;
-                                targetWorksheet.Cells[currentRow, 3 + i].Style.Numberformat.Format = "#,0";
-                            }
-                            else
-                            {
-                                targetWorksheet.Cells[currentRow, 3 + i].Value = "Missing value";
-                                targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                            }
-                        }
-                        else
-                        {
-                            targetWorksheet.Cells[currentRow, 3 + i].Value = "Search error";
-                            targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                        }
-                    }
-                    else
-                    {
-                        targetWorksheet.Cells[currentRow, 3 + i].Value = "No usable data";
-                        targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                    }
+                    PopulateTitrationCell(CSV.NWAData.TitrationOffset.ViscosityCPS, targetWorksheet, currentRow, columnIterator, titrationIndices[columnIterator]);
                 }
 
                 currentRow++;
@@ -795,40 +718,9 @@ namespace CoA_Tool.Excel
 
                 targetWorksheet.Cells[currentRow, 1].Value = "Water activity (aW)";
 
-                for (int i = 0; i < itemsInWorksheet; i++)
+                for(int columnIterator = 0; columnIterator < itemsInWorksheet; columnIterator++)
                 {
-                    if (titrationIndices.Count > 0)
-                    {
-                        if (titrationIndices[i].Count > 0)
-                        {
-                            bool waterActivityValuePresent = NWAData.WaterActivityExists(titrationIndices[i], out float waterActivity, out bool valueIsAlsoValid);
-
-                            if (waterActivityValuePresent && valueIsAlsoValid)
-                            {
-                                targetWorksheet.Cells[currentRow, 3 + i].Value = Math.Round(waterActivity, 3);
-                            }
-                            else if (waterActivityValuePresent && valueIsAlsoValid == false)
-                            {
-                                targetWorksheet.Cells[currentRow, 3 + i].Value = "Invalid value";
-                                targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                            }
-                            else
-                            {
-                                targetWorksheet.Cells[currentRow, 3 + i].Value = "Missing value";
-                                targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                            }
-                        }
-                        else
-                        {
-                            targetWorksheet.Cells[currentRow, 3 + i].Value = "Search error";
-                            targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                        }
-                    }
-                    else
-                    {
-                        targetWorksheet.Cells[currentRow, 3 + i].Value = "No usable data";
-                        targetWorksheet.Cells[currentRow, 3 + i].Style.Font.Color.SetColor(Color.Red);
-                    }
+                    PopulateWaterActivityCell(targetWorksheet, currentRow, columnIterator, titrationIndices[columnIterator]);
                 }
 
                 currentRow++;
@@ -843,7 +735,7 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if (sizeOfThirdContentBlock > 0) // TODO: Review block
+            if (sizeOfThirdContentBlock > 0) 
             {
                 sumOfBlockRows += sizeOfThirdContentBlock;
 
@@ -882,6 +774,10 @@ namespace CoA_Tool.Excel
                 targetWorksheet.Cells[thirdBlockHeaderRow + 1, 2, thirdBlockHeaderRow + sizeOfThirdContentBlock, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
 
                 targetWorksheet.Cells[thirdBlockHeaderRow + 1, 1, thirdBlockHeaderRow + sizeOfThirdContentBlock, 1].Style.HorizontalAlignment = ExcelHorizontalAlignment.Left;
+            }
+            else
+            {
+                currentRow -= 2; // Negates addition from beginning of content block's code
             }
 
             // For fourth content block
@@ -1005,7 +901,7 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if (sizeOfFourthContentBlock > 0) // TODO: Review block
+            if (sizeOfFourthContentBlock > 0) 
             {
                 sumOfBlockRows += sizeOfFourthContentBlock;
 
@@ -1045,6 +941,10 @@ namespace CoA_Tool.Excel
 
                 CreateTableOfBorders(6, sizeOfFourthContentBlock, fourthBlockHeaderRow + 1, 3, targetWorksheet);
             }
+            else
+            {
+                currentRow -= 2; // Negates addition from beginning of content block's code
+            }
 
             // For fifth content block
             if (sumOfBlockRows > 0)
@@ -1081,7 +981,7 @@ namespace CoA_Tool.Excel
                 currentRow++;
             }
 
-            if (sizeOfFifthContentBlock > 0) // TODO: Review block
+            if (sizeOfFifthContentBlock > 0) 
             {
                 sumOfBlockRows += sizeOfFifthContentBlock;
 
@@ -1107,11 +1007,13 @@ namespace CoA_Tool.Excel
 
                 CreateTableOfBorders(6, sizeOfFifthContentBlock, fifthBlockHeaderRow + 1, 3, targetWorksheet);
             }
+            else
+            {
+                currentRow -= 2; // Negates addition from beginning of content block's code
+            }
 
             // For verified by and document disclaimer
-
-            currentRow += 1;
-
+            currentRow++;
             targetWorksheet.Cells[currentRow, 1].Value = "Verified By";
             targetWorksheet.Cells[currentRow, 1, currentRow + 5, 8].Style.Font.Size = 11;
             targetWorksheet.Cells[currentRow, 1].Style.Font.Bold = true;
@@ -1151,168 +1053,140 @@ namespace CoA_Tool.Excel
             }
         }
         /// <summary>
-        /// Determines the string value of a cell for micro results in the worksheet.
-        /// </summary>
-        /// <param name="rawMicroValues"></param>
-        /// <param name="microType"></param>
-        /// <returns></returns>
-        private string ValueForMicroCell(List<string> rawMicroValues, CSV.NWAData.MicroOffset microType, string cityOfManufacture)
-        {
-            if(rawMicroValues.Count == 0)
-            {
-                return "Search error";
-            }
-
-            List<int> numericalMicroValues = OnlyIntegersFrom(rawMicroValues);
-
-            if(numericalMicroValues.Count > 0)
-            {
-                int greatestValue = 0;
-
-                foreach (int value in numericalMicroValues)
-                {
-                    if (value > greatestValue)
-                    {
-                        greatestValue = value;
-                    }
-                }
-
-                if(greatestValue == 0)
-                {
-                    return XMLOperations.Definitions.NodeValueViaXPath(XMLOperations.Definitions.DefinitionFiles.Micro, 
-                        "/Dilutions_By_Factory/factory[@name = '" + cityOfManufacture + "']/" + Convert.ToString(microType));
-                }
-                else
-
-                {
-                    return Convert.ToString(greatestValue);
-                }
-            }
-            else
-            {
-                return "N/A";
-            }
-        }
-        /// <summary>
-        /// Returns the converted values of integer-convertable strings.
-        /// </summary>
-        /// <param name="targetValues">The strings to attempt integer conversion with.</param>
-        /// <returns></returns>
-        private List<int> OnlyIntegersFrom(List<string> targetValues)
-        {
-            List<int> integerParseableValues = new List<int>();
-
-            foreach(string item in targetValues)
-            {
-                if(Int32.TryParse(item, out int result)) // Result is left unused
-                {
-                    integerParseableValues.Add(result);
-                }
-            }
-
-            return integerParseableValues;
-        }
-        /// <summary>
-        /// Returns a Color dependent on the target cell's value and comment.
-        /// </summary>
-        /// <param name="targetWorksheet">The worksheet object containing the target cell.</param>
-        /// <param name="targetCellRow">Represents the row in which the target cell is positioned.</param>
-        /// <param name="targetCellColumn">Represents the column in which the target cell is positioned.</param>
-        /// <returns></returns>
-        private Color FontColorForCell(ExcelWorksheet targetWorksheet, int targetCellRow, int targetCellColumn, string commentText)
-        {
-           string cellValue = targetWorksheet.Cells[targetCellRow, targetCellColumn].Value.ToString();
-
-            if (cellValue == "Search error")
-            {
-                return Color.Red;
-            }
-            else if (commentText.Contains("invalid"))
-            {
-                return Color.OrangeRed;
-            }
-            else
-            {
-                return Color.Black;
-            }
-        }
-        /// <summary>
-        /// Returns a Color dependent on the target cell's value.
-        /// </summary>
-        /// <param name="targetWorksheet">The worksheet object containing the target cell.</param>
-        /// <param name="targetCellRow">Represents the row in which the target cell is positioned.</param>
-        /// <param name="targetCellColumn">Represents the column in which the target cell is positioned.</param>
-        /// <returns></returns>
-        private Color FontColorForCell(ExcelWorksheet targetWorksheet, int targetCellRow, int targetCellColumn)
-        {
-            string cellValue = targetWorksheet.Cells[targetCellRow, targetCellColumn].Value.ToString();
-
-            if (cellValue == "Search error")
-            {
-                return Color.Red;
-            }
-            else
-            {
-                return Color.Black;
-            }
-        }
-        /// <summary>
-        /// Determines if a comment is required for a particular micro cell.
-        /// </summary>
-        /// <param name="rawMicroValues">The micro values relevant to the cell.</param>
-        /// <param name="commentText">The value of the comment to be written.</param>
-        /// <returns></returns>
-        private bool CommentNeededForMicroCell(List<string> rawMicroValues, out string commentText)
-        {
-            foreach(string rawValue in rawMicroValues)
-            {
-                if(rawValue != "*" && Int32.TryParse(rawValue, out _ ) == false)
-                {
-                    commentText = "One or more values were invalid";
-                    return true;
-                }
-            }
-            commentText = "";
-            return false;
-        }
-        /// <summary>
-        /// Assigns the target cell with relevant information and styling pertaining to micro results.
+        /// Determines and assigns the target cell with relevant information and styling pertaining to micro results.
         /// </summary>
         /// <param name="microTypeOfCell">Indentifies the type of micro result the cell is associated with.</param>
         /// <param name="targetWorksheet">The worksheet containing the target cell.</param>
         /// <param name="cellRow">The row in which the target cell is positioned.</param>
         /// <param name="cellColumn">The column in which the target cell is positioned.</param>
-        /// <param name="microIndicesForNWA">The micro result indices for values relevant to the cell.</param>
-        private void PopulateMicroCell(CSV.NWAData.MicroOffset microTypeOfCell, ExcelWorksheet targetWorksheet, int cellRow, int cellColumn, List<int> microIndicesForNWA)
+        /// <param name="nWAIndicesToParse">The micro result indices for values relevant to the cell.</param>
+        private void PopulateMicroCell(CSV.NWAData.MicroOffset microTypeOfCell, ExcelWorksheet targetWorksheet, int cellRow, int cellColumn, List<int> nWAIndicesToParse)
         {
             // Get all relevant values
-            List<string> rawMicroValues = NWAData.MicroValues(microIndicesForNWA, microTypeOfCell);
+            List<string> rawMicroValues = NWAData.MicroValues(nWAIndicesToParse, microTypeOfCell);
 
             // Determine manufacturing city for parsing Micro.XML
             string cityOfManufacture = Lot.CityOfManufacture(SalesOrder.Lots[(Convert.ToInt32(targetWorksheet.Name.Substring(4)) - 1) * 6 + cellColumn]);
+
+            // Add offset to account for columns used for row headers
+            cellColumn += resultOffset;
+
             // Assign final value to cell
-            string valueForCell = ValueForMicroCell(rawMicroValues, microTypeOfCell, cityOfManufacture);
-            targetWorksheet.Cells[cellRow, 3 + cellColumn].Value = valueForCell;
+            string valueForCell = CellDetermination.ValueForMicroCell(rawMicroValues, microTypeOfCell, cityOfManufacture);
+            targetWorksheet.Cells[cellRow, cellColumn].Value = valueForCell;
 
             // Reassign the cell value from a string to an integer if integer conversion succeeds
             if (Int32.TryParse(valueForCell, out int parsedValue))
             {
                 // Excel throws warning for numbers input as strings regardless of cell formatting.
-                targetWorksheet.Cells[cellRow, 3 + cellColumn].Value = parsedValue;
+                targetWorksheet.Cells[cellRow, cellColumn].Value = parsedValue;
             }
 
             // Set cell font color and add a comment if necessary
             Color fontColor;
-            if (CommentNeededForMicroCell(rawMicroValues, out string commentText))
+
+            if (CellDetermination.CommentNeededForMicroOrTitration(rawMicroValues, out string commentText))
             {
-                targetWorksheet.Cells[cellRow, 3 + cellColumn].AddComment(commentText, "CoA Tool");
-                fontColor = FontColorForCell(targetWorksheet, cellRow, 3 + cellColumn, commentText);
+                targetWorksheet.Cells[cellRow, cellColumn].AddComment(commentText, "CoA Tool");
+                fontColor = CellDetermination.FontColorForCell(targetWorksheet.Cells[cellRow, cellColumn].Value.ToString(), commentText);
             }
             else
             {
-                fontColor = FontColorForCell(targetWorksheet, cellRow, 3 + cellColumn);
+                fontColor = CellDetermination.FontColorForCell(targetWorksheet.Cells[cellRow, cellColumn].Value.ToString());
             }
-            targetWorksheet.Cells[cellRow, 3 + cellColumn].Style.Font.Color.SetColor(fontColor);
+
+            targetWorksheet.Cells[cellRow, cellColumn].Style.Font.Color.SetColor(fontColor);
+        }
+        /// <summary>
+        /// Determines and assigns the target cell with relevant information and styling pertaining to titration results.
+        /// </summary>
+        /// <param name="titrationTestCategory">Indentifies the type of titration test the cell is associated with.</param>
+        /// <param name="targetWorksheet">The worksheet containing the target cell.</param>
+        /// <param name="cellRow">The row in which the target cell is positioned.</param>
+        /// <param name="cellColumn">The column in which the target cell is positioned.</param>
+        /// <param name="nWAIndicesToParse">The titration result indices for values relevant to the cell.</param>
+        private void PopulateTitrationCell(CSV.NWAData.TitrationOffset titrationTestCategory, ExcelWorksheet targetWorksheet, int cellRow, int cellColumn, List<int> nWAIndicesToParse)
+        {
+            // Get all relevant values
+            List<string> rawTitrationValues = NWAData.TitrationValues(nWAIndicesToParse, titrationTestCategory);
+
+            // Determine manufacturing city for parsing Micro.XML
+            string cityOfManufacture = Lot.CityOfManufacture(SalesOrder.Lots[(Convert.ToInt32(targetWorksheet.Name.Substring(4)) - 1) * 6 + cellColumn]);
+
+            // Add offset to account for columns used for row headers
+            cellColumn += resultOffset;
+
+            // Assign final value to cell
+            string valueForCell = CellDetermination.ValueForTitrationCell(rawTitrationValues, titrationTestCategory);
+            targetWorksheet.Cells[cellRow, cellColumn].Value = valueForCell;
+
+            // Reassign the cell value from a string to a float if float conversion succeeds
+            if (Single.TryParse(valueForCell, out float parsedValue))
+            {
+                // Excel throws warning for numbers input as strings regardless of cell formatting.
+                targetWorksheet.Cells[cellRow, cellColumn].Value = Math.Round(parsedValue, 3);
+            }
+
+            if(titrationTestCategory.ToString().Contains("Viscosity"))
+            {
+                targetWorksheet.Cells[cellRow, cellColumn].Style.Numberformat.Format = "#,##0";
+            }
+
+            // Set cell font color and add a comment if necessary
+            Color fontColor;
+
+            if (CellDetermination.CommentNeededForMicroOrTitration(rawTitrationValues, out string commentText))
+            {
+                targetWorksheet.Cells[cellRow, cellColumn].AddComment(commentText, "CoA Tool");
+                fontColor = CellDetermination.FontColorForCell(targetWorksheet.Cells[cellRow, cellColumn].Value.ToString(), commentText);
+            }
+            else
+            {
+                fontColor = CellDetermination.FontColorForCell(targetWorksheet.Cells[cellRow, cellColumn].Value.ToString());
+            }
+
+            targetWorksheet.Cells[cellRow, cellColumn].Style.Font.Color.SetColor(fontColor);
+        }
+        /// <summary>
+        /// Determines and assigns the target cell with relevant information and styling pertaining to water activity results.
+        /// </summary>
+        /// <param name="targetWorksheet">The worksheet containing the target cell.</param>
+        /// <param name="cellRow">The row in which the target cell is positioned.</param>
+        /// <param name="cellColumn">The column in which the target cell is positioned.</param>
+        /// <param name="nWAIndicesToParse">The water activity result indices for values relevant to the cell.</param>
+        private void PopulateWaterActivityCell(ExcelWorksheet targetWorksheet, int cellRow, int cellColumn, List<int> nWAIndicesToParse)
+        {
+            // Get all relevant values
+            List<string> rawWaterActivityValues = NWAData.WaterActivityValues(nWAIndicesToParse);
+
+            // Add offset to account for columns used for row headers
+            cellColumn += resultOffset;
+
+            // Assign final value to cell
+            string valueForCell = CellDetermination.ValueForWaterActivityCell(rawWaterActivityValues);
+            targetWorksheet.Cells[cellRow, cellColumn].Value = valueForCell;
+
+            // Reassign the cell value from a string to a float if float conversion succeeds
+            if (Single.TryParse(valueForCell, out float parsedValue))
+            {
+                // Excel throws warning for numbers input as strings regardless of cell formatting.
+                targetWorksheet.Cells[cellRow, cellColumn].Value = parsedValue;
+            }
+
+            // Set cell font color and add a comment if necessary
+            Color fontColor;
+
+            if (CellDetermination.CommentNeededForWaterActivity(rawWaterActivityValues, out string commentText))
+            {
+                targetWorksheet.Cells[cellRow, cellColumn].AddComment(commentText, "CoA Tool");
+                fontColor = CellDetermination.FontColorForCell(targetWorksheet.Cells[cellRow, cellColumn].Value.ToString(), commentText);
+            }
+            else
+            {
+                fontColor = CellDetermination.FontColorForCell(targetWorksheet.Cells[cellRow, cellColumn].Value.ToString());
+            }
+
+            targetWorksheet.Cells[cellRow, cellColumn].Style.Font.Color.SetColor(fontColor);
         }
         
     }

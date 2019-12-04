@@ -26,7 +26,7 @@ namespace CoA_Tool.Templates
         public enum ContentItems
         {
             Unassigned, CustomerName, SalesOrder, PurchaseOrder, GenerationDate, ProductName, RecipeAndItem, LotCode, BatchFromMicro, BatchFromDressing,
-            BestByDate, ManufacturingSite, ManufacturingDate, Acidity, pH, ViscosityCM, ViscosityCPS, WaterActivity, BrixSlurry, Yeast, Mold,
+            BestByDate, ManufacturingSite, ManufacturingDate, Acidity, pH, Salt, ViscosityCM, ViscosityCPS, WaterActivity, BrixSlurry, Yeast, Mold,
             Aerobic, Coliform, EColi, Lactics, Salmonella, Listeria, ColorAndAppearance, Form, FlavorAndOdor
         }
 
@@ -52,6 +52,7 @@ namespace CoA_Tool.Templates
         public bool IncludeManufacturingDate;
         public bool IncludeAcidity;
         public bool IncludepH;
+        public bool IncludeSalt;
         public bool IncludeViscosityCM;
         public bool IncludeViscosityCPS;
         public bool IncludeWaterActivity;
@@ -113,8 +114,8 @@ namespace CoA_Tool.Templates
                     ConsoleOps.WriteMessageInCenter("Could not find any templates in " + templateDirectory +
                         "  Press any key once templates have been added", ConsoleColor.Red);
 
-                    System.Console.ReadKey();
-                    System.Console.Write("\b \b ");
+                    Console.ReadKey();
+                    Console.Write("\b \b ");
 
                 } while (Directory.GetFiles(templateDirectory, "*.txt").Length == 0);
 
@@ -430,6 +431,10 @@ namespace CoA_Tool.Templates
                                                     customFilter.ContentItem = ContentItems.pH;
                                                     assignedContentItem = true;
                                                     break;
+                                                case "salt":
+                                                    customFilter.ContentItem = ContentItems.Salt;
+                                                    assignedContentItem = true;
+                                                    break;
                                                 case "viscosity cm":
                                                     customFilter.ContentItem = ContentItems.ViscosityCM;
                                                     assignedContentItem = true;
@@ -592,6 +597,10 @@ namespace CoA_Tool.Templates
                             if (delimitedLine[1].ToLower() == "yes")
                                 IncludepH = true;
                             break;
+                        case "salt":
+                            if (delimitedLine[1].ToLower() == "yes")
+                                IncludeSalt = true;
+                            break;
                         case "viscosity cm":
                             if (delimitedLine[1].ToLower() == "yes")
                                 IncludeViscosityCM = true;
@@ -687,6 +696,7 @@ namespace CoA_Tool.Templates
             IncludeManufacturingSite = false;
             IncludeAcidity = false;
             IncludepH = false;
+            IncludeSalt = false;
             IncludeViscosityCM = false;
             IncludeViscosityCPS = false;
             IncludeWaterActivity = false;

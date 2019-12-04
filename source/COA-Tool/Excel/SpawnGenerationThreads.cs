@@ -16,6 +16,14 @@ namespace CoA_Tool.Excel
             // Objects are instantiated with minimum processing until pertinent loading methods are called for the selected algorithm
             CSV.NWAData nwaData = new CSV.NWAData();
             CSV.TableauData tableau = new CSV.TableauData();
+
+            if(tableau.CSVFilesFrom(tableau.InProgressCurrentBatchPath).Count == 0)
+            {
+                tableau.MoveBetweenDirectoriesMulti(tableau.CSVFilesFrom(tableau.CurrentCompleteBatchPath), CSV.TableauData.LotDirectory.PreviousBatch);
+            }
+
+            tableau.MoveBetweenDirectoriesMulti(tableau.CSVFilesFrom(tableau.PreviousBatchPath), CSV.TableauData.LotDirectory.DeletionQueue);
+           
             FinishedGoodsData finishedGoods = new FinishedGoodsData();
             int numberOfDocumentsToGenerate = 0;
 
@@ -26,7 +34,7 @@ namespace CoA_Tool.Excel
                 tableau.Load();
                 finishedGoods.Load();
 
-                tableau.MoveBetweenDirectories(tableau.CSVFilesFrom(tableau.DesktopSubDirectoryPath + "\\3) Previous Batch\\"), CSV.TableauData.LotDirectory.DeletionQueue);
+                tableau.MoveBetweenDirectoriesMulti(tableau.CSVFilesFrom(tableau.NewBatchPath), CSV.TableauData.LotDirectory.InProgress);
 
                 foreach (CSV.SalesOrder salesOrder in tableau.SalesOrders)
                 {
