@@ -408,11 +408,14 @@ namespace CoA_Tool.CSV
 
             for(int i = 0; i < batchValues.Count; i++)
             {
-                batchesCombinedInString += batchValues[i];
-
-                if(i + 1 < batchValues.Count)
+                if(batchValues[i] != "*")
                 {
-                    batchesCombinedInString += ", ";
+                    batchesCombinedInString += batchValues[i];
+
+                    if (i + 1 < batchValues.Count && batchValues[i + 1] != "*")
+                    {
+                        batchesCombinedInString += ", ";
+                    }
                 }
             }
 

@@ -101,7 +101,9 @@ namespace CoA_Tool.Excel
 
                     foreach (string lotCode in lotsToProcess)
                     {
-                        if(FinishedGoodsData.RecipeCodeExists(Lot.ProductCode(lotCode), out string recipeCode) == false)
+                        if(FinishedGoodsData.RecipeCodeExists(Lot.ProductCode(lotCode), out string recipeCode) == false ||
+                            Int64.TryParse(lotCode, out _) == false || 
+                            lotCode.Length != 13)
                         {
                             containsInvalidLot = true;
                             invalidLotValue = lotCode;
@@ -151,8 +153,11 @@ namespace CoA_Tool.Excel
 
                         if (File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/CoAs/" + fileName))
                         {
-                            TableauData.MoveBetweenDirectoriesSingle(TableauData.InProgressCurrentBatchPath + SalesOrder.OrderNumber + ".csv", 
+                            if(containsInvalidLot == false)
+                            {
+                                TableauData.MoveBetweenDirectoriesSingle(TableauData.InProgressCurrentBatchPath + SalesOrder.OrderNumber + ".csv",
                                 CSV.TableauData.LotDirectory.Complete);
+                            }
                             fileSaved = true;
                         }
                     }
@@ -483,7 +488,15 @@ namespace CoA_Tool.Excel
 
                             if (batchValue != "")
                             {
-                                targetWorksheet.Cells[currentRow, 3 + i].Value = batchValue;
+                                // True if only one batch number is listed
+                                if (Int32.TryParse(batchValue, out int parsedValue)) 
+                                {
+                                    targetWorksheet.Cells[currentRow, 3 + i].Value = parsedValue;
+                                }
+                                else
+                                {
+                                    targetWorksheet.Cells[currentRow, 3 + i].Value = batchValue;
+                                }
                             }
                             else
                             {
@@ -503,7 +516,7 @@ namespace CoA_Tool.Excel
                     }
                 }
 
-                if (WorkbookTemplate.IncludeBatchFromDressing == false)
+                if (WorkbookTemplate.IncludeBatchFromMicro == false)
                 {
                     sizeOfSecondContentBlock++; // If both are set to be included, batch from dressing will overwrite
                     currentRow++;

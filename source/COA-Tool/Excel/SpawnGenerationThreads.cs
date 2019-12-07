@@ -17,13 +17,13 @@ namespace CoA_Tool.Excel
             CSV.NWAData nwaData = new CSV.NWAData();
             CSV.TableauData tableau = new CSV.TableauData();
 
-            if(tableau.CSVFilesFrom(tableau.InProgressCurrentBatchPath).Count == 0)
+            tableau.MoveBetweenDirectoriesMulti(tableau.CSVFilesFrom(tableau.PreviousBatchPath), CSV.TableauData.LotDirectory.DeletionQueue);
+
+            if (tableau.CSVFilesFrom(tableau.InProgressCurrentBatchPath).Count == 0)
             {
                 tableau.MoveBetweenDirectoriesMulti(tableau.CSVFilesFrom(tableau.CurrentCompleteBatchPath), CSV.TableauData.LotDirectory.PreviousBatch);
             }
 
-            tableau.MoveBetweenDirectoriesMulti(tableau.CSVFilesFrom(tableau.PreviousBatchPath), CSV.TableauData.LotDirectory.DeletionQueue);
-           
             FinishedGoodsData finishedGoods = new FinishedGoodsData();
             int numberOfDocumentsToGenerate = 0;
 

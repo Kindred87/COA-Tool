@@ -71,7 +71,9 @@ namespace CoA_Tool.CSV
             }
             else //  Load from \\3) Previous Batch
             {
-                filePaths = (CSVFilesFrom(PreviousBatchPath));
+                filePaths = CSVFilesFrom(PreviousBatchPath);
+                MoveBetweenDirectoriesMulti(filePaths, LotDirectory.NewBatch);
+                filePaths = CSVFilesFrom(NewBatchPath);
             }
 
             foreach (string file in filePaths)

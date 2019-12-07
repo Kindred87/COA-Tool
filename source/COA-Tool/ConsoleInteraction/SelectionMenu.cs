@@ -460,6 +460,7 @@ namespace CoA_Tool.ConsoleInteraction
         {
             if(WindowSizeChanged())
             {
+                Console.Clear();
                 UpdateMenu();
                 SaveWindowDimensions();
             }
